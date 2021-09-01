@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class ForwardTask(object):
     def __init__(self, num_legs=4, num_motors=12):
         """Initializes the task."""
@@ -46,8 +45,11 @@ class ForwardTask(object):
         self.current_motor_torques = env.robot.GetMotorTorques()
         self.last_base_orientation = self.current_base_orientation
         self.current_base_orientation = env.robot.GetBaseOrientation()
-        self.last_foot_contacts = self.current_foot_contacts
+        self.Last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
+
+        #self.current_target_base_velocity = env.GetTargetVelocity()
+        #self.current_actual_base_velocity = 
 
     def done(self, env):
         """Checks if the episode is over.
@@ -80,6 +82,10 @@ class ForwardTask(object):
                    self.current_motor_velocities)) * self._env._sim_time_step
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
+
+        # Penalty for deviating from the target velocity
+        target_vel = env.get_target_velocity() 
+        current_vel = env.get_current_velocity()
 
         objectives = [forward_reward, energy_reward, drift_reward, shake_reward, jump_reward, contact_reward]
         objective_weights = [1.0, 0.005, 0.001, 0.001, 0.001, 0.005]
