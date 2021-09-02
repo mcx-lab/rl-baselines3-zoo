@@ -49,7 +49,8 @@ def build_regular_env(robot_class,
     robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
     robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY']),
     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS)
+    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS)
   ]
 
   task = forward_task.ForwardTask()
