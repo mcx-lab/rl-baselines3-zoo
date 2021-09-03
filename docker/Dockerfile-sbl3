@@ -1,6 +1,6 @@
 # Dockerfile to build custom image for rl-stablebaseline3 in DGX
 
-FROM nvcr.io/nvidia/tensorflow:21.08-tf1-py3
+FROM nvcr.io/nvidia/pytorch:21.08-py3
 
 ARG DEBIAN_FRONTEND=noninteractive
 
