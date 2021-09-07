@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -l select=1:ncpus=12:ngpus=1:host=dgx02
+#PBS -l select=1:ncpus=1:ngpus=0:host=dgx02
 #PBS -l software=pytorch
 #PBS -N rl-baselines3-zoo_image
 #PBS -m abe
