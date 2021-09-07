@@ -1,6 +1,6 @@
 #!/bin/sh
 #PBS -l select=1:ncpus=12:ngpus=1:host=dgx02
-#PBS -l software="pytorch"
+#PBS -l software=pytorch
 #PBS -N rl-baselines3-zoo
 #PBS -l walltime=12:00:00
 #PBS -m abe

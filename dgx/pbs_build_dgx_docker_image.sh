@@ -1,6 +1,6 @@
 #!/bin/sh
 #PBS -l select=1:ncpus=12:ngpus=1:host=dgx02
-#PBS -l software="pytorch"
+#PBS -l software=pytorch
 #PBS -N rl-baselines3-zoo_image
 #PBS -m abe
 #PBS -M michael_chuah@i2r.a-star.edu.sg
