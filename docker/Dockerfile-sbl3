@@ -16,8 +16,8 @@ RUN apt-get install -q -y --no-install-recommends \
 RUN apt-get -y -f install
 
 # copy files to container
-COPY . /root/rl-baselines-zoo
-RUN pip install -r /root/rl-baselines-zoo/requirements.txt
+COPY . /root/rl-baselines3-zoo
+RUN pip install -r /root/rl-baselines3-zoo/requirements.txt --ignore-installed
 
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
 CMD ["bash"]
