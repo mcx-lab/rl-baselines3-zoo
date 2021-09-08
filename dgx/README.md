@@ -15,7 +15,7 @@ Remember to change the email to your I2R email.
 
 4. Submit the job as follows:
 ```
-qsub rl-baselines3-zoo/dgx/submit_job.sh
+qsub -q noGPU rl-baselines3-zoo/dgx/submit_job.sh
 ```
 A suitable queue will be automatically assigned. 
 To manually select a specific queue (e.g. noGPU), use `qsub -q noGPU <path/to/script>`. 
