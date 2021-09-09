@@ -22,3 +22,24 @@ To manually select a specific queue (e.g. noGPU), use `qsub -q noGPU <path/to/sc
 
 5. Check the status of your script with `qstat | grep $USER`. 
 
+## Retrieving run results
+
+1. Start an interactive session in the same node that you submitted your training job in. 
+```
+qsub -i -q noGPU select=1:ngpus=0:ncpus=1:host=dgx02 -N script1 -l software=nvidia-docker \ 
+    -l walltime=1:00:00 -m abe -M <your_email@i2r.a-star.edu.sg>
+```
+2. From the run log (<script_name>.o<process_id>), find the container ID that was used for your run. 
+```
+cat rl_baselines_zoo_train_a1_ppo.o21984 | grep INFO
+```
+3. Start an interactive bash session into the container. 
+```
+docker exec -it <container_id> bash
+```
+4. The internal filesystem of the Docker container contains the saved logs.
+```
+cd ~/rl-baselines3-zoo/logs/ppo
+```
+
+
