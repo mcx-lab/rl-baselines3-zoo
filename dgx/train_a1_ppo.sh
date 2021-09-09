@@ -14,22 +14,24 @@ echo "INFO: Using container name ${CONTAINER_NAME}..."
 
 # Delete the previous container if it exists
 CONTAINER_ID=$(docker ps -aqf "name=${CONTAINER_NAME}")
-if [ $CONTAINER_ID != "" ] 
+if [[ $CONTAINER_ID != "" ]]
 then
-    echo "INFO: Deleting existing container ${CONTAINER_ID}..."
-    docker rm -f $CONTAINER_ID
-fi
+    echo "INFO: Reusing existing container ${CONTAINER_ID}..."
+    nvidia-docker start $CONTAINER_ID
 
-# Create the container from the current image. This only works the first time
-nvidia-docker run --privileged --net=host \
-    --name=$CONTAINER_NAME \
-    --env="DISPLAY=$DISPLAY" \
-    --env="QT_X11_NO_MITSHM=1" \
-    --runtime=nvidia \
-    --gpus all \
-    -dit \
-    dgx-sbl3:latest \
-    bash
+else
+    echo "INFO: No pre-existing container found; creating new container..."
+    # Create the container from the current image
+    nvidia-docker run --privileged --net=host \
+        --name=$CONTAINER_NAME \
+        --env="DISPLAY=$DISPLAY" \
+        --env="QT_X11_NO_MITSHM=1" \
+        --runtime=nvidia \
+        --gpus all \
+        -dit \
+        dgx-sbl3:latest \
+        bash
+fi
 
 # Now we can run training scripts as usual. 
 # PBS pro scheduler automatically logs stderr and stdout so no need to manually do that
