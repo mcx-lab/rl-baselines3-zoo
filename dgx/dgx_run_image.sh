@@ -35,7 +35,7 @@ else
 fi
 
 # Now we can run training scripts as usual. 
-# PBS pro scheduler automatically logs stderr and stdout so no need to manually do that
+# PBS Pro scheduler automatically logs stderr and stdout so no need to manually do that
 CONTAINER_ID=$(docker ps -aqf "name=${CONTAINER_NAME}")
 
 echo nvidia-smi

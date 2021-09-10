@@ -10,7 +10,7 @@
 RL_BASELINES_DIR="/home/i2r/$USER/DATA/rl-baselines3-zoo"
 
 # First, cd to our git repository
-# Next, build the docker image and save it in the docker registry
+# Next, build the Docker image and save it in the Docker registry
 # This has to be done in the same command because it starts a subshell
 (cd $RL_BASELINES_DIR && nvidia-docker build -t dgx-sbl3:latest \
 	-f docker/Dockerfile-sbl3 .)
