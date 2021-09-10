@@ -1,8 +1,0 @@
-#!/bin/sh
-#PBS -l select=1:ncpus=1:ngpus=0:host=dgx02
-#PBS -l software=pytorch
-#PBS -N rl-baselines3-zoo_image
-#PBS -m abe
-#PBS -M michael_chuah@i2r.a-star.edu.sg
-
-sh /home/i2r/chuahmy/DATA/rl-baselines3-zoo/dgx/build_dgx_docker_image.sh
