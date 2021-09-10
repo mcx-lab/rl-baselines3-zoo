@@ -2,6 +2,7 @@
 #PBS -l select=1:ncpus=1:ngpus=0:host=dgx02
 #PBS -l software=pytorch
 #PBS -N build_dgx_image
+#PBS -l walltime=1:00:00
 #PBS -m abe
 #PBS -M chuahmy@i2r.a-star.edu.sg
 
