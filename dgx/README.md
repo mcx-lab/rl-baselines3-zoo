@@ -13,7 +13,8 @@ rl-baselines3-zoo
 Refer to PowerPoint sent by Feri Guretno in email. 
 Remember to change the email to your I2R email. 
 
-4. Submit the job as follows:
+4. Submit the job as follows. If you have configured the job to request GPUs in the previous step,
+then submit to a queue with GPUs like lessGPU or lessGPU-long
 ```
 qsub -q noGPU rl-baselines3-zoo/dgx/submit_job.sh
 ```
@@ -26,7 +27,7 @@ To manually select a specific queue (e.g. noGPU), use `qsub -q noGPU <path/to/sc
 
 1. Start an interactive session in the same node that you submitted your training job in. 
 ```
-qsub -i -q noGPU select=1:ngpus=0:ncpus=1:host=dgx02 -N script1 -l software=nvidia-docker \ 
+qsub -I -q noGPU select=1:ngpus=0:ncpus=1:host=dgx02 -N script1 -l software=nvidia-docker \ 
     -l walltime=1:00:00 -m abe -M <your_email@i2r.a-star.edu.sg>
 ```
 2. From the run log (<script_name>.o<process_id>), find the container ID that was used for your run. 
