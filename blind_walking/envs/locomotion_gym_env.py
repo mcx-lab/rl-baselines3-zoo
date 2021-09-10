@@ -72,6 +72,7 @@ class LocomotionGymEnv(gym.Env):
     self._gym_config = gym_config
     self._robot_class = robot_class
     self._robot_sensors = robot_sensors
+    self._observations = None
 
     self._sensors = env_sensors if env_sensors is not None else list()
     if self._robot_class is None:
@@ -462,6 +463,7 @@ class LocomotionGymEnv(gym.Env):
       sensors_dict[s.get_name()] = s.get_observation()
 
     observations = collections.OrderedDict(list(sensors_dict.items()))
+    self._observations = observations
     return observations
 
   def _get_env_state(self):

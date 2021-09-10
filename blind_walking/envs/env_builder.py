@@ -18,8 +18,8 @@ from blind_walking.envs import locomotion_gym_config
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
 from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
 from blind_walking.envs.env_wrappers import simple_openloop
-from blind_walking.envs.env_wrappers import forward_task
-from blind_walking.envs.sensors import robot_sensors
+from blind_walking.envs.env_wrappers import forward_task, forward_task_pos
+from blind_walking.envs.sensors import robot_sensors, environment_sensors
 from blind_walking.robots import a1
 from blind_walking.robots import laikago
 from blind_walking.robots import robot_config
@@ -49,8 +49,11 @@ def build_regular_env(robot_class,
     robot_sensors.BaseVelocitySensor(),
     robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY']),
     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS)
+    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS)
   ]
+
+  # env_sensors = [environment_sensors.TargetPositionSensor()]
 
   task = forward_task.ForwardTask()
 
