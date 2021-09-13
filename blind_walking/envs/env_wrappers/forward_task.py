@@ -36,6 +36,8 @@ class ForwardTask(object):
         self.last_foot_contacts = env.robot.GetFootContacts()
         self.current_foot_contacts = self.last_foot_contacts
 
+        self.motor_inertia = [i[0] for i in env.robot._motor_inertia]
+
     def update(self, env):
         """Updates the internal state of the task."""
         self.last_base_pos = self.current_base_pos
@@ -78,11 +80,16 @@ class ForwardTask(object):
         energy_reward = -np.abs(
             np.dot(self.current_motor_torques,
                    self.current_motor_velocities)) * self._env._sim_time_step
+        energy_rot_reward = -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) \
+            * self._env._sim_time_step * 0.5
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
 
-        objectives = [forward_reward, energy_reward, drift_reward, shake_reward, jump_reward, contact_reward]
-        objective_weights = [1.0, 0.005, 0.001, 0.001, 0.001, 0.005]
+
+        objectives = [forward_reward, energy_reward, drift_reward, shake_reward, \
+                      jump_reward, contact_reward, energy_rot_reward]
+        objective_weights = [1.0, 0.005, 0.001, 0.001, \
+                             0.001, 0.0, 0.005]
         weighted_objectives = [o * w for o, w in zip(objectives, objective_weights)]
         reward = sum(weighted_objectives)
         return reward
