@@ -123,9 +123,10 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
     dy_target = target_pos[1] - self._current_base_pos[1]
     # Transform to local frame
     dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
-    # Scale to maximum possible
-    if dx_target_local or dy_target_local:
-      scale_ratio = self._max_distance / np.linalg.norm([dx_target_local, dy_target_local])
+    target_distance = np.linalg.norm([dx_target_local, dy_target_local])
+    # If target is too far, scale down to maximum possible
+    if target_distance and abs(target_distance) > self._max_distance:
+      scale_ratio = self._max_distance / target_distance
       dx_target_local = dx_target_local * scale_ratio
       dy_target_local = dy_target_local * scale_ratio
     return [dx_target_local, dy_target_local]
