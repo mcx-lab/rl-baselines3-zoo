@@ -464,20 +464,6 @@ class LocomotionGymEnv(gym.Env):
     observations = collections.OrderedDict(list(sensors_dict.items()))
     return observations
 
-  def _get_env_state(self):
-    """Get simulation environment state
-
-    Returns:
-      state: carry mass, carry mass position, motor strength, friction, terrain height
-        in numpy array format
-    """
-    carry_mass = self.carry_mass
-    carry_mass_position = self.carry_mass_pos
-    motor_strength = self.robot._motor_model._strength_ratios
-    friction = self.height_field_friction
-    terrain_height = self.height_field_perturbation_range
-    return np.hstack([carry_mass, carry_mass_position, motor_strength, friction, terrain_height])
-
   def set_time_step(self, num_action_repeat, sim_step=0.001):
     """Sets the time step of the environment.
 
