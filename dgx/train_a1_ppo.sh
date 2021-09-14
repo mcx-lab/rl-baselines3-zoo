@@ -1,6 +1,9 @@
 #!/bin/bash
 RL_BASELINES_DIR=$1
 
+# Collect all extra arguments to pass to training script
+EXTRA_ARGS="${@:1}"
+
 # First, cd to our git repository
 # Next, build the docker image and save it in the docker registry
 # This has to be done in the same command because it starts a subshell
@@ -37,4 +40,6 @@ fi
 # PBS pro scheduler automatically logs stderr and stdout so no need to manually do that
 CONTAINER_ID=$(docker ps -aqf "name=${CONTAINER_NAME}")
 echo "INFO: Running train.py in container ${CONTAINER_ID}..."
-nvidia-docker exec $CONTAINER_ID sh -c "cd ~/rl-baselines3-zoo && python train.py --algo ppo --env A1GymEnv-v0 --save-freq 100000"
+CMD="cd ~/rl-baselines3-zoo && python train.py --algo ppo --env A1GymEnv-v0 --save-freq 100000 ${EXTRA_ARGS}"
+echo "INFO: Running command ${CMD}"
+nvidia-docker exec $CONTAINER_ID sh -c $CMD
