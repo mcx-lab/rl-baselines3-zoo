@@ -158,6 +158,7 @@ HalfCheetahBulletEnv-v0: &pybullet-defaults
 
 A1GymEnv-v0:
   <<: *pybullet-defaults
+  env_wrapper: utils.wrappers.DummyWrapper
   policy_kwargs: "dict(log_std_init=-2,
                        ortho_init=False,
                        activation_fn=nn.ReLU,
