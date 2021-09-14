@@ -10,4 +10,4 @@
 RL_BASELINES_DIR="/home/i2r/daniel_tan/DATA/rl-baselines3-zoo"
 SCRIPT="${RL_BASELINES_DIR}/dgx/train_a1_ppo.sh"
 echo "Executing script ${SCRIPT} from repository ${RL_BASELINES_DIR}..."
-bash $SCRIPT $RL_BASELINES_DIR
+bash $SCRIPT $RL_BASELINES_DIR --hyperparams env_wrapper:"'sb3_contrib.common.wrappers.TimeFeatureWrapper'"
