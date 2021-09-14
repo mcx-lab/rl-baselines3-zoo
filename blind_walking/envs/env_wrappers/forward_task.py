@@ -86,10 +86,10 @@ class ForwardTask(object):
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
 
 
-        objectives = [forward_reward, energy_reward, drift_reward, shake_reward, \
-                      jump_reward, contact_reward, energy_rot_reward]
-        objective_weights = [1.0, 0.005, 0.001, 0.001, \
-                             0.001, 0.0, 0.005]
+        objectives = [forward_reward, drift_reward, jump_reward, \
+                      shake_reward, energy_reward, energy_rot_reward, contact_reward]
+        objective_weights = [1.0, 0.001, 0.001, \
+                             0.001, 0.005, 0.005, 0.0]
         weighted_objectives = [o * w for o, w in zip(objectives, objective_weights)]
         reward = sum(weighted_objectives)
         return reward
