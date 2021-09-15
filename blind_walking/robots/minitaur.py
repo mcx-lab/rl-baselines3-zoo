@@ -291,6 +291,8 @@ class Minitaur(object):
     self._leg_inertia_urdf.extend(
         [self._link_urdf[motor_id + 1] for motor_id in self._motor_link_ids])
 
+    self._motor_inertia = [self._link_urdf[motor_id + 1] for motor_id in self._motor_id_list]
+
   def _BuildJointNameToIdDict(self):
     num_joints = self._pybullet_client.getNumJoints(self.quadruped)
     self._joint_name_to_id = {}
