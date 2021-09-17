@@ -1,6 +1,6 @@
 # Dockerfile to build custom image for rl-stablebaseline3 in DGX
 
-FROM nvcr.io/nvidia/tensorflow:21.08-tf1-py3
+FROM nvcr.io/nvidia/pytorch:21.08-py3
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -16,8 +16,8 @@ RUN apt-get install -q -y --no-install-recommends \
 RUN apt-get -y -f install
 
 # copy files to container
-COPY . /root/rl-baselines-zoo
-RUN pip install -r /root/rl-baselines-zoo/requirements.txt
+COPY . /root/rl-baselines3-zoo
+RUN pip install -r /root/rl-baselines3-zoo/requirements.txt --ignore-installed
 
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
 CMD ["bash"]

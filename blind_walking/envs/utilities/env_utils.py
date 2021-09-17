@@ -20,8 +20,29 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+from collections.abc import Mapping
 from gym import spaces
 import numpy as np
+
+def nested_dict_iter(dict):
+  """ Return a linear iterator over the keys/values of a nested dictionary """
+
+  for key, value in dict.items():
+    if isinstance(object, Mapping):
+      for inner_key, inner_value in nested_dict_iter(value):
+        yield f"{key}/{inner_key}", inner_value
+    else:
+      yield key, value
+
+def nested_dict_space_iter(space_dict):
+  """ Return a linear iterator over the keys/values of a nested gym.spaces.dict.Dict """
+  
+  for key, value in space_dict.spaces.items():
+    if isinstance(value, spaces.dict.Dict):
+      for inner_key, inner_value in nested_dict_space_iter(value):
+        yield f"{key}/{inner_key}", inner_value
+    else:
+      yield key, value
 
 def flatten_observations(observation_dict, observation_excluded=()):
   """Flattens the observation dictionary to an array.
@@ -42,7 +63,7 @@ def flatten_observations(observation_dict, observation_excluded=()):
   if not isinstance(observation_excluded, (list, tuple)):
     observation_excluded = [observation_excluded]
   observations = []
-  for key, value in observation_dict.items():
+  for key, value in nested_dict_iter(observation_dict):
     if key not in observation_excluded:
       observations.append(np.asarray(value).flatten())
   flat_observations = np.concatenate(observations)
@@ -76,7 +97,7 @@ def flatten_observation_spaces(observation_spaces, observation_excluded=()):
     observation_excluded = [observation_excluded]
   lower_bound = []
   upper_bound = []
-  for key, value in observation_spaces.spaces.items():
+  for key, value in nested_dict_space_iter(observation_spaces):
     if key not in observation_excluded:
       lower_bound.append(np.asarray(value.low).flatten())
       upper_bound.append(np.asarray(value.high).flatten())

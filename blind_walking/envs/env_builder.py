@@ -15,15 +15,15 @@
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_env
 from blind_walking.envs import locomotion_gym_config
-from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
+from blind_walking.envs.env_wrappers import a1_gym_env_observation_dictionary_to_array_wrapper as a1_obs_dict_to_array_wrapper
 from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
 from blind_walking.envs.env_wrappers import simple_openloop
-from blind_walking.envs.env_wrappers import forward_task
-from blind_walking.envs.sensors import robot_sensors
+from blind_walking.envs.env_wrappers import forward_task, forward_task_pos
+from blind_walking.envs.sensors import robot_sensors, environment_sensors
+from blind_walking.envs.utilities import rma_env_randomizer
 from blind_walking.robots import a1
 from blind_walking.robots import laikago
 from blind_walking.robots import robot_config
-
 
 def build_regular_env(robot_class,
                       motor_control_mode,
@@ -45,22 +45,36 @@ def build_regular_env(robot_class,
   gym_config = locomotion_gym_config.LocomotionGymConfig(
       simulation_parameters=sim_params)
 
-  sensors = [
-    robot_sensors.BaseVelocitySensor(),
+  robot_sensor_list = [
+    robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
     robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY']),
     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS)
+    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS)
+  ]
+
+  environment_sensor_list = [
+    environment_sensors.ControllerKpCoefficientSensor(num_motors = a1.NUM_MOTORS),
+    environment_sensors.ControllerKdCoefficientSensor(num_motors = a1.NUM_MOTORS),
+    environment_sensors.MotorStrengthRatiosSensor(num_motors = a1.NUM_MOTORS),
+  ]
+
+  environment_randomizer_list = [
+    rma_env_randomizer.RMAEnvRandomizer(
+      config = rma_env_randomizer.config_registry['no_var_train']
+    )
   ]
 
   task = forward_task.ForwardTask()
 
-  env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
-                                            robot_class=robot_class,
-                                            robot_sensors=sensors,
-                                            task=task)
+  env = locomotion_gym_env.LocomotionGymEnv(gym_config = gym_config,
+                                            robot_class = robot_class,
+                                            robot_sensors = robot_sensor_list,
+                                            env_sensors = environment_sensor_list,
+                                            task = task, 
+                                            env_randomizers = environment_randomizer_list)
 
-  env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
-      env)
+  env = a1_obs_dict_to_array_wrapper.A1GymEnvObservationDictionaryToArrayWrapper(env)
   if (motor_control_mode
       == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
     if robot_class == laikago.Laikago:
@@ -74,3 +88,4 @@ def build_regular_env(robot_class,
           trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
               action_limit=action_limit))
   return env
+

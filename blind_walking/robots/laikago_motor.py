@@ -60,6 +60,9 @@ class LaikagoMotorModel(object):
     self._motor_control_mode = motor_control_mode
     self._strength_ratios = np.full(NUM_MOTORS, 1)
 
+  def get_strength_ratios(self):
+    return self._strength_ratios
+
   def set_strength_ratios(self, ratios):
     """Set the strength of each motors relative to the default value.
 

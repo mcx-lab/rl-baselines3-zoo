@@ -30,6 +30,9 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv,
 # For custom activation fn
 from torch import nn as nn  # noqa: F401
 
+# For custom features extractor
+from blind_walking.net.feature_extractor import A1GymEnvCombinedExtractor
+
 # Register custom envs
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 from utils.callbacks import SaveVecNormalizeCallback, TrialEvalCallback

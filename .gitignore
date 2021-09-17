@@ -1,5 +1,6 @@
 __pycache__/
 logs
+logs_of_interest
 .pytest_cache/
 .coverage
 .coverage.*
@@ -15,3 +16,5 @@ git_rewrite_commit_history.sh
 .vscode/
 venv/
 *~
+target_positions.csv
+target_positions.png

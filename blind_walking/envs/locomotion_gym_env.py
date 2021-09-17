@@ -72,6 +72,7 @@ class LocomotionGymEnv(gym.Env):
     self._gym_config = gym_config
     self._robot_class = robot_class
     self._robot_sensors = robot_sensors
+    self._observations = None
 
     self._sensors = env_sensors if env_sensors is not None else list()
     if self._robot_class is None:
@@ -137,9 +138,10 @@ class LocomotionGymEnv(gym.Env):
 
     # Construct the observation space from the list of sensors. Note that we
     # will reconstruct the observation_space after the robot is created.
-    self.observation_space = (
-        space_utils.convert_sensors_to_gym_space_dictionary(
-            self.all_sensors()))
+    self.observation_space = spaces.Dict({
+        'robot_observations': space_utils.convert_sensors_to_gym_space_dictionary(self.all_robot_sensors()),
+        'environment_state': space_utils.convert_sensors_to_gym_space_dictionary(self.all_environment_sensors())
+    })
 
     # Set terrain type
     self.terrain_type = gym_config.simulation_parameters.terrain_type
@@ -212,6 +214,12 @@ class LocomotionGymEnv(gym.Env):
   def all_sensors(self):
     """Returns all robot and environmental sensors."""
     return self._robot.GetAllSensors() + self._sensors
+  
+  def all_robot_sensors(self):
+    return self._robot.GetAllSensors()
+
+  def all_environment_sensors(self):
+    return self._sensors
 
   def sensor_by_name(self, name):
     """Returns the sensor with the given name, or None if not exist."""
@@ -317,7 +325,8 @@ class LocomotionGymEnv(gym.Env):
     for env_randomizer in self._env_randomizers:
       env_randomizer.randomize_env(self)
 
-    return self._get_observation()
+    observation = self._get_observation()
+    return observation
 
   def step(self, action):
     """Step forward the simulation, given the action.
@@ -457,26 +466,18 @@ class LocomotionGymEnv(gym.Env):
     Returns:
       observations: sensory observation in the numpy array format
     """
-    sensors_dict = {}
-    for s in self.all_sensors():
-      sensors_dict[s.get_name()] = s.get_observation()
+    sensors_dict = {
+      'robot_observations': collections.OrderedDict(),
+      'environment_state': collections.OrderedDict()
+    }
+    for s in self.all_robot_sensors():
+      sensors_dict['robot_observations'][s.get_name()] = s.get_observation()
+    for s in self.all_environment_sensors():
+      sensors_dict['environment_state'][s.get_name()] = s.get_observation()
 
     observations = collections.OrderedDict(list(sensors_dict.items()))
+    self._observations = observations
     return observations
-
-  def _get_env_state(self):
-    """Get simulation environment state
-
-    Returns:
-      state: carry mass, carry mass position, motor strength, friction, terrain height
-        in numpy array format
-    """
-    carry_mass = self.carry_mass
-    carry_mass_position = self.carry_mass_pos
-    motor_strength = self.robot._motor_model._strength_ratios
-    friction = self.height_field_friction
-    terrain_height = self.height_field_perturbation_range
-    return np.hstack([carry_mass, carry_mass_position, motor_strength, friction, terrain_height])
 
   def set_time_step(self, num_action_repeat, sim_step=0.001):
     """Sets the time step of the environment.

@@ -24,6 +24,9 @@ if __name__ == "__main__":
         "--load-best", action="store_true", default=False, help="Load best model instead of last model if available"
     )
     parser.add_argument(
+        "--one-episode", action="store_true", default=False, help="Stop recording after the first episode terminates"
+    )
+    parser.add_argument(
         "--load-checkpoint",
         type=int,
         help="Load checkpoint instead of last model if available, you must pass the number of timesteps corresponding to it",
@@ -102,9 +105,10 @@ if __name__ == "__main__":
     try:
         for _ in range(video_length + 1):
             action, _ = model.predict(obs, deterministic=deterministic)
-            obs, _, _, _ = env.step(action)
+            obs, _, done, _ = env.step(action)
             if not args.no_render:
                 env.render()
+            if args.one_episode and done: break
     except KeyboardInterrupt:
         pass
 

@@ -1268,6 +1268,9 @@ class Minitaur(object):
     """
     return self._motor_kds
 
+  def GetMotorStrengthRatios(self):
+    return self._motor_model.get_strength_ratios()
+
   def SetMotorStrengthRatio(self, ratio):
     """Set the strength of all motors relative to the default value.
 

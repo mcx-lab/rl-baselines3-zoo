@@ -60,6 +60,9 @@ class MotorModel(object):
     self._torque_table = [0, 1, 1.9, 2.45, 3.0, 3.25, 3.5]
     self._strength_ratios = [1.0] * NUM_MOTORS
 
+  def get_strength_ratios(self):
+    return self._strength_ratios
+
   def set_strength_ratios(self, ratios):
     """Set the strength of each motors relative to the default value.
 

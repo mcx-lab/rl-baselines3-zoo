@@ -21,6 +21,7 @@ def main():  # noqa: C901
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
     parser.add_argument("--algo", help="RL Algorithm", default="ppo", type=str, required=False, choices=list(ALGOS.keys()))
     parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
+    parser.add_argument("--n-episodes", help="Max number of episodes", default=-1, type=int)
     parser.add_argument("--num-threads", help="Number of threads for PyTorch (-1 to use default)", default=-1, type=int)
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
@@ -227,6 +228,9 @@ def main():  # noqa: C901
                     if infos[0].get("is_success") is not None:
                         successes.append(infos[0].get("is_success", False))
                         episode_reward, ep_len = 0.0, 0
+
+                if done and len(episode_rewards) >= args.n_episodes > 0:
+                    break
 
     except KeyboardInterrupt:
         pass
