@@ -64,6 +64,120 @@ class LastActionSensor(sensor.BoxSpaceSensor):
     """Returns the last action of the environment."""
     return self._env.last_action
 
+class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
+  """ 
+  A sensor that reports the Kp coefficients 
+  used in the PD controller that converts angles to torques
+  """
+
+  def __init__(self,
+               num_motors: int,
+               lower_bound: _FLOAT_OR_ARRAY = 45,
+               upper_bound: _FLOAT_OR_ARRAY = 65,
+               name: typing.Text = "ControllerKpCoefficient",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+
+    """Constructs ControllerKpCoefficientSensor.
+    Args:
+      lower_bound: the lower bound of the gains
+      upper_bound: the upper bound of the gains
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._env = None
+
+    super(ControllerKpCoefficientSensor, self).__init__(name=name,
+                                           shape=(num_motors,),
+                                           lower_bound=lower_bound,
+                                           upper_bound=upper_bound,
+                                           dtype=dtype)
+
+  def on_reset(self, env):
+    """From the callback, the sensor remembers the environment.
+    Args:
+      env: the environment who invokes this callback function.
+    """
+    self._env = env
+ 
+  def _get_observation(self) -> _ARRAY:
+    """Returns the Kp coefficients. """
+    return self._env.robot.GetMotorPositionGains()
+
+class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
+  """ 
+  A sensor that reports the Kd coefficients 
+  used in the PD controller that converts angles to torques
+  """
+
+  def __init__(self,
+               num_motors: int,
+               lower_bound: _FLOAT_OR_ARRAY = 0.3,
+               upper_bound: _FLOAT_OR_ARRAY = 0.9,
+               name: typing.Text = "ControllerKdCoefficient",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    """Constructs ControllerKdCoefficientSensor.
+    Args:
+      lower_bound: the lower bound of the gain
+      upper_bound: the upper bound of the gain
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._env = None
+
+    super(ControllerKdCoefficientSensor, self).__init__(name=name,
+                                           shape=(num_motors,),
+                                           lower_bound=lower_bound,
+                                           upper_bound=upper_bound,
+                                           dtype=dtype)
+
+  def on_reset(self, env):
+    """From the callback, the sensor remembers the environment.
+    Args:
+      env: the environment who invokes this callback function.
+    """
+    self._env = env
+ 
+  def _get_observation(self) -> _ARRAY:
+    """Returns the Kd coefficients. """
+    return self._env._robot.GetMotorVelocityGains()
+
+class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
+  """ 
+  A sensor that reports the relative motor strength for each joint
+  """
+
+  def __init__(self,
+               num_motors: int,
+               lower_bound: _FLOAT_OR_ARRAY = 0.0,
+               upper_bound: _FLOAT_OR_ARRAY = 1.0,
+               name: typing.Text = "MotorStrengthRatios",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    """Constructs MotorStrengthRatiosSensor.
+    Args:
+      lower_bound: the lower bound of the gains
+      upper_bound: the upper bound of the gains
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._env = None
+
+    super(MotorStrengthRatiosSensor, self).__init__(name=name,
+                                           shape=(num_motors,),
+                                           lower_bound=lower_bound,
+                                           upper_bound=upper_bound,
+                                           dtype=dtype)
+
+  def on_reset(self, env):
+    """From the callback, the sensor remembers the environment.
+    Args:
+      env: the environment who invokes this callback function.
+    """
+    self._env = env
+ 
+  def _get_observation(self) -> _ARRAY:
+    """Returns the relative motor strength (1 = full strength)."""
+    return self._env._robot.GetMotorStrengthRatios()
+
 class TargetPositionSensor(sensor.BoxSpaceSensor):
   """A sensor that reports the relative target position."""
 
