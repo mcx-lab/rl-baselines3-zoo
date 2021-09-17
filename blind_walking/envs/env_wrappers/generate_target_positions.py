@@ -17,8 +17,7 @@ filepath_png = os.path.join(os.path.dirname(__file__), filename_png)
 
 speed_default = 0.02
 speed_timestep_signals = [1900, 1600, 1300, 1000] # have to be in descending order
-target_speeds = [0.02, 0.021, 0.02, 0.019]
-speed_slow_start = False
+target_speeds = [0.0, 0.014, 0.016, 0.018]
 
 dir_default = 0
 dir_timestep_signals = [800, 600, 400, 200] # have to be in descending order
@@ -29,12 +28,10 @@ plot_graph = True
 
 # ######################### Helper Functions ######################### #
 
-def get_target_speed(timestep, slow_start=False):
+def get_target_speed(timestep):
     for i, t in enumerate(speed_timestep_signals):
         if timestep > t:
             return target_speeds[i]
-    if slow_start and speed_timestep_signals:
-        return speed_default * timestep / speed_timestep_signals[-1]
     return speed_default
 
 def get_target_dir(timestep):
@@ -60,7 +57,7 @@ writer = csv.writer(f, delimiter=",")
 writer.writerow(current_pos)
 for t in range(n_timesteps):
     # calculate target position
-    target_speed = get_target_speed(t, slow_start=speed_slow_start)
+    target_speed = get_target_speed(t)
     target_dir = get_target_dir(t)
     target_pos = calculate_target_pos(current_pos, target_speed, target_dir)
     # write target position to csv file

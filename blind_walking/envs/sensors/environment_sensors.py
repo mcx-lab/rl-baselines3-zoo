@@ -215,6 +215,8 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
                                                dtype=dtype)
 
     self._max_distance = max_distance
+    self._distance = self._max_distance
+
     self._last_base_pos = np.zeros(3)
     self._current_base_pos = np.zeros(3)
     self._last_yaw = 0
@@ -226,12 +228,21 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
     self._last_yaw = self._current_yaw
     self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
 
+    # Hardcoded, for better training of speed change
+    speed_timestep_signals = [1900, 1600, 1300, 1000]
+    target_speeds = [0.0, 0.014, 0.016, 0.018]
+    for i, t in enumerate(speed_timestep_signals):
+      if env._env_step_counter > t:
+        self._distance = target_speeds[i]
+        break
+
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
     Args:
       env: the environment who invokes this callback function.
     """
     self._env = env
+    self._distance = self._max_distance
     self._current_base_pos = self._env._robot.GetBasePosition()
     self._last_base_pos = self._current_base_pos
     self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
@@ -243,9 +254,10 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
     dy_target = target_pos[1] - self._current_base_pos[1]
     # Transform to local frame
     dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
-    # Scale to maximum possible
-    if dx_target_local or dy_target_local:
-      scale_ratio = self._max_distance / np.linalg.norm([dx_target_local, dy_target_local])
+    target_distance = np.linalg.norm([dx_target_local, dy_target_local])
+    # If target is too far, scale down to maximum possible
+    if target_distance and abs(target_distance) > self._distance:
+      scale_ratio = self._distance / target_distance
       dx_target_local = dx_target_local * scale_ratio
       dy_target_local = dy_target_local * scale_ratio
     return [dx_target_local, dy_target_local]

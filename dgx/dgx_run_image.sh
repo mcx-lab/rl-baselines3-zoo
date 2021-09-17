@@ -37,8 +37,10 @@ fi
 # Now we can run training scripts as usual. 
 # PBS Pro scheduler automatically logs stderr and stdout so no need to manually do that
 CONTAINER_ID=$(docker ps -aqf "name=${CONTAINER_NAME}")
+echo "Running nvidia-smi within dgx"
+nvidia-smi
 
-echo nvidia-smi
-
+echo "Running nvidia-smi within Docker"
+nvidia-docker exec $CONTAINER_ID sh -c "nvidia-smi"
 echo "INFO: Running train.py in container ${CONTAINER_ID}..."
 nvidia-docker exec $CONTAINER_ID sh -c "cd ~/rl-baselines3-zoo && python train.py --algo ppo --env A1GymEnv-v0 --save-freq 100000"

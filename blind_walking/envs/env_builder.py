@@ -21,6 +21,7 @@ from blind_walking.envs.env_wrappers import simple_openloop
 from blind_walking.envs.env_wrappers import forward_task, forward_task_pos
 from blind_walking.envs.sensors import robot_sensors, environment_sensors
 from blind_walking.envs.utilities import rma_env_randomizer
+
 from blind_walking.robots import a1
 from blind_walking.robots import laikago
 from blind_walking.robots import robot_config
@@ -64,6 +65,8 @@ def build_regular_env(robot_class,
       config = rma_env_randomizer.config_registry['no_var_train']
     )
   ]
+
+  # env_sensors = [environment_sensors.TargetPositionSensor()]
 
   task = forward_task.ForwardTask()
 
