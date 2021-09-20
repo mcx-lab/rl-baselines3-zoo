@@ -45,29 +45,19 @@ def build_regular_env(robot_class,
   gym_config = locomotion_gym_config.LocomotionGymConfig(
       simulation_parameters=sim_params)
 
-  # Note: The name for each sensor is <unique_name>_<encoding_method>. 
-  # flatten = no encoding, pass directly to actor / critic network
-  # mlp = encode with a MLP architecture 
   robot_sensor_list = [
-    robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True, 
-      name = 'BaseVelocity_flatten'),
-    robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY'], 
-      name = 'IMU_flatten'),
-    robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS, 
-      name = 'MotorAngle_flatten'),
-    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS,
-      name = 'MotorVelocity_flatten'),
-    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS, 
-      name = 'MotorTorque_flatten'), 
+    robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
+    robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY']),
+    robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS),
   ]
 
   env_sensor_list = [
-    environment_sensors.ControllerKpCoefficientSensor(num_motors=a1.NUM_MOTORS, 
-      name = 'ControllerKp_mlp'),
-    environment_sensors.ControllerKdCoefficientSensor(num_motors=a1.NUM_MOTORS,
-      name = 'ControllerKd_mlp'),
-    environment_sensors.MotorStrengthRatiosSensor(num_motors=a1.NUM_MOTORS,
-      name = 'MotorStrengthRatio_mlp')
+    environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+    environment_sensors.ControllerKpCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
+    environment_sensors.ControllerKdCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
+    environment_sensors.MotorStrengthRatiosSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
   ]
 
   env_randomizer_list = [

@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""An env wrapper that flattens the A1GymEnv observations into an array """
+
+"""An env wrapper that splits and flattens the A1GymEnv observations to an array based on its encoder """
 import gym
 import collections
 from gym import spaces
 
 from blind_walking.envs.utilities import env_utils
+
 
 def get_encoder_from_sensor_name(sensor_name: str):
   sensor_id, encoder_name = sensor_name.split("_")
@@ -52,7 +54,7 @@ def filter_observation_by_encoder(observation: dict, encoder_name: str):
   return filtered_observation
 
 class ObservationDictionarySplitByEncoderWrapper(gym.Env):
-  """An env wrapper that flattens the observation dictionary to an array."""
+  """An env wrapper that splits and flattens the observation dictionary to an array based on its encoder."""
   def __init__(self, gym_env, observation_excluded=()):
     """Initializes the wrapper."""
     self.observation_excluded = observation_excluded

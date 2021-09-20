@@ -33,6 +33,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
                lower_bound: _FLOAT_OR_ARRAY = -1.0,
                upper_bound: _FLOAT_OR_ARRAY = 1.0,
                name: typing.Text = "LastAction",
+               enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs LastActionSensor.
 
@@ -48,6 +49,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
 
     super(LastActionSensor, self).__init__(name=name,
                                            shape=(self._num_actions,),
+                                           enc_name=enc_name,
                                            lower_bound=lower_bound,
                                            upper_bound=upper_bound,
                                            dtype=dtype)
@@ -75,6 +77,7 @@ class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
                lower_bound: _FLOAT_OR_ARRAY = 45,
                upper_bound: _FLOAT_OR_ARRAY = 65,
                name: typing.Text = "ControllerKpCoefficient",
+               enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
 
     """Constructs ControllerKpCoefficientSensor.
@@ -87,10 +90,11 @@ class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
     self._env = None
 
     super(ControllerKpCoefficientSensor, self).__init__(name=name,
-                                           shape=(num_motors,),
-                                           lower_bound=lower_bound,
-                                           upper_bound=upper_bound,
-                                           dtype=dtype)
+                                                        shape=(num_motors,),
+                                                        enc_name=enc_name,
+                                                        lower_bound=lower_bound,
+                                                        upper_bound=upper_bound,
+                                                        dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -114,6 +118,7 @@ class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
                lower_bound: _FLOAT_OR_ARRAY = 0.3,
                upper_bound: _FLOAT_OR_ARRAY = 0.9,
                name: typing.Text = "ControllerKdCoefficient",
+               enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs ControllerKdCoefficientSensor.
     Args:
@@ -125,10 +130,11 @@ class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
     self._env = None
 
     super(ControllerKdCoefficientSensor, self).__init__(name=name,
-                                           shape=(num_motors,),
-                                           lower_bound=lower_bound,
-                                           upper_bound=upper_bound,
-                                           dtype=dtype)
+                                                        shape=(num_motors,),
+                                                        enc_name=enc_name,
+                                                        lower_bound=lower_bound,
+                                                        upper_bound=upper_bound,
+                                                        dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -151,6 +157,7 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
                lower_bound: _FLOAT_OR_ARRAY = 0.0,
                upper_bound: _FLOAT_OR_ARRAY = 1.0,
                name: typing.Text = "MotorStrengthRatios",
+               enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs MotorStrengthRatiosSensor.
     Args:
@@ -162,10 +169,11 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
     self._env = None
 
     super(MotorStrengthRatiosSensor, self).__init__(name=name,
-                                           shape=(num_motors,),
-                                           lower_bound=lower_bound,
-                                           upper_bound=upper_bound,
-                                           dtype=dtype)
+                                                    shape=(num_motors,),
+                                                    enc_name=enc_name,
+                                                    lower_bound=lower_bound,
+                                                    upper_bound=upper_bound,
+                                                    dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -186,6 +194,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
                lower_bound: _FLOAT_OR_ARRAY = -1.0,
                upper_bound: _FLOAT_OR_ARRAY = 1.0,
                name: typing.Text = "TargetPosition",
+               enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs TargetPositionSensor.
     Args:
@@ -204,6 +213,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
 
     super(TargetPositionSensor, self).__init__(name=name,
                                                shape=(2,),
+                                               enc_name=enc_name,
                                                lower_bound=lower_bound,
                                                upper_bound=upper_bound,
                                                dtype=dtype)
