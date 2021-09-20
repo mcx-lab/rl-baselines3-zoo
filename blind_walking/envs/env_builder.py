@@ -15,7 +15,7 @@
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_env
 from blind_walking.envs import locomotion_gym_config
-from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
+from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
 from blind_walking.envs.env_wrappers import simple_openloop
 from blind_walking.envs.env_wrappers import forward_task, forward_task_pos
@@ -23,7 +23,7 @@ from blind_walking.envs.sensors import robot_sensors, environment_sensors
 from blind_walking.robots import a1
 from blind_walking.robots import laikago
 from blind_walking.robots import robot_config
-
+from blind_walking.envs.utilities.rma_env_randomizer import RMAEnvRandomizer, config_registry
 
 def build_regular_env(robot_class,
                       motor_control_mode,
@@ -45,24 +45,45 @@ def build_regular_env(robot_class,
   gym_config = locomotion_gym_config.LocomotionGymConfig(
       simulation_parameters=sim_params)
 
-  sensors = [
-    robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
-    robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY']),
-    robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
-    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS)
+  # Note: The name for each sensor is <unique_name>_<encoding_method>. 
+  # flatten = no encoding, pass directly to actor / critic network
+  # mlp = encode with a MLP architecture 
+  robot_sensor_list = [
+    robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True, 
+      name = 'BaseVelocity_flatten'),
+    robot_sensors.IMUSensor(channels=['R', 'P', 'Y', 'dR', 'dP', 'dY'], 
+      name = 'IMU_flatten'),
+    robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS, 
+      name = 'MotorAngle_flatten'),
+    robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS,
+      name = 'MotorVelocity_flatten'),
+    robot_sensors.MotorTorqueSensor(num_motors=a1.NUM_MOTORS, 
+      name = 'MotorTorque_flatten'), 
   ]
 
-  # env_sensors = [environment_sensors.TargetPositionSensor()]
+  env_sensor_list = [
+    environment_sensors.ControllerKpCoefficientSensor(num_motors=a1.NUM_MOTORS, 
+      name = 'ControllerKp_mlp'),
+    environment_sensors.ControllerKdCoefficientSensor(num_motors=a1.NUM_MOTORS,
+      name = 'ControllerKd_mlp'),
+    environment_sensors.MotorStrengthRatiosSensor(num_motors=a1.NUM_MOTORS,
+      name = 'MotorStrengthRatio_mlp')
+  ]
+
+  env_randomizer_list = [
+    RMAEnvRandomizer(config_registry['rma_easy_train'])
+  ]
 
   task = forward_task.ForwardTask()
 
   env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                             robot_class=robot_class,
-                                            robot_sensors=sensors,
-                                            task=task)
+                                            robot_sensors=robot_sensor_list,
+                                            env_sensors=env_sensor_list,
+                                            task=task,
+                                            env_randomizers=env_randomizer_list)
 
-  env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
+  env = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(
       env)
   if (motor_control_mode
       == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
