@@ -1091,7 +1091,7 @@ class Minitaur(object):
                                            localInertiaDiagonal=motor_inertia)
 
   def SetFootFriction(self, foot_friction):
-    """Set the lateral friction of the feet.
+    """Set the lateral friction of the feet. 
 
     Args:
       foot_friction: The lateral friction coefficient of the foot. This value is
@@ -1269,6 +1269,9 @@ class Minitaur(object):
       The derivative gain.
     """
     return self._motor_kds
+
+  def GetMotorStrengthRatios(self):
+    return self._motor_model.get_strength_ratios()
 
   def SetMotorStrengthRatio(self, ratio):
     """Set the strength of all motors relative to the default value.
