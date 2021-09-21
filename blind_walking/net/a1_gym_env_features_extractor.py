@@ -12,9 +12,11 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, Combine
 def build_mlp(input_size: int, arch: List[int]):
     layer_sizes = [input_size] + arch
     layers = []
-    for input_size, output_size in zip(layer_sizes[:-1], layer_sizes[1:]):
+    for index, (input_size, output_size) in enumerate(zip(layer_sizes[:-1], layer_sizes[1:])):
         layers.append(nn.Linear(input_size, output_size))
-        layers.append(nn.ReLU())
+        is_last_layer = index == len(layer_sizes) - 1
+        if not is_last_layer:
+            layers.append(nn.ReLU())
     return nn.Sequential(*layers)    
 
 class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
