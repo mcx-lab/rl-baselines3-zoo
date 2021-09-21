@@ -9,6 +9,7 @@ from stable_baselines3.common.type_aliases import TensorDict
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, CombinedExtractor
 
 
+# TODO - move this to a utilities file
 def build_mlp(input_size: int, arch: List[int]):
     layer_sizes = [input_size] + arch
     layers = []
@@ -28,9 +29,10 @@ class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, 
                  observation_space: gym.spaces.Dict,
                  mlp_arch = [256, 16]):
+        self.mlp_output_size = mlp_arch[-1]
         flatten_output_size = math.prod(observation_space.spaces['flatten'].shape)
         mlp_input_size = math.prod(observation_space.spaces['mlp'].shape)
-        features_dim = flatten_output_size + mlp_arch[-1]  
+        features_dim = flatten_output_size + mlp_arch[-1] # TODO - change this to self.mlp_output_size  
         super(A1GymEnvFeaturesExtractor, self).__init__(observation_space, features_dim=features_dim)
 
         self.flatten_encoder = nn.Flatten() if len(observation_space.spaces['flatten'].shape) > 1 else lambda x: x
