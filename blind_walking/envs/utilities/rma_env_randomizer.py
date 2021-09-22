@@ -15,7 +15,7 @@ class RMAEnvRandomizerConfig:
     motor_strength_ratios_upper_bound: float
 
 config_registry = {
-    'no_var_train': RMAEnvRandomizerConfig(
+    'no_var': RMAEnvRandomizerConfig(
         resample_probability=0,
         controller_Kp_lower_bound=55, 
         controller_Kp_upper_bound=55, 
@@ -24,7 +24,7 @@ config_registry = {
         motor_strength_ratios_lower_bound=1.0,
         motor_strength_ratios_upper_bound=1.0
     ),
-    'rma_easy_train': RMAEnvRandomizerConfig(
+    'rma_easy': RMAEnvRandomizerConfig(
         resample_probability=0.004,
         controller_Kp_lower_bound=50, 
         controller_Kp_upper_bound=60, 
@@ -33,7 +33,7 @@ config_registry = {
         motor_strength_ratios_lower_bound=0.9,
         motor_strength_ratios_upper_bound=1.0
     ),
-    'rma_hard_train': RMAEnvRandomizerConfig(
+    'rma_hard': RMAEnvRandomizerConfig(
         resample_probability=0.01,
         controller_Kp_lower_bound=45, 
         controller_Kp_upper_bound=65, 
@@ -44,23 +44,13 @@ config_registry = {
     )   
 }
 
-test_configs = {}
-for train_config_name, config in config_registry.items():
-    test_config_name = "_".join(train_config_name.split("_")[:-1] + ['test'])
-    test_config = deepcopy(config_registry[train_config_name])
-    # Set the resample probability to 1 so that various envs will be seen in evaluation
-    test_config.resample_probability = 1
-    test_configs[test_config_name] = test_config
-
-config_registry.update(test_configs)
-
 class RMAEnvRandomizer(env_randomizer_base.EnvRandomizerBase):
     """ A randomizer that perturbs the A1 gym env according to RMA paper """
     
     def __init__(self, config):
         self.config = config
 
-    def randomize_env(self, env):
+    def _randomize(self, env):
         robot = env._robot
         if np.random.uniform() < self.config.resample_probability:
             Kp = np.random.uniform(self.config.controller_Kp_lower_bound, self.config.controller_Kp_upper_bound)
@@ -69,3 +59,9 @@ class RMAEnvRandomizer(env_randomizer_base.EnvRandomizerBase):
                 self.config.motor_strength_ratios_upper_bound)
             robot.SetMotorGains(Kp, Kd)
             robot.SetMotorStrengthRatio(motor_strength_ratio)
+
+    def randomize_env(self, env):
+        return self._randomize(env)
+
+    def randomize_step(self, env):
+        return self._randomize(env)
