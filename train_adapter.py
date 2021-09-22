@@ -6,8 +6,10 @@ import sys
 import numpy as np
 import torch as th
 import yaml
+import gym
 from zipfile import ZipFile
 from stable_baselines3.common.utils import set_random_seed
+from stable_baselines3.common.utils import obs_as_tensor
 
 import utils.import_envs  # noqa: F401 pylint: disable=unused-import
 from utils import ALGOS, create_test_env, get_latest_run_id, get_saved_hyperparams
@@ -15,13 +17,6 @@ from utils.exp_manager import ExperimentManager
 from utils.utils import StoreDict
 from blind_walking.net.adapter import Adapter
 
-
-# TODO - shift this to utils.utils
-def obs_dict_to_tensor_dict(obs):
-    tensor_obs = dict()
-    for key, value in obs.items():
-        tensor_obs[key] = th.from_numpy(value)
-    return tensor_obs
 
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
@@ -191,23 +186,27 @@ def main():  # noqa: C901
     # Reset environment
     obs = env.reset()
 
+    # Hyperparameters
+    # TODO - change to hyperparameters config
+    n_epochs = 1000
+    n_timesteps = int(2e3)
+    n_minibatch = 4
+    minibatch_size = int(n_timesteps/n_minibatch)
+    learning_rate = 1e-2
+
     # Create adapter model
     adapter = Adapter(trained_policy.observation_space,
                       cnn_output_size=16) # TODO - change to trained_feature_encoder.mlp_output_size
     criterion = th.nn.MSELoss()
-    optimizer = th.optim.Adam(adapter.parameters(), lr=5e-4)
-    optimizer.zero_grad()
+    optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
-    n_epochs = 1000 # TODO - change these to hyperparameters config
-    n_timesteps = int(2e3)
-    batch_size = 128
     # Train adapter model
-    running_loss = 0.0
     try:
         for epoch in range(n_epochs):
             obs = env.reset()
+            running_loss = 0
             for i in range(n_timesteps):
-                obs = obs_dict_to_tensor_dict(obs)
+                obs = obs_as_tensor(obs, trained_model.device)
 
                 # Forward
                 predicted_extrinsics = adapter(obs)
@@ -216,7 +215,14 @@ def main():  # noqa: C901
                 policy_output = trained_base_policy(predicted_extrinsics)
                 action = trained_base_policy_action(policy_output[0])
                 value = trained_base_policy_value(policy_output[1])
-                obs, reward, done, infos = env.step(action.detach().cpu().numpy())
+
+                # Clip and perform action
+                clipped_action = action.detach().cpu().numpy()
+                if isinstance(trained_model.action_space, gym.spaces.Box):
+                    clipped_action = np.clip(clipped_action,
+                                             trained_model.action_space.low,
+                                             trained_model.action_space.high)
+                obs, reward, done, infos = env.step(clipped_action)
 
                 # Accumulate loss
                 loss = criterion(predicted_extrinsics, actual_extrinsics)
@@ -224,12 +230,12 @@ def main():  # noqa: C901
                 running_loss += loss
 
                 # Optimize per mini batch
-                if (i+1) % batch_size == 0 or i == n_timesteps-1:
+                if (i+1) % minibatch_size == 0:
                     optimizer.step()
                     optimizer.zero_grad()
-                if i == n_timesteps-1:
-                    print(f'epoch {epoch}, running loss: {running_loss}')
-                    running_loss = 0.0
+            # Print stats
+            if (epoch+1) % 1 == 0:
+                print(f'epoch {epoch}, running loss: {running_loss}')
     except KeyboardInterrupt:
         # Allow saving of model when training is interrupted
         pass
@@ -239,11 +245,12 @@ def main():  # noqa: C901
 
     # Save adapter model
     print('saving model...')
-    adapter_folder = f'{env_id}_adapter'
-    os.mkdir(os.path.join(log_path, adapter_folder))
-    adapter_path = os.path.join(log_path, adapter_folder, 'adapter.pth')
+    adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
+    if not os.path.exists(adapter_folder):
+        os.mkdir(adapter_folder)
+    adapter_path = os.path.join(adapter_folder, 'adapter.pth')
     th.save(adapter.state_dict(), adapter_path)
-    adapter_optimizer_path = os.path.join(log_path, adapter_folder, 'adapter.optimizer.pth')
+    adapter_optimizer_path = os.path.join(adapter_folder, 'adapter.optimizer.pth')
     th.save(optimizer.state_dict(), adapter_optimizer_path)
 
 if __name__ == "__main__":
