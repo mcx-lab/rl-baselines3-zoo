@@ -192,7 +192,7 @@ def main():  # noqa: C901
     n_timesteps = int(2e3)
     n_minibatch = 4
     minibatch_size = int(n_timesteps/n_minibatch)
-    learning_rate = 1e-2
+    learning_rate = 5e-4
 
     # Create adapter model
     adapter = Adapter(trained_policy.observation_space,
@@ -210,7 +210,7 @@ def main():  # noqa: C901
 
                 # Forward
                 predicted_extrinsics = adapter(obs)
-                actual_extrinsics = trained_feature_encoder(obs)
+                target_extrinsics = trained_feature_encoder(obs)
 
                 policy_output = trained_base_policy(predicted_extrinsics)
                 action = trained_base_policy_action(policy_output[0])
@@ -225,7 +225,7 @@ def main():  # noqa: C901
                 obs, reward, done, infos = env.step(clipped_action)
 
                 # Accumulate loss
-                loss = criterion(predicted_extrinsics, actual_extrinsics)
+                loss = criterion(predicted_extrinsics, target_extrinsics)
                 loss.backward()
                 running_loss += loss
 

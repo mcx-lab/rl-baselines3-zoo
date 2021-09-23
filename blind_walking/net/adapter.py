@@ -17,6 +17,10 @@ def build_mlp(input_size: int, arch: List[int]):
     return nn.Sequential(*layers)
 
 class Adapter(nn.Module):
+    '''
+    Adapter module to imitate feature encoder. 
+    Uses only 'flatten' observation space to predict extrinsics.
+    '''
 
     def __init__(self, observation_space: gym.spaces.Dict, cnn_output_size=8):
         super(Adapter, self).__init__()
@@ -56,6 +60,6 @@ class Adapter(nn.Module):
 
         # Add flatten embedding
         flatten_embedding = self.flatten_encoder(observations['flatten'])
-        extrinsics_and_observations = th.cat([extrinsics, flatten_embedding], dim=1)
+        extrinsics_and_observations = th.cat([flatten_embedding, extrinsics], dim=1)
 
         return extrinsics_and_observations
