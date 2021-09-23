@@ -1,4 +1,5 @@
 import argparse
+import csv
 import glob
 import importlib
 import os
@@ -200,6 +201,15 @@ def main():  # noqa: C901
     criterion = th.nn.MSELoss()
     optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
+    # File creation for saving
+    adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
+    if not os.path.exists(adapter_folder):
+        os.mkdir(adapter_folder)
+    statsfile = os.path.join(adapter_folder, 'stats.csv')
+    with open(statsfile, 'w') as f:
+        writer = csv.writer(f, delimiter=',')
+        writer.writerow(['epoch', 'running loss'])
+
     # Train adapter model
     try:
         for epoch in range(n_epochs):
@@ -234,7 +244,10 @@ def main():  # noqa: C901
                     optimizer.step()
                     optimizer.zero_grad()
             # Print stats
-            if (epoch+1) % 1 == 0:
+            with open(statsfile, 'a') as f:
+                writer = csv.writer(f, delimiter=',')
+                writer.writerow([epoch, running_loss.item()])
+            if (epoch+1) % 10 == 0:
                 print(f'epoch {epoch}, running loss: {running_loss}')
     except KeyboardInterrupt:
         # Allow saving of model when training is interrupted
@@ -245,9 +258,6 @@ def main():  # noqa: C901
 
     # Save adapter model
     print('saving model...')
-    adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
-    if not os.path.exists(adapter_folder):
-        os.mkdir(adapter_folder)
     adapter_path = os.path.join(adapter_folder, 'adapter.pth')
     th.save(adapter.state_dict(), adapter_path)
     adapter_optimizer_path = os.path.join(adapter_folder, 'adapter.optimizer.pth')
