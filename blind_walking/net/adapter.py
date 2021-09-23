@@ -4,8 +4,7 @@ import torch as th
 from torch import nn
 from collections import deque
 from stable_baselines3.common.type_aliases import TensorDict
-
-from blind_walking.net.utils import build_mlp
+from stable_baselines3.common.torch_layers import create_mlp
 
 
 class Adapter(nn.Module):
@@ -22,12 +21,16 @@ class Adapter(nn.Module):
         obs_flatten_input_size = math.prod(observation_space.spaces['flatten'].shape)
 
         self.flatten_encoder = nn.Flatten()
-        self.adapter_mlp_encoder = build_mlp(obs_flatten_input_size, [256, 32])
-        self.adapter_cnn_encoder = [nn.Conv1d(32, 32, 5, stride=1),
-                                    nn.Conv1d(32, 32, 5, stride=1),
-                                    nn.Conv1d(32, 32, 8, stride=4),
-                                    nn.Flatten(),
-                                    nn.Linear(288, cnn_output_size)]
+        adapter_mlp_layers = create_mlp(input_dim=obs_flatten_input_size,
+                                        output_dim=32,
+                                        net_arch=[256])
+        self.adapter_mlp_encoder = nn.Sequential(*adapter_mlp_layers)
+        adapter_cnn_layers = [nn.Conv1d(32, 32, 5, stride=1),
+                              nn.Conv1d(32, 32, 5, stride=1),
+                              nn.Conv1d(32, 32, 8, stride=4),
+                              nn.Flatten(),
+                              nn.Linear(288, cnn_output_size)]
+        self.adapter_cnn_encoder = nn.Sequential(*adapter_cnn_layers)
 
     def forward(self, observations: TensorDict):
         # Update states and actions stored
@@ -44,11 +47,8 @@ class Adapter(nn.Module):
             recent_states_embedding.append(t)
 
         # Predict extrinsics using adapter
-        layer_input = th.stack(recent_states_embedding, dim=2)
-        for layer in self.adapter_cnn_encoder:
-            layer_output = layer(layer_input)
-            layer_input = layer_output
-        extrinsics = layer_output
+        recent_states_embedding_tensor = th.stack(recent_states_embedding, dim=2)
+        extrinsics = self.adapter_cnn_encoder(recent_states_embedding_tensor)
 
         # Add flatten embedding
         flatten_embedding = self.flatten_encoder(observations['flatten'])

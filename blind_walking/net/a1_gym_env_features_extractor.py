@@ -5,7 +5,7 @@ from torch import nn
 from stable_baselines3.common.type_aliases import TensorDict
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-from blind_walking.net.utils import build_mlp
+from blind_walking.net.utils import build_mlp # TODO - change using build_mlp to create_mlp from sb3
 
 
 class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
