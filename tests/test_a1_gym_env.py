@@ -14,8 +14,16 @@ class TestA1GymEnv(unittest.TestCase):
 
     @property 
     def robot(self):
-        """ An alias to easily get the robot from A1GymEnv() """
-        return self.env._env._gym_env._robot
+        """ An alias to easily get the robot from A1GymEnv() 
+        
+        Although the robot is only defined in LocomotionGymEnv, 
+        and A1GymEnv contains multiple wrappers on top of that, 
+        we can access it this way because gym.Wrapper behaves as if
+        it has the attributes of the wrapped env. 
+
+        Reference: line 233 of https://github.com/openai/gym/blob/master/gym/core.py
+        """
+        return self.env.robot
 
     def test_default_env_parameters(self):
         self.env.reset()
