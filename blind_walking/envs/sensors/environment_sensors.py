@@ -186,6 +186,41 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
     """Returns the relative motor strength (1 = full strength)."""
     return self._env._robot.GetMotorStrengthRatios()
 
+class FootFrictionSensor(sensor.BoxSpaceSensor):
+  def __init__(self, 
+              num_feet: int = 4, 
+              lower_bound: _FLOAT_OR_ARRAY = -np.inf,
+               upper_bound: _FLOAT_OR_ARRAY = np.inf,
+               name: typing.Text = "FootFriction",
+               enc_name: typing.Text = 'flatten',
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    """Constructs FootFrictionSensor.
+    Args:
+      lower_bound: the lower bound of the target position
+      upper_bound: the upper bound of the target position
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._env = None
+
+    super(MotorStrengthRatiosSensor, self).__init__(name=name,
+                                                    shape=(num_feet,),
+                                                    enc_name=enc_name,
+                                                    lower_bound=lower_bound,
+                                                    upper_bound=upper_bound,
+                                                    dtype=dtype)
+
+  def on_reset(self, env):
+    """From the callback, the sensor remembers the environment.
+    Args:
+      env: the environment who invokes this callback function.
+    """
+    self._env = env
+ 
+  def _get_observation(self) -> _ARRAY:
+    """Returns the friction for each foot."""
+    return self._env._robot.GetFootFriction()
+
 class TargetPositionSensor(sensor.BoxSpaceSensor):
   """A sensor that reports the relative target position."""
 

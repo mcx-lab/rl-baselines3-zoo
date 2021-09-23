@@ -1102,6 +1102,17 @@ class Minitaur(object):
                                            link_id,
                                            lateralFriction=foot_friction)
 
+  def GetFootFriction(self):
+    frictions = []
+    for link_id in self._foot_link_ids:
+      dynamics_info = self._pybullet_client.getDynamicsInfo(self.quadruped,
+                                                            link_id)
+      # dynamics_info is a tuple 
+      # Reference: https://usermanual.wiki/Document/pybullet20quickstart20guide.479068914/view
+      friction = dynamics_info[1]
+      frictions.append(friction)
+    return np.array(frictions)
+    
   def SetFootRestitution(self, foot_restitution):
     """Set the coefficient of restitution at the feet.
 
