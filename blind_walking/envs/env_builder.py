@@ -73,8 +73,7 @@ def build_regular_env(robot_class,
                                             task=task,
                                             env_randomizers=env_randomizer_list)
 
-  env = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(
-      env)
+  env = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(env)
   if (motor_control_mode
       == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
     if robot_class == laikago.Laikago:
