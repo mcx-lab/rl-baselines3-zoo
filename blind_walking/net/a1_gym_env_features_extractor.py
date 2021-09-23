@@ -1,22 +1,12 @@
 import gym
 import math
-
 import torch as th
-from typing import List
 from torch import nn
-from stable_baselines3.common.preprocessing import get_flattened_obs_dim, is_image_space
 from stable_baselines3.common.type_aliases import TensorDict
-from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, CombinedExtractor
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
+from blind_walking.net.utils import build_mlp
 
-# TODO - move this to a utilities file
-def build_mlp(input_size: int, arch: List[int]):
-    layer_sizes = [input_size] + arch
-    layers = []
-    for input_size, output_size in zip(layer_sizes[:-1], layer_sizes[1:]):
-        layers.append(nn.Linear(input_size, output_size))
-        layers.append(nn.ReLU())
-    return nn.Sequential(*layers)    
 
 class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
     """

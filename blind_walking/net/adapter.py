@@ -2,19 +2,11 @@ import math
 import gym
 import torch as th
 from torch import nn
-from typing import List
 from collections import deque
 from stable_baselines3.common.type_aliases import TensorDict
 
+from blind_walking.net.utils import build_mlp
 
-# TODO - move this to a utilities file
-def build_mlp(input_size: int, arch: List[int]):
-    layer_sizes = [input_size] + arch
-    layers = []
-    for input_size, output_size in zip(layer_sizes[:-1], layer_sizes[1:]):
-        layers.append(nn.Linear(input_size, output_size))
-        layers.append(nn.ReLU())
-    return nn.Sequential(*layers)
 
 class Adapter(nn.Module):
     '''
