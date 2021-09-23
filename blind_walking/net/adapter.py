@@ -13,7 +13,7 @@ class Adapter(nn.Module):
     Uses only 'flatten' observation space to predict extrinsics.
     '''
 
-    def __init__(self, observation_space: gym.spaces.Dict, cnn_output_size=8):
+    def __init__(self, observation_space: gym.spaces.Dict, output_size=8):
         super(Adapter, self).__init__()
 
         self.history_length = 50
@@ -29,7 +29,7 @@ class Adapter(nn.Module):
                               nn.Conv1d(32, 32, 5, stride=1),
                               nn.Conv1d(32, 32, 8, stride=4),
                               nn.Flatten(),
-                              nn.Linear(288, cnn_output_size)]
+                              nn.Linear(288, output_size)]
         self.adapter_cnn_encoder = nn.Sequential(*adapter_cnn_layers)
 
     def forward(self, observations: TensorDict):

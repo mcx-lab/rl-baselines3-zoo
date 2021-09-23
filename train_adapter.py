@@ -196,7 +196,7 @@ def main():  # noqa: C901
 
     # Create adapter model
     adapter = Adapter(trained_policy.observation_space,
-                      cnn_output_size=16) # TODO - change to trained_feature_encoder.mlp_output_size
+                      output_size=trained_feature_encoder.mlp_output_size)
     criterion = th.nn.MSELoss()
     optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
