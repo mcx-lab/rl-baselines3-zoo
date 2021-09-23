@@ -18,7 +18,8 @@ class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, mlp_output_size=8):
         self.mlp_output_size = mlp_output_size
         flatten_output_size = math.prod(observation_space.spaces['flatten'].shape)
-        mlp_input_size = math.prod(observation_space.spaces['mlp'].shape)
+        assert len(observation_space.spaces['mlp'].shape) == 1, "Mlp-encoded space must be 1-dimensional"
+        mlp_input_size = observation_space.spaces['mlp'].shape[0]
         features_dim = flatten_output_size + mlp_output_size
         super(A1GymEnvFeaturesExtractor, self).__init__(observation_space, features_dim=features_dim)
 

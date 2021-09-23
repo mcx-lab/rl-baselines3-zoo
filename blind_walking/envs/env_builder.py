@@ -61,7 +61,7 @@ def build_regular_env(robot_class,
   ]
 
   env_randomizer_list = [
-    RMAEnvRandomizer(config_registry['rma_easy_train'])
+    RMAEnvRandomizer(config_registry['rma_easy'])
   ]
 
   task = forward_task.ForwardTask()
