@@ -28,10 +28,8 @@ def main():  # noqa: C901
     parser.add_argument("--num-threads", help="Number of threads for PyTorch (-1 to use default)", default=-1, type=int)
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
-    parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int)
-    parser.add_argument(
-        "--load-best", action="store_true", default=False, help="Load best model instead of last model if available"
-    )
+    parser.add_argument("--no-save", action="store_true", default=False, help="Do not save the adapter and stats (useful for tests)")
+    parser.add_argument("--load-best", action="store_true", default=False, help="Load best model instead of last model if available")
     parser.add_argument(
         "--load-checkpoint",
         type=int,
@@ -44,7 +42,6 @@ def main():  # noqa: C901
         default=False,
         help="Load last checkpoint instead of last model if available",
     )
-    parser.add_argument("--stochastic", action="store_true", default=False, help="Use stochastic actions")
     parser.add_argument(
         "--norm-reward", action="store_true", default=False, help="Normalize reward if applicable (trained with VecNormalize)"
     )
@@ -124,8 +121,6 @@ def main():  # noqa: C901
     set_random_seed(args.seed)
 
     if args.num_threads > 0:
-        if args.verbose > 1:
-            print(f"Setting torch.num_threads to {args.num_threads}")
         th.set_num_threads(args.num_threads)
 
     is_atari = ExperimentManager.is_atari(env_id)
@@ -202,13 +197,14 @@ def main():  # noqa: C901
     optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
     # File creation for saving
-    adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
-    if not os.path.exists(adapter_folder):
-        os.mkdir(adapter_folder)
-    statsfile = os.path.join(adapter_folder, 'stats.csv')
-    with open(statsfile, 'w') as f:
-        writer = csv.writer(f, delimiter=',')
-        writer.writerow(['epoch', 'running loss'])
+    if not args.no_save:
+        adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
+        if not os.path.exists(adapter_folder):
+            os.mkdir(adapter_folder)
+            statsfile = os.path.join(adapter_folder, 'stats.csv')
+        with open(statsfile, 'w') as f:
+            writer = csv.writer(f, delimiter=',')
+            writer.writerow(['epoch', 'running loss'])
 
     # Train adapter model
     try:
@@ -244,9 +240,10 @@ def main():  # noqa: C901
                     optimizer.step()
                     optimizer.zero_grad()
             # Print stats
-            with open(statsfile, 'a') as f:
-                writer = csv.writer(f, delimiter=',')
-                writer.writerow([epoch, running_loss.item()])
+            if not args.no_save:
+                with open(statsfile, 'a') as f:
+                    writer = csv.writer(f, delimiter=',')
+                    writer.writerow([epoch, running_loss.item()])
             if (epoch+1) % 10 == 0:
                 print(f'epoch {epoch}, running loss: {running_loss}')
     except KeyboardInterrupt:
@@ -257,11 +254,12 @@ def main():  # noqa: C901
     env.close()
 
     # Save adapter model
-    print('saving model...')
-    adapter_path = os.path.join(adapter_folder, 'adapter.pth')
-    th.save(adapter.state_dict(), adapter_path)
-    adapter_optimizer_path = os.path.join(adapter_folder, 'adapter.optimizer.pth')
-    th.save(optimizer.state_dict(), adapter_optimizer_path)
+    if not args.no_save:
+        print('saving model...')
+        adapter_path = os.path.join(adapter_folder, 'adapter.pth')
+        th.save(adapter.state_dict(), adapter_path)
+        adapter_optimizer_path = os.path.join(adapter_folder, 'adapter.optimizer.pth')
+        th.save(optimizer.state_dict(), adapter_optimizer_path)
 
 if __name__ == "__main__":
     main()
