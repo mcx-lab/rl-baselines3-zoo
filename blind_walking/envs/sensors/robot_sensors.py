@@ -153,7 +153,6 @@ class MotorTorqueSensor(sensor.BoxSpaceSensor):
     else:
       motor_torques = self._robot.GetTrueMotorTorques()
     return motor_torques
->>>>>>> master
 
 class MinitaurLegPoseSensor(sensor.BoxSpaceSensor):
   """A sensor that reads leg_pose from the Minitaur robot."""
