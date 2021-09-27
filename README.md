@@ -228,6 +228,8 @@ Note: if you want to pass a string, you need to escape it like that: `my_string:
 
 ## Record a Video of a Trained Agent
 
+Instead of using `utils.record_video`, use `enjoy.py` for consistent environment parameters.
+
 Record 1000 steps with the latest saved model:
 
 ```
