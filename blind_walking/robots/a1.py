@@ -346,7 +346,8 @@ class A1(minitaur.Minitaur):
       data = self._pybullet_client.rayTest(foot_position, projection_position)
       if data[0] == -1: # -1 if did not detect anything within detectable distance (out of range)
         distances[toe_link_index] = max_detection_distance
-      distances[toe_link_index] = data[2] * max_detection_distance # data[2] * (abs(foot_position[2]) - abs(projection_position[2]))
+      else:
+        distances[toe_link_index] = data[2] * max_detection_distance # data[2] * (abs(foot_position[2]) - abs(projection_position[2]))
 
     return distances
 
