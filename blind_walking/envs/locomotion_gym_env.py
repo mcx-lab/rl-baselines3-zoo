@@ -162,7 +162,6 @@ class LocomotionGymEnv(gym.Env):
         self.hf._generate_field(self,
                                 friction=self.height_field_friction,
                                 heightPerturbationRange=self.height_field_perturbation_range)
-    # If collapsible tile or platform, enable hard reset
     elif self.collapsible_tile:
       self.cp._generate_field(self)
       self._hard_reset = True

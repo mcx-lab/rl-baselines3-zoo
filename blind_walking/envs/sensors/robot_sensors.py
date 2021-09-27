@@ -114,6 +114,10 @@ class MotorVelocitySensor(sensor.BoxSpaceSensor):
       motor_velocities = self._robot.GetTrueMotorVelocities()
     return motor_velocities
 
+class UltrasonicSensor(sensor.BoxSpaceSensor):
+  """A sensor that reads the distance between the robot feet and the ground directly below"""
+  pass
+
 class MotorTorqueSensor(sensor.BoxSpaceSensor):
   """A sensor that reads motor torques from the robot."""
 
