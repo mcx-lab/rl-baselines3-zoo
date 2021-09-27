@@ -58,7 +58,7 @@ class CollapsiblePlatform():
     def _reset_field_collapsible(self, env):
         for index, blockId in enumerate(self.damping_platform):
             env.pybullet_client.resetBasePositionAndOrientation(
-                        blockId, damping_tile_pos[index], [0, 0, 0, 1])
+                        blockId, self.damping_tile_pos[index], [0, 0, 0, 1])
             env.pybullet_client.resetBaseVelocity(blockId, [0, 0, 0], [0, 0, 0])
             if self.textureId:
                 env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
@@ -72,9 +72,9 @@ class CollapsiblePlatform():
         for index, blockId in enumerate(self.collapsible_platform):
             env.pybullet_client.removeBody(blockId)
             del self.collapsible_platform[index]
-            regenerated_body = env.pybullet_client.loadSoftBody("cube.obj", basePosition = collapsible_tile_pos[index], scale = 0.25, mass = 1., 
+            regenerated_body = env.pybullet_client.loadSoftBody("cube.obj", basePosition = self.collapsible_tile_pos[index], scale = 0.25, mass = 1., 
                                         useNeoHookean = 0, useBendingSprings=1,useMassSpring=1, 
-                                        springElasticStiffness=sElasticStiffness, springDampingStiffness=sDampingStiffness,
+                                        springElasticStiffness=self.sElasticStiffness, springDampingStiffness=self.sDampingStiffness,
                                         springDampingAllDirections = 1, collisionMargin=0.01, 
                                         useSelfCollision = 1, frictionCoeff = .5, useFaceContact=1)
             self.collapsible_platform = np.insert(self.collapsible_platform, index, regenerated_body, axis=0)

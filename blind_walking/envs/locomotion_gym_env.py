@@ -154,6 +154,16 @@ class LocomotionGymEnv(gym.Env):
                                 friction=self.height_field_friction,
                                 heightPerturbationRange=self.height_field_perturbation_range)
 
+    self.height_field = True
+    self.hf = CollapsiblePlatform()
+    if self.height_field:
+      self.hf._generate_field(self,
+                              case=1,
+                              sElasticStiffness=8,
+                              sDampingStiffness=1,
+                              texture='water_texture' # or 'grass_texture'
+                          )
+
     # Generate collapsible platform or not
     self.cp = CollapsiblePlatform()
     if self.collapsible_platform:
