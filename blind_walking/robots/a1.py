@@ -335,20 +335,18 @@ class A1(minitaur.Minitaur):
 
     return contact_forces
 
-  def getFootDistToGround(self):
-    detect_dist_from_foot_to_ground = 5.0
-  
+  def GetFootDistancesToGround(self, max_detection_distance = 5.0):
     distances = [0] * NUM_LEGS
     for foot_id in self._foot_link_ids:
       toe_link_index = self._foot_link_ids.index(
         foot_id)
       foot_position = self._pybullet_client.getLinkState(self.quadruped, foot_id)[0] # index 0 is linkWorldPosition
       projection_position = copy.copy(foot_position)
-      projection_position[2] = projection_position[2] - detect_dist_from_foot_to_ground # always pointing downwards
+      projection_position[2] = projection_position[2] - max_detection_distance # always pointing downwards
       data = self._pybullet_client.rayTest(foot_position, projection_position)
       if data[0] == -1: # -1 if did not detect anything within detectable distance (out of range)
-        distances[toe_link_index] = 5.0
-      distances[toe_link_index] = data[2] * detect_dist_from_foot_to_ground # data[2] * (abs(foot_position[2]) - abs(projection_position[2]))
+        distances[toe_link_index] = max_detection_distance
+      distances[toe_link_index] = data[2] * max_detection_distance # data[2] * (abs(foot_position[2]) - abs(projection_position[2]))
 
     return distances
 
