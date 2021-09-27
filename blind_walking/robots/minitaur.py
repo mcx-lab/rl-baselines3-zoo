@@ -291,6 +291,8 @@ class Minitaur(object):
     self._leg_inertia_urdf.extend(
         [self._link_urdf[motor_id + 1] for motor_id in self._motor_link_ids])
 
+    self._motor_inertia = [self._link_urdf[motor_id + 1] for motor_id in self._motor_id_list]
+
   def _BuildJointNameToIdDict(self):
     num_joints = self._pybullet_client.getNumJoints(self.quadruped)
     self._joint_name_to_id = {}
@@ -1089,7 +1091,7 @@ class Minitaur(object):
                                            localInertiaDiagonal=motor_inertia)
 
   def SetFootFriction(self, foot_friction):
-    """Set the lateral friction of the feet.
+    """Set the lateral friction of the feet. 
 
     Args:
       foot_friction: The lateral friction coefficient of the foot. This value is
@@ -1100,6 +1102,17 @@ class Minitaur(object):
                                            link_id,
                                            lateralFriction=foot_friction)
 
+  def GetFootFriction(self):
+    frictions = []
+    for link_id in self._foot_link_ids:
+      dynamics_info = self._pybullet_client.getDynamicsInfo(self.quadruped,
+                                                            link_id)
+      # dynamics_info is a tuple 
+      # Reference: https://usermanual.wiki/Document/pybullet20quickstart20guide.479068914/view
+      friction = dynamics_info[1]
+      frictions.append(friction)
+    return np.array(frictions)
+    
   def SetFootRestitution(self, foot_restitution):
     """Set the coefficient of restitution at the feet.
 
@@ -1267,6 +1280,9 @@ class Minitaur(object):
       The derivative gain.
     """
     return self._motor_kds
+
+  def GetMotorStrengthRatios(self):
+    return self._motor_model.get_strength_ratios()
 
   def SetMotorStrengthRatio(self, ratio):
     """Set the strength of all motors relative to the default value.

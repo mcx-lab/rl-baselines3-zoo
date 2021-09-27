@@ -129,6 +129,7 @@ class BoxSpaceSensor(Sensor):
   def __init__(self,
                name: typing.Text,
                shape: typing.Tuple[int, ...],
+               enc_name: typing.Text = 'flatten',
                lower_bound: _FLOAT_OR_ARRAY = -np.pi,
                upper_bound: _FLOAT_OR_ARRAY = np.pi,
                dtype=np.float64) -> None:
@@ -141,7 +142,7 @@ class BoxSpaceSensor(Sensor):
       upper_bound: the upper_bound of sensor value, in float or np.array.
       dtype: data type of sensor value
     """
-    super(BoxSpaceSensor, self).__init__(name)
+    super(BoxSpaceSensor, self).__init__(f'{name}_{enc_name}')
 
     self._shape = shape
     self._dtype = dtype

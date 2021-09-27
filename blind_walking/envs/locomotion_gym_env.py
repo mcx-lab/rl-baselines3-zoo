@@ -29,6 +29,7 @@ from blind_walking.envs.sensors import space_utils
 from blind_walking.envs.env_wrappers.heightfield import HeightField
 from blind_walking.envs.env_wrappers.collapsibleplatform import CollapsiblePlatform
 
+
 _ACTION_EPS = 0.01
 _NUM_SIMULATION_ITERATION_STEPS = 300
 _LOG_BUFFER_LENGTH = 5000
@@ -71,6 +72,7 @@ class LocomotionGymEnv(gym.Env):
     self._gym_config = gym_config
     self._robot_class = robot_class
     self._robot_sensors = robot_sensors
+    self._observations = None
 
     self._sensors = env_sensors if env_sensors is not None else list()
     if self._robot_class is None:
@@ -126,10 +128,9 @@ class LocomotionGymEnv(gym.Env):
     self._render_width = gym_config.simulation_parameters.render_width
     self._render_height = gym_config.simulation_parameters.render_height
 
-    # Set terrain type
-    self.terrain_type = gym_config.simulation_parameters.terrain_type
-    self.height_field = self.terrain_type == 1
-    self.collapsible_platform = self.terrain_type == 2
+    self.height_field = False
+    self.collapsible_tile = False
+    self.collapsible_platform = False
 
     self._hard_reset = True
     self.reset()
@@ -141,18 +142,27 @@ class LocomotionGymEnv(gym.Env):
         space_utils.convert_sensors_to_gym_space_dictionary(
             self.all_sensors()))
 
+    # Set terrain type
+    self.terrain_type = gym_config.simulation_parameters.terrain_type
+    self.height_field = self.terrain_type == 1
+    self.collapsible_tile = self.terrain_type == 2
+    self.collapsible_platform = self.terrain_type == 3
+    # Terrain generators
+    self.hf = HeightField()
+    self.cp = CollapsiblePlatform()
+
     # Set the default height field options.
     self.height_field_iters = gym_config.simulation_parameters.height_field_iters
     self.height_field_friction = gym_config.simulation_parameters.height_field_friction
     self.height_field_perturbation_range = gym_config.simulation_parameters.height_field_perturbation_range
-    # Generate height field or not
-    self.hf = HeightField()
+    # Generate terrain
     if self.height_field:
       # Extra roughness generated with each iteration
       for _ in range(self.height_field_iters):
         self.hf._generate_field(self,
                                 friction=self.height_field_friction,
                                 heightPerturbationRange=self.height_field_perturbation_range)
+    '''<<<<<<< HEAD
 
     self.height_field = True
     self.hf = CollapsiblePlatform()
@@ -167,8 +177,15 @@ class LocomotionGymEnv(gym.Env):
     # Generate collapsible platform or not
     self.cp = CollapsiblePlatform()
     if self.collapsible_platform:
+    ======='''
+    # If collapsible tile or platform, enable hard reset
+    elif self.collapsible_tile:
+      # >>>>>>> master
       self.cp._generate_field(self)
-      # self.cp._generate_soft_env(self)
+      self._hard_reset = True
+    elif self.collapsible_platform:
+      self.cp._generate_soft_env(self)
+      self._hard_reset = True
 
   def _build_action_space(self):
     """Builds action space based on motor control mode."""
@@ -246,7 +263,7 @@ class LocomotionGymEnv(gym.Env):
 
     # Clear the simulation world and rebuild the robot interface.
     if self._hard_reset:
-      if self.collapsible_platform:
+      if self.collapsible_tile or self.collapsible_platform:
         self._pybullet_client.resetSimulation(self._pybullet_client.RESET_USE_DEFORMABLE_WORLD)
       else:
         self._pybullet_client.resetSimulation()
@@ -260,8 +277,15 @@ class LocomotionGymEnv(gym.Env):
           "ground": self._pybullet_client.loadURDF("plane_implicit.urdf")
       }
 
+      adjust_position = [0, 0, 0]
       # Adjust position if there is a collapsible platform
-      adjust_position = [0, 0, 0.5] if self.collapsible_platform else [0, 0, 0]
+      # Generate collapsible platform
+      if self.collapsible_tile:
+        adjust_position = [0, 0, 0.5]
+        self.cp._generate_field(self)
+      elif self.collapsible_platform:
+        adjust_position = [0, 0, 0.15]
+        self.cp._generate_soft_env(self)
 
       # Rebuild the robot
       self._robot = self._robot_class(
@@ -456,21 +480,8 @@ class LocomotionGymEnv(gym.Env):
       sensors_dict[s.get_name()] = s.get_observation()
 
     observations = collections.OrderedDict(list(sensors_dict.items()))
+    self._observations = observations
     return observations
-
-  def _get_env_state(self):
-    """Get simulation environment state
-
-    Returns:
-      state: carry mass, carry mass position, motor strength, friction, terrain height
-        in numpy array format
-    """
-    carry_mass = self.carry_mass
-    carry_mass_position = self.carry_mass_pos
-    motor_strength = self.robot._motor_model._strength_ratios
-    friction = self.height_field_friction
-    terrain_height = self.height_field_perturbation_range
-    return np.hstack([carry_mass, carry_mass_position, motor_strength, friction, terrain_height])
 
   def set_time_step(self, num_action_repeat, sim_step=0.001):
     """Sets the time step of the environment.
