@@ -165,6 +165,32 @@ def foot_positions_in_base_frame(foot_angles):
                                                    l_hip_sign=(-1)**(i + 1))
   return foot_positions + HIP_OFFSETS
 
+def transform_to_rotated_frame(v: np.ndarray, theta: float):
+  """ Transform a 2D vector into a coordinate frame rotated anticlockwise by theta """
+  x, y = v
+  xn = np.cos(theta) * x + np.sin(theta) * y
+  yn = -np.sin(theta) * x + np.cos(theta) * y
+  return np.array([xn, yn]).astype(v)
+
+def world_frame_to_base_frame(v_world: np.ndarray, robot):
+  """ Transform a 2D displacement vector from world frame to robot base frame """
+  yaw = robot.GetBaseRollPitchYaw[2]
+  return transform_to_rotated_frame(v_world, yaw)
+
+def base_frame_to_world_frame(v_base: np.ndarray, robot):
+  """ Transform a 2D displacement vector from robot base frame to world frame """
+  neg_yaw = -robot.GetBaseRollPitchYaw[2]
+  return transform_to_rotated_frame(v_base, neg_yaw)
+
+def get_grid_coordinates(center, grid_unit, grid_size):
+  """
+  Returns:
+    (grid_size ** 2) x 2 array of grid coordinates
+  """
+  k = grid_size / 2 - 0.5
+  displacements = np.linspace(-k * grid_unit, k * grid_unit, num = grid_size)
+  coordinates = np.array([[a,b] for a in displacements for b in displacements])
+  return coordinates
 
 class A1(minitaur.Minitaur):
   """A simulation for the Laikago robot."""
@@ -349,6 +375,24 @@ class A1(minitaur.Minitaur):
       distances[toe_link_index] = data[2] * max_detection_distance # data[2] * (abs(foot_position[2]) - abs(projection_position[2]))
 
     return distances
+
+  def _GetTerrainHeightUnderPoint(self, pos_world):
+    pass
+
+  def GetTerrainHeightGrid(self, grid_unit = 1.0, grid_size = 10):
+    """ Get the terrain height in a NxN grid around the robot. 
+    
+    Args:
+      grid_unit:    Side length of one square in the grid
+      grid_size:    Number of squares along one side of grid
+
+    Returns:
+      N x N numpy array of floats corresponding to terrain height at that location
+    """
+    base_position_world = self.GetBasePosition()[:2]
+    base_position_base = world_frame_to_base_frame(base_position_world)
+    grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
+    grid_coordinates_world = np.array([base_frame_to_world_frame(gcb) for gcb in grid_coordinates_base])
 
   def ResetPose(self, add_constraint):
     del add_constraint
