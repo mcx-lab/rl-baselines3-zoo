@@ -65,12 +65,12 @@ HIP_OFFSETS = np.array([[0.183, -0.047, 0.], [0.183, 0.047, 0.],
                         [-0.183, -0.047, 0.], [-0.183, 0.047, 0.]
                         ]) + COM_OFFSET
 
-ABDUCTION_P_GAIN = 55.0
-ABDUCTION_D_GAIN = 0.6
-HIP_P_GAIN = 55.0
-HIP_D_GAIN = 0.6
-KNEE_P_GAIN = 55.0
-KNEE_D_GAIN = 0.6
+ABDUCTION_P_GAIN = 100.0
+ABDUCTION_D_GAIN = 1.0
+HIP_P_GAIN = 100.0
+HIP_D_GAIN = 2.0
+KNEE_P_GAIN = 100.0
+KNEE_D_GAIN = 2.0
 
 # Bases on the readings from Laikago's default pose.
 INIT_MOTOR_ANGLES = np.array([0, 0.9, -1.8] * NUM_LEGS)
