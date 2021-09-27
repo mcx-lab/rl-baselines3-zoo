@@ -5,7 +5,7 @@ import unittest
 
 from gym import spaces
 from blind_walking.envs.gym_envs.a1_gym_env import A1GymEnv
-from blind_walking.net.a1_gym_env_features_extractor import A1GymEnvFeaturesExtractor
+from blind_walking.net.feature_encoder import LocomotionFeatureEncoder
 
 class TestA1GymEnv(unittest.TestCase):
 
@@ -60,11 +60,11 @@ class TestA1GymEnv(unittest.TestCase):
         self.robot.SetFootFriction(constant)
         assert np.all(self.robot.GetFootFriction() == constant)
 
-class TestA1GymEnvFeaturesExtractor(unittest.TestCase):
+class TestLocomotionFeatureEncoder(unittest.TestCase):
 
     def setUp(self) -> None:
         self.env = A1GymEnv()
-        self.extractor = A1GymEnvFeaturesExtractor(self.env.observation_space)
+        self.extractor = LocomotionFeatureEncoder(self.env.observation_space)
 
     def test_forward(self):
         obs = self.env.reset()

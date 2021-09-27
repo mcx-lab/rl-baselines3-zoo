@@ -37,7 +37,7 @@ from utils.hyperparams_opt import HYPERPARAMS_SAMPLER
 from utils.utils import ALGOS, get_callback_list, get_latest_run_id, get_wrapper_class, linear_schedule
 
 # For A1GymEnv custom feature extractor and wrapper
-from blind_walking.net.a1_gym_env_features_extractor import A1GymEnvFeaturesExtractor
+from blind_walking.net.feature_encoder import LocomotionFeatureEncoder
 
 class ExperimentManager(object):
     """
