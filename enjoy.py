@@ -3,11 +3,12 @@ import glob
 import importlib
 import os
 import sys
-
 import numpy as np
 import torch as th
 import yaml
+
 from stable_baselines3.common.utils import set_random_seed
+from stable_baselines3.common.vec_env import VecVideoRecorder
 
 import utils.import_envs  # noqa: F401 pylint: disable=unused-import
 from utils import ALGOS, create_test_env, get_latest_run_id, get_saved_hyperparams
@@ -25,6 +26,8 @@ def main():  # noqa: C901
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
     parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int)
+    parser.add_argument("--record", action="store_true", default=False, help="Record video")
+    parser.add_argument("-o", "--output-folder", help="Video output folder", type=str)
     parser.add_argument(
         "--no-render", action="store_true", default=False, help="Do not render the environment (useful for tests)"
     )
@@ -86,16 +89,19 @@ def main():  # noqa: C901
     for ext in ["zip"]:
         model_path = os.path.join(log_path, f"{env_id}.{ext}")
         found = os.path.isfile(model_path)
+        name_prefix = f"final-model-{algo}-{env_id}"
         if found:
             break
 
     if args.load_best:
         model_path = os.path.join(log_path, "best_model.zip")
         found = os.path.isfile(model_path)
+        name_prefix = f"best-model-{algo}-{env_id}"
 
     if args.load_checkpoint is not None:
         model_path = os.path.join(log_path, f"rl_model_{args.load_checkpoint}_steps.zip")
         found = os.path.isfile(model_path)
+        name_prefix = f"checkpoint-{args.load_checkpoint}-{algo}-{env_id}"
 
     if args.load_last_checkpoint:
         checkpoints = glob.glob(os.path.join(log_path, "rl_model_*_steps.zip"))
@@ -109,6 +115,7 @@ def main():  # noqa: C901
         checkpoints = sorted(checkpoints, key=step_count)
         model_path = checkpoints[-1]
         found = True
+        name_prefix = f"checkpoint-{step_count(model_path)}-{algo}-{env_id}"
 
     if not found:
         raise ValueError(f"No model found for {algo} on {env_id}, path: {model_path}")
@@ -182,6 +189,18 @@ def main():  # noqa: C901
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
     deterministic = not stochastic
+
+    # If record video
+    if args.record:
+        video_folder = args.output_folder
+        if video_folder is None:
+            video_folder = os.path.join(log_path, "videos")
+        env = VecVideoRecorder(env,
+                               video_folder,
+                               record_video_trigger=lambda x: x == 0,
+                               video_length=args.n_timesteps,
+                               name_prefix=name_prefix)
+        env.reset()
 
     state = None
     episode_reward = 0.0

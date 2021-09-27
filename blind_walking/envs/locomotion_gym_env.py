@@ -363,9 +363,6 @@ class LocomotionGymEnv(gym.Env):
       self._pybullet_client.configureDebugVisualizer(
           self._pybullet_client.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
 
-    for env_randomizer in self._env_randomizers:
-      env_randomizer.randomize_step(self)
-
     # robot class and put the logics here.
     self._robot.Step(action)
 
@@ -381,6 +378,9 @@ class LocomotionGymEnv(gym.Env):
     self._env_step_counter += 1
     if done:
       self._robot.Terminate()
+
+    for env_randomizer in self._env_randomizers:
+      env_randomizer.randomize_step(self)
     return self._get_observation(), reward, done, {}
 
   def render(self, mode='rgb_array'):

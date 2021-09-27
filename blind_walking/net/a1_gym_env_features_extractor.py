@@ -23,7 +23,7 @@ class A1GymEnvFeaturesExtractor(BaseFeaturesExtractor):
         features_dim = flatten_output_size + mlp_output_size
         super(A1GymEnvFeaturesExtractor, self).__init__(observation_space, features_dim=features_dim)
 
-        self.flatten_encoder = nn.Flatten() if len(observation_space.spaces['flatten'].shape) > 1 else lambda x: x
+        self.flatten_encoder = nn.Flatten()
         mlp_layers = create_mlp(input_dim=mlp_input_size,
                                 output_dim=mlp_output_size,
                                 net_arch=[256, 128])
