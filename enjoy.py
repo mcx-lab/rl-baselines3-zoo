@@ -168,7 +168,10 @@ def main():  # noqa: C901
     if args.record:
         video_folder = args.output_folder
         if video_folder is None:
-            video_folder = os.path.join(log_path, "videos")
+            if args.adapter:
+                video_folder = os.path.join(log_path, 'videos_adapter')
+            else:
+                video_folder = os.path.join(log_path, "videos")
         env = VecVideoRecorder(env,
                                video_folder,
                                record_video_trigger=lambda x: x == 0,
