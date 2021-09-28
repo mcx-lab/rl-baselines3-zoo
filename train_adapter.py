@@ -29,34 +29,25 @@ def main():  # noqa: C901
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
     parser.add_argument("--no-save", action="store_true", default=False, help="Do not save the adapter and stats (useful for tests)")
+    parser.add_argument("-i", "--trained-agent-folder", help="Path to a pretrained agent folder to continue training", default="", type=str)
     parser.add_argument("--load-best", action="store_true", default=False, help="Load best model instead of last model if available")
-    parser.add_argument(
-        "--load-checkpoint",
-        type=int,
-        help="Load checkpoint instead of last model if available, "
-        "you must pass the number of timesteps corresponding to it",
-    )
-    parser.add_argument(
-        "--load-last-checkpoint",
-        action="store_true",
-        default=False,
-        help="Load last checkpoint instead of last model if available",
-    )
-    parser.add_argument(
-        "--norm-reward", action="store_true", default=False, help="Normalize reward if applicable (trained with VecNormalize)"
-    )
+    parser.add_argument("--load-checkpoint",
+                        type=int,
+                        help="Load checkpoint instead of last model if available, "
+                        "you must pass the number of timesteps corresponding to it")
+    parser.add_argument("--load-last-checkpoint",
+                        action="store_true",
+                        default=False,
+                        help="Load last checkpoint instead of last model if available")
+    parser.add_argument("--norm-reward", action="store_true", default=False, help="Normalize reward if applicable (trained with VecNormalize)")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
     parser.add_argument("--reward-log", help="Where to log reward", default="", type=str)
-    parser.add_argument(
-        "--gym-packages",
-        type=str,
-        nargs="+",
-        default=[],
-        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)",
-    )
-    parser.add_argument(
-        "--env-kwargs", type=str, nargs="+", action=StoreDict, help="Optional keyword argument to pass to the env constructor"
-    )
+    parser.add_argument("--gym-packages",
+                        type=str,
+                        nargs="+",
+                        default=[],
+                        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)")
+    parser.add_argument("--env-kwargs", type=str, nargs="+", action=StoreDict, help="Optional keyword argument to pass to the env constructor")
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
@@ -197,12 +188,20 @@ def main():  # noqa: C901
     criterion = th.nn.MSELoss()
     optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
+    # Load from pretrained adapter if given
+    if args.trained_agent_folder:
+        adapter_path = os.path.join(args.trained_agent_folder, 'adapter.pth')
+        adapter.load_state_dict(th.load(adapter_path))
+        adapter.train()
+        optimizer_path = os.path.join(args.trained_agent_folder, 'adapter.optimizer.pth')
+        optimizer.load_state_dict(th.load(optimizer_path))
+
     # File creation for saving
     if not args.no_save:
         adapter_folder = os.path.join(log_path, f'{env_id}_adapter')
         if not os.path.exists(adapter_folder):
             os.mkdir(adapter_folder)
-            statsfile = os.path.join(adapter_folder, 'stats.csv')
+        statsfile = os.path.join(adapter_folder, 'stats.csv')
         with open(statsfile, 'w') as f:
             writer = csv.writer(f, delimiter=',')
             writer.writerow(['epoch', 'running loss'])
