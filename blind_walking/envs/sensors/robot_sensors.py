@@ -84,8 +84,8 @@ class MotorVelocitySensor(sensor.BoxSpaceSensor):
   def __init__(self,
                num_motors: int,
                noisy_reading: bool = True,
-               lower_bound: _FLOAT_OR_ARRAY = 100,
-               upper_bound: _FLOAT_OR_ARRAY = -100,
+               lower_bound: _FLOAT_OR_ARRAY = -100,
+               upper_bound: _FLOAT_OR_ARRAY = 100,
                name: typing.Text = "MotorVelocity",
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs MotorVelocitySensor.
@@ -120,8 +120,8 @@ class MotorTorqueSensor(sensor.BoxSpaceSensor):
   def __init__(self,
                num_motors: int,
                noisy_reading: bool = True,
-               lower_bound: _FLOAT_OR_ARRAY = 100,
-               upper_bound: _FLOAT_OR_ARRAY = -100,
+               lower_bound: _FLOAT_OR_ARRAY = -100,
+               upper_bound: _FLOAT_OR_ARRAY = 100,
                name: typing.Text = "MotorTorque",
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs MotorTorqueSensor.
@@ -206,8 +206,8 @@ class BaseVelocitySensor(sensor.BoxSpaceSensor):
   """A sensor that reads the robot's base velocity."""
 
   def __init__(self,
-               lower_bound: _FLOAT_OR_ARRAY = 100,
-               upper_bound: _FLOAT_OR_ARRAY = -100,
+               lower_bound: _FLOAT_OR_ARRAY = -100,
+               upper_bound: _FLOAT_OR_ARRAY = 100,
                convert_to_local_frame: bool = False,
                exclude_z: bool = False,
                name: typing.Text = "BaseVelocity",
@@ -502,3 +502,63 @@ class PoseSensor(sensor.BoxSpaceSensor):
   def _get_observation(self) -> _ARRAY:
     return np.concatenate((self._robot.GetBasePosition()[:2],
                            (self._robot.GetTrueBaseRollPitchYaw()[2],)))
+
+class FootForceSensor(sensor.BoxSpaceSensor):
+  """A sensor that reads foot force from the robot."""
+
+  def __init__(self,
+               num_legs: int,
+               noisy_reading: bool = True,
+               lower_bound: _FLOAT_OR_ARRAY = 0,
+               upper_bound: _FLOAT_OR_ARRAY = 200,
+               name: typing.Text = "FootForce",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    """Constructs FootForceSensor.
+
+    Args:
+      num_legs: the number of legs in the robot
+      noisy_reading: whether values are true observations
+      lower_bound: the lower bound of the normal force
+      upper_bound: the upper bound of the normal force
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._num_legs = num_legs
+    self._noisy_reading = noisy_reading
+    super(FootForceSensor, self).__init__(name=name,
+                                          shape=(self._num_legs,),
+                                          lower_bound=lower_bound,
+                                          upper_bound=upper_bound,
+                                          dtype=dtype)
+
+  def _get_observation(self) -> _ARRAY:
+    return self._robot.GetFootForces()
+
+class FootContactSensor(sensor.BoxSpaceSensor):
+  """A sensor that reads foot contact from the robot."""
+
+  def __init__(self,
+               num_legs: int,
+               lower_bound: _FLOAT_OR_ARRAY = 0,
+               upper_bound: _FLOAT_OR_ARRAY = 1,
+               name: typing.Text = "FootContact",
+               dtype: typing.Type[typing.Any] = np.float64) -> None:
+    """Constructs FootContactSensor.
+
+    Args:
+      num_legs: the number of legs in the robot
+      noisy_reading: whether values are true observations
+      lower_bound: the lower bound of the normal contact
+      upper_bound: the upper bound of the normal contact
+      name: the name of the sensor
+      dtype: data type of sensor value
+    """
+    self._num_legs = num_legs
+    super(FootContactSensor, self).__init__(name=name,
+                                            shape=(self._num_legs,),
+                                            lower_bound=lower_bound,
+                                            upper_bound=upper_bound,
+                                            dtype=dtype)
+
+  def _get_observation(self) -> _ARRAY:
+    return self._robot.GetFootContacts()
