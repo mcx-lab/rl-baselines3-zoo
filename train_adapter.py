@@ -174,6 +174,7 @@ def main():  # noqa: C901
     trained_model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
     # Get actor-critic policy which contains the feature extractor and ppo
     trained_policy = trained_model.policy
+    trained_policy.eval()
     trained_feature_encoder = trained_policy.features_extractor
     trained_base_policy = trained_policy.mlp_extractor
     trained_base_policy_action = trained_policy.action_net

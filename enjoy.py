@@ -6,14 +6,17 @@ import sys
 import numpy as np
 import torch as th
 import yaml
+import gym
 
-from stable_baselines3.common.utils import set_random_seed
+from stable_baselines3.common.utils import set_random_seed, obs_as_tensor
 from stable_baselines3.common.vec_env import VecVideoRecorder
 
 import utils.import_envs  # noqa: F401 pylint: disable=unused-import
 from utils import ALGOS, create_test_env, get_latest_run_id, get_saved_hyperparams
 from utils.exp_manager import ExperimentManager
 from utils.utils import StoreDict
+from blind_walking.net.adapter import Adapter
+
 
 
 def main():  # noqa: C901
@@ -28,41 +31,32 @@ def main():  # noqa: C901
     parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int)
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
     parser.add_argument("-o", "--output-folder", help="Video output folder", type=str)
-    parser.add_argument(
-        "--no-render", action="store_true", default=False, help="Do not render the environment (useful for tests)"
-    )
+    parser.add_argument("--no-render", action="store_true", default=False, help="Do not render the environment (useful for tests)")
+    parser.add_argument("--adapter", action="store_true", default=False, help="Use adapter module instead of trained model")
+    parser.add_argument("--load-best",
+                        action="store_true",
+                        default=False, help="Load best model instead of last model if available")
+    parser.add_argument("--load-checkpoint",
+                        type=int,
+                        help="Load checkpoint instead of last model if available, "
+                        "you must pass the number of timesteps corresponding to it")
+    parser.add_argument("--load-last-checkpoint",
+                        action="store_true",
+                        default=False,
+                        help="Load last checkpoint instead of last model if available")
     parser.add_argument("--deterministic", action="store_true", default=False, help="Use deterministic actions")
-    parser.add_argument(
-        "--load-best", action="store_true", default=False, help="Load best model instead of last model if available"
-    )
-    parser.add_argument(
-        "--load-checkpoint",
-        type=int,
-        help="Load checkpoint instead of last model if available, "
-        "you must pass the number of timesteps corresponding to it",
-    )
-    parser.add_argument(
-        "--load-last-checkpoint",
-        action="store_true",
-        default=False,
-        help="Load last checkpoint instead of last model if available",
-    )
     parser.add_argument("--stochastic", action="store_true", default=False, help="Use stochastic actions")
-    parser.add_argument(
-        "--norm-reward", action="store_true", default=False, help="Normalize reward if applicable (trained with VecNormalize)"
-    )
+    parser.add_argument("--norm-reward", action="store_true", default=False,
+                        help="Normalize reward if applicable (trained with VecNormalize)")
     parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
     parser.add_argument("--reward-log", help="Where to log reward", default="", type=str)
-    parser.add_argument(
-        "--gym-packages",
-        type=str,
-        nargs="+",
-        default=[],
-        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)",
-    )
-    parser.add_argument(
-        "--env-kwargs", type=str, nargs="+", action=StoreDict, help="Optional keyword argument to pass to the env constructor"
-    )
+    parser.add_argument("--gym-packages",
+                        type=str,
+                        nargs="+",
+                        default=[],
+                        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)")
+    parser.add_argument("--env-kwargs", type=str, nargs="+", action=StoreDict,
+                        help="Optional keyword argument to pass to the env constructor")
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
@@ -72,6 +66,8 @@ def main():  # noqa: C901
     env_id = args.env
     algo = args.algo
     folder = args.folder
+
+    # ######################### Get experiment folder ######################### #
 
     if args.exp_id == 0:
         args.exp_id = get_latest_run_id(os.path.join(folder, algo), env_id)
@@ -122,6 +118,8 @@ def main():  # noqa: C901
 
     print(f"Loading {model_path}")
 
+    # ######################### Create environment ######################### #
+
     # Off-policy algorithm only support one env for now
     off_policy_algos = ["qrdqn", "dqn", "ddpg", "sac", "her", "td3", "tqc"]
 
@@ -164,6 +162,21 @@ def main():  # noqa: C901
         hyperparams=hyperparams,
         env_kwargs=env_kwargs,
     )
+    obs = env.reset()
+
+    # If record video
+    if args.record:
+        video_folder = args.output_folder
+        if video_folder is None:
+            video_folder = os.path.join(log_path, "videos")
+        env = VecVideoRecorder(env,
+                               video_folder,
+                               record_video_trigger=lambda x: x == 0,
+                               video_length=args.n_timesteps,
+                               name_prefix=name_prefix)
+        env.reset()
+
+    # ######################### Load model ######################### #
 
     kwargs = dict(seed=args.seed)
     if algo in off_policy_algos:
@@ -184,23 +197,25 @@ def main():  # noqa: C901
 
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
-    obs = env.reset()
+    if args.adapter:
+        # Get actor-critic policy which contains the feature extractor and ppo
+        policy = model.policy
+        policy.eval()
+        feature_encoder = policy.features_extractor
+        base_policy = policy.mlp_extractor
+        base_policy_action = policy.action_net
+        base_policy_value = policy.value_net
+        # Load adapter module
+        adapter_path = os.path.join(log_path, f'{env_id}_adapter', 'adapter.pth')
+        adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
+        adapter.load_state_dict(th.load(adapter_path))
+        adapter.eval()
+
+    # ######################### Enjoy Loop ######################### #
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
     deterministic = not stochastic
-
-    # If record video
-    if args.record:
-        video_folder = args.output_folder
-        if video_folder is None:
-            video_folder = os.path.join(log_path, "videos")
-        env = VecVideoRecorder(env,
-                               video_folder,
-                               record_video_trigger=lambda x: x == 0,
-                               video_length=args.n_timesteps,
-                               name_prefix=name_prefix)
-        env.reset()
 
     state = None
     episode_reward = 0.0
@@ -210,8 +225,23 @@ def main():  # noqa: C901
     successes = []
     try:
         for _ in range(args.n_timesteps):
-            action, state = model.predict(obs, state=state, deterministic=deterministic)
-            obs, reward, done, infos = env.step(action)
+            if args.adapter:
+                obs = obs_as_tensor(obs, model.device)
+                extrinsics = adapter(obs)
+                output = base_policy(extrinsics)
+                action = base_policy_action(output[0])
+                value = base_policy_value(output[1])
+                # Clip and perform action
+                clipped_action = action.detach().cpu().numpy()
+                if isinstance(model.action_space, gym.spaces.Box):
+                    clipped_action = np.clip(clipped_action,
+                                             model.action_space.low,
+                                             model.action_space.high)
+                obs, reward, done, infos = env.step(clipped_action)
+            else:
+                action, state = model.predict(obs, state=state, deterministic=deterministic)
+                obs, reward, done, infos = env.step(action)
+
             if not args.no_render:
                 env.render("human")
 
@@ -246,9 +276,10 @@ def main():  # noqa: C901
                     if infos[0].get("is_success") is not None:
                         successes.append(infos[0].get("is_success", False))
                         episode_reward, ep_len = 0.0, 0
-
     except KeyboardInterrupt:
         pass
+
+    # ######################### Print stats ######################### #
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
