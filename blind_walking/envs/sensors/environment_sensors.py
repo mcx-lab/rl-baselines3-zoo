@@ -187,10 +187,10 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
     return self._env._robot.GetMotorStrengthRatios()
 
 class FootFrictionSensor(sensor.BoxSpaceSensor):
-  def __init__(self, 
-              num_feet: int = 4, 
-              lower_bound: _FLOAT_OR_ARRAY = -np.inf,
-               upper_bound: _FLOAT_OR_ARRAY = np.inf,
+  def __init__(self,
+               num_legs: int = 4,
+               lower_bound: _FLOAT_OR_ARRAY = 0.0,
+               upper_bound: _FLOAT_OR_ARRAY = 5.0,
                name: typing.Text = "FootFriction",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
@@ -203,12 +203,12 @@ class FootFrictionSensor(sensor.BoxSpaceSensor):
     """
     self._env = None
 
-    super(MotorStrengthRatiosSensor, self).__init__(name=name,
-                                                    shape=(num_feet,),
-                                                    enc_name=enc_name,
-                                                    lower_bound=lower_bound,
-                                                    upper_bound=upper_bound,
-                                                    dtype=dtype)
+    super(FootFrictionSensor, self).__init__(name=name,
+                                             shape=(num_legs,),
+                                             enc_name=enc_name,
+                                             lower_bound=lower_bound,
+                                             upper_bound=upper_bound,
+                                             dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
