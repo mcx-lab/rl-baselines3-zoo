@@ -170,19 +170,19 @@ def transform_to_rotated_frame(v: np.ndarray, theta: float):
   x, y = v
   xn = np.cos(theta) * x + np.sin(theta) * y
   yn = -np.sin(theta) * x + np.cos(theta) * y
-  return np.array([xn, yn]).astype(v)
+  return np.array([xn, yn])
 
 def world_frame_to_base_frame(v_world: np.ndarray, robot):
   """ Transform a 2D displacement vector from world frame to robot base frame """
-  yaw = robot.GetBaseRollPitchYaw[2]
+  yaw = robot.GetBaseRollPitchYaw()[2]
   return transform_to_rotated_frame(v_world, yaw)
 
 def base_frame_to_world_frame(v_base: np.ndarray, robot):
   """ Transform a 2D displacement vector from robot base frame to world frame """
-  neg_yaw = -robot.GetBaseRollPitchYaw[2]
+  neg_yaw = -robot.GetBaseRollPitchYaw()[2]
   return transform_to_rotated_frame(v_base, neg_yaw)
 
-def get_grid_coordinates(center, grid_unit, grid_size):
+def get_grid_coordinates(grid_unit, grid_size):
   """
   Returns:
     (grid_size ** 2) x 2 array of grid coordinates
@@ -377,23 +377,40 @@ class A1(minitaur.Minitaur):
 
     return distances
 
-  def _GetTerrainHeightUnderPoint(self, pos_world):
-    pass
+  def _GetTerrainHeightUnderPoint(self, position_world, max_height = 5.0):
+    """ Get the terrain height at a 2D position """
 
-  def GetTerrainHeightGrid(self, grid_unit = 1.0, grid_size = 10):
-    """ Get the terrain height in a NxN grid around the robot. 
+    upper_bound = np.concatenate([position_world, np.array([max_height])])
+    lower_bound = copy.copy(upper_bound)
+    lower_bound[2] = lower_bound[2] - 2 * max_height
+    
+    data = self._pybullet_client.rayTest(upper_bound, lower_bound)[0]
+    if data[0] == -1: # -1 if did not detect anything within detectable distance (out of range)
+      distance_to_ground = 2 * max_height
+    else:
+      distance_to_ground = data[2] * 2 * max_height
+    return max_height - distance_to_ground
+
+  def GetLocalDistancesToGround(self, grid_unit = 0.1, grid_size = 16):
+    """ Get the vertical distance from base height to ground in a NxN grid around the robot. 
     
     Args:
       grid_unit:    Side length of one square in the grid
       grid_size:    Number of squares along one side of grid
 
     Returns:
-      N x N numpy array of floats corresponding to terrain height at that location
+      N x N numpy array of floats
     """
     base_position_world = self.GetBasePosition()[:2]
-    base_position_base = world_frame_to_base_frame(base_position_world)
+    base_height = self.GetBasePosition()[2]
+    base_position_base = world_frame_to_base_frame(base_position_world, self)
     grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
-    grid_coordinates_world = np.array([base_frame_to_world_frame(gcb) for gcb in grid_coordinates_base])
+    grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
+
+    heights = []
+    for coord in grid_coordinates_world:
+      heights.append(self._GetTerrainHeightUnderPoint(coord))
+    return np.array(heights).reshape((grid_size, grid_size))
 
   def ResetPose(self, add_constraint):
     del add_constraint

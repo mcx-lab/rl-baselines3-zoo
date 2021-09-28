@@ -58,6 +58,7 @@ def build_regular_env(robot_class,
     environment_sensors.ControllerKpCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
     environment_sensors.ControllerKdCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
     environment_sensors.MotorStrengthRatiosSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
+    environment_sensors.LocalDistancesToGroundSensor(enc_name='mlp')
   ]
 
   env_randomizer_list = [
