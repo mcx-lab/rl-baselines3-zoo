@@ -23,6 +23,7 @@ class Stairs(EnvModifier):
         stepShape = env.pybullet_client.createCollisionShape(
             p.GEOM_BOX,halfExtents=[boxHalfLength,boxHalfWidth,boxHalfHeight]
         )
+        colors = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]]
 
         # Create upwards stairs
         base_pos = [start_x, 0, boxHalfHeight]
@@ -30,6 +31,7 @@ class Stairs(EnvModifier):
             step = env.pybullet_client.createMultiBody(baseMass=0, baseCollisionShapeIndex=stepShape,
                                                        basePosition=base_pos, baseOrientation=[0,0,0,1])
             env.pybullet_client.changeDynamics(step, -1, lateralFriction=friction)
+            env.pybullet_client.changeVisualShape(step, -1, rgbaColor=colors[i%len(colors)])
             base_pos = [sum(x) for x in zip(base_pos, [step_run, 0, step_rise])]
 
         # Create downwards stairs
@@ -38,6 +40,7 @@ class Stairs(EnvModifier):
             step = env.pybullet_client.createMultiBody(baseMass=0, baseCollisionShapeIndex=stepShape,
                                                        basePosition=base_pos, baseOrientation=[0,0,0,1])
             env.pybullet_client.changeDynamics(step, -1, lateralFriction=friction)
+            env.pybullet_client.changeVisualShape(step, -1, rgbaColor=colors[(-i-1)%len(colors)])
             base_pos = [sum(x) for x in zip(base_pos, [step_run, 0, -step_rise])]
 
         env.pybullet_client.configureDebugVisualizer(
