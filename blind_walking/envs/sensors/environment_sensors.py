@@ -241,7 +241,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
     self._env = None
 
     # Get data from file
-    filepath = 'blind_walking/envs/env_wrappers/target_positions.csv'
+    filepath = 'blind_walking/envs/tasks/target_positions.csv'
     with open(filepath, newline='') as f:
       reader = csv.reader(f, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
       self._data = list(reader)
