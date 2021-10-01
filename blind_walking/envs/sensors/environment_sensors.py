@@ -354,3 +354,4 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
       grid_unit = self.grid_unit, 
       grid_size = self.grid_size
     ).reshape(-1)
+    
