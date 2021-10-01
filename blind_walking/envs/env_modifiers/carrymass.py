@@ -4,12 +4,15 @@ import pybullet_data as pd
 import random
 random.seed(10)
 
+from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
-class CarryMass():
+
+class CarryMass(EnvModifier):
     def __init__(self):
         self.cm_id = 0
+        super().__init__()
 
-    def _generate_mass(self, env, mass=1, mass_pos=[0,0,0]):
+    def _generate(self, env, mass=1, mass_pos=[0,0,0]):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
 
         env.pybullet_client.configureDebugVisualizer(
