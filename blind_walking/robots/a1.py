@@ -410,7 +410,8 @@ class A1(minitaur.Minitaur):
     heights = []
     for coord in grid_coordinates_world:
       heights.append(self._GetTerrainHeightUnderPoint(coord))
-    return np.array(heights).reshape((grid_size, grid_size))
+    # Subtract terrain height from base height to get vertical distance to ground
+    return base_height - np.array(heights).reshape((grid_size, grid_size))
 
   def ResetPose(self, add_constraint):
     del add_constraint
