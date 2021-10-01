@@ -176,16 +176,15 @@ def main():  # noqa: C901
 
     # Hyperparameters
     # TODO - change to hyperparameters config
-    n_epochs = 1000
+    n_epochs = 500
     n_timesteps = int(2e3)
     n_minibatch = 4
-    minibatch_size = int(n_timesteps/n_minibatch)
     learning_rate = 5e-4
 
     # Create adapter model
     adapter = Adapter(trained_policy.observation_space,
                       output_size=trained_feature_encoder.mlp_output_size)
-    criterion = th.nn.MSELoss()
+    criterion = th.nn.MSELoss(reduction='mean')
     optimizer = th.optim.Adam(adapter.parameters(), lr=learning_rate)
 
     # Load from pretrained adapter if given
@@ -204,48 +203,54 @@ def main():  # noqa: C901
         statsfile = os.path.join(adapter_folder, 'stats.csv')
         with open(statsfile, 'w') as f:
             writer = csv.writer(f, delimiter=',')
-            writer.writerow(['epoch', 'running loss'])
+            writer.writerow(['epoch', 'loss'])
 
     # Train adapter model
     try:
         for epoch in range(n_epochs):
-            obs = env.reset()
-            running_loss = 0
-            for i in range(n_timesteps):
-                obs = obs_as_tensor(obs, trained_model.device)
+            predictions = []
+            targets = []
 
-                # Forward
-                predicted_extrinsics = adapter(obs)
-                target_extrinsics = trained_feature_encoder(obs)
+            for n in range(n_minibatch):
+                obs = env.reset()
+                for i in range(n_timesteps):
+                    obs = obs_as_tensor(obs, trained_model.device)
 
-                policy_output = trained_base_policy(predicted_extrinsics)
-                action = trained_base_policy_action(policy_output[0])
-                value = trained_base_policy_value(policy_output[1])
+                    # Forward
+                    predicted_extrinsics = adapter(obs)
+                    target_extrinsics = trained_feature_encoder(obs)
 
-                # Clip and perform action
-                clipped_action = action.detach().cpu().numpy()
-                if isinstance(trained_model.action_space, gym.spaces.Box):
-                    clipped_action = np.clip(clipped_action,
-                                             trained_model.action_space.low,
-                                             trained_model.action_space.high)
-                obs, reward, done, infos = env.step(clipped_action)
+                    policy_output = trained_base_policy(predicted_extrinsics)
+                    action = trained_base_policy_action(policy_output[0])
+                    value = trained_base_policy_value(policy_output[1])
 
-                # Accumulate loss
-                loss = criterion(predicted_extrinsics, target_extrinsics)
-                loss.backward()
-                running_loss += loss
+                    # Clip and perform action
+                    clipped_action = action.detach().cpu().numpy()
+                    if isinstance(trained_model.action_space, gym.spaces.Box):
+                        clipped_action = np.clip(clipped_action,
+                                                 trained_model.action_space.low,
+                                                 trained_model.action_space.high)
+                    obs, reward, done, infos = env.step(clipped_action)
 
-                # Optimize per mini batch
-                if (i+1) % minibatch_size == 0:
-                    optimizer.step()
-                    optimizer.zero_grad()
+                    # Accumulate predictions and targets
+                    predictions.append(predicted_extrinsics)
+                    targets.append(target_extrinsics)
+
+            # Optimize
+            predictions = th.cat(predictions, dim=0)
+            targets = th.cat(targets, dim=0)
+            loss = criterion(predictions, targets)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+
             # Print stats
             if not args.no_save:
                 with open(statsfile, 'a') as f:
                     writer = csv.writer(f, delimiter=',')
-                    writer.writerow([epoch, running_loss.item()])
+                    writer.writerow([epoch, loss.item()])
             if (epoch+1) % 10 == 0:
-                print(f'epoch {epoch}, running loss: {running_loss}')
+                print(f'epoch {epoch}, loss: {loss}')
     except KeyboardInterrupt:
         # Allow saving of model when training is interrupted
         pass
