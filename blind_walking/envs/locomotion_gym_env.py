@@ -26,9 +26,9 @@ import pybullet_data as pd
 from blind_walking.robots import robot_config
 from blind_walking.envs.sensors import sensor
 from blind_walking.envs.sensors import space_utils
-from blind_walking.envs.env_wrappers.heightfield import HeightField
-from blind_walking.envs.env_wrappers.collapsibleplatform import CollapsiblePlatform
-from blind_walking.envs.env_wrappers.stairs import Stairs
+from blind_walking.envs.env_modifications.heightfield import HeightField
+from blind_walking.envs.env_modifications.collapsibleplatform import CollapsiblePlatform
+from blind_walking.envs.env_modifications.stairs import Stairs
 
 
 _ACTION_EPS = 0.01
