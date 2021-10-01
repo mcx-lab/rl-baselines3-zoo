@@ -16,6 +16,12 @@ import pybullet_data as pd
 import math
 import time
 
+import random
+random.seed(10)
+
+from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
+
+
 textureId = -1
 
 useProgrammatic = 0
@@ -26,17 +32,15 @@ updateHeightfield = False
 heightfieldSource = useProgrammatic
 numHeightfieldRows = 256
 numHeightfieldColumns = 256
-import random
-random.seed(10)
 
-
-class HeightField():
+class HeightField(EnvModifier):
     def __init__(self):
         self.hf_id = 0
         self.terrainShape = 0
         self.heightfieldData = [0] * numHeightfieldRows * numHeightfieldColumns
+        super().__init__()
 
-    def _generate_field(self, env, heightPerturbationRange=0.08, friction=0.5):
+    def _generate(self, env, heightPerturbationRange=0.08, friction=0.5):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         env.pybullet_client.configureDebugVisualizer(
             env.pybullet_client.COV_ENABLE_RENDERING, 0)
@@ -109,7 +113,7 @@ class HeightField():
         env.pybullet_client.configureDebugVisualizer(
             env.pybullet_client.COV_ENABLE_RENDERING, 1)
 
-    def UpdateHeightField(self, heightPerturbationRange=0.08):
+    def _reset(self, heightPerturbationRange=0.08):
         if heightfieldSource == useProgrammatic:
             for j in range(int(numHeightfieldColumns / 2)):
                 for i in range(int(numHeightfieldRows / 2)):

@@ -1,15 +1,19 @@
 import pybullet as p
 
+from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
-class Stairs():
 
-    def _generate_field(self,
-                        env,
-                        start_x=3,
-                        num_steps=5,
-                        step_rise=0.1,
-                        step_run=0.2,
-                        friction=0.5):
+class Stairs(EnvModifier):
+
+    def __init__(self):
+        super().__init__()
+    
+    def _generate(self, env,
+                  start_x=3,
+                  num_steps=5,
+                  step_rise=0.1,
+                  step_run=0.2,
+                  friction=0.5):
         env.pybullet_client.configureDebugVisualizer(
             env.pybullet_client.COV_ENABLE_RENDERING, 0)
 

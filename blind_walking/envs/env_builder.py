@@ -19,6 +19,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_split_by_enco
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
 from blind_walking.envs.env_wrappers import simple_openloop
+from blind_walking.envs.env_modifiers import heightfield, stairs
 from blind_walking.envs.tasks import forward_task, forward_task_pos
 from blind_walking.envs.sensors import robot_sensors, environment_sensors
 from blind_walking.robots import a1
@@ -59,6 +60,8 @@ def build_regular_env(robot_class,
 
   env_randomizer_list = []
 
+  env_modifier_list = []
+
   task = forward_task.ForwardTask()
 
   env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
@@ -66,7 +69,8 @@ def build_regular_env(robot_class,
                                             robot_sensors=robot_sensor_list,
                                             env_sensors=env_sensor_list,
                                             task=task,
-                                            env_randomizers=env_randomizer_list)
+                                            env_randomizers=env_randomizer_list,
+                                            env_modifiers=env_modifier_list,)
 
   # env = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(env)
   env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
