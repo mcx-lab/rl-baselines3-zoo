@@ -40,7 +40,7 @@ class HeightField(EnvModifier):
         self.heightfieldData = [0] * numHeightfieldRows * numHeightfieldColumns
         super().__init__()
 
-    def _generate(self, env, heightPerturbationRange=0.08, friction=0.5):
+    def _generate(self, env, start_x=0, heightPerturbationRange=0.08, friction=0.5):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         env.pybullet_client.configureDebugVisualizer(
             env.pybullet_client.COV_ENABLE_RENDERING, 0)
@@ -67,7 +67,7 @@ class HeightField(EnvModifier):
                 numHeightfieldColumns=numHeightfieldColumns)
             terrain = env.pybullet_client.createMultiBody(0, terrainShape)
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [0, 0, 0.0], [0, 0, 0, 1])
+                terrain, [start_x, 0, 0.0], [0, 0, 0, 1])
             env.pybullet_client.changeDynamics(terrain,
                                                -1,
                                                lateralFriction=friction)
@@ -80,7 +80,7 @@ class HeightField(EnvModifier):
                 heightfieldTextureScaling=128)
             terrain = env.pybullet_client.createMultiBody(0, terrainShape)
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [0, 0, 0], [0, 0, 0, 1])
+                terrain, [start_x, 0, 0], [0, 0, 0, 1])
             env.pybullet_client.changeDynamics(terrain,
                                                -1,
                                                lateralFriction=friction)
@@ -97,7 +97,7 @@ class HeightField(EnvModifier):
                                                   -1,
                                                   textureUniqueId=textureId)
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [0, 0, 0.1], [0, 0, 0, 1])
+                terrain, [start_x, 0, 0.1], [0, 0, 0, 1])
             env.pybullet_client.changeDynamics(terrain,
                                                -1,
                                                lateralFriction=friction)
