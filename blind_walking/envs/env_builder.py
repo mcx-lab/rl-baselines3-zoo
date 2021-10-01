@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for building environments."""
+from os import environ
 from blind_walking.envs import locomotion_gym_env
 from blind_walking.envs import locomotion_gym_config
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
@@ -55,14 +56,8 @@ def build_regular_env(robot_class,
 
   env_sensor_list = [
     environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-<<<<<<< HEAD
-    environment_sensors.ControllerKpCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
-    environment_sensors.ControllerKdCoefficientSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
-    environment_sensors.MotorStrengthRatiosSensor(num_motors=a1.NUM_MOTORS, enc_name='mlp'),
-    environment_sensors.LocalDistancesToGroundSensor(enc_name='mlp')
-=======
-    environment_sensors.TargetPositionSensor()
->>>>>>> master
+    environment_sensors.TargetPositionSensor(),
+    environment_sensors.LocalDistancesToGroundSensor()
   ]
 
   env_randomizer_list = []
