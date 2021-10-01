@@ -387,6 +387,14 @@ class LocomotionGymEnv(gym.Env):
     """Set simulation ground model."""
     self._world_dict['ground'] = ground_id
 
+  def get_state(self):
+    """ Bullet internally saves an in-memory copy of the world state and return a state_id referencing it """
+    return self._pybullet_client.saveState()
+
+  def set_state(self, state_id):
+    """ Takes the state_id returned from get_state() and restores the associated world state """
+    return self._pybullet_client.restoreState(stateId = state_id)
+
   @property
   def rendering_enabled(self):
     return self._is_render

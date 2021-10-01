@@ -56,13 +56,14 @@ def build_regular_env(robot_class,
 
   env_sensor_list = [
     environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+    environment_sensors.TargetPositionSensor()
   ]
 
   env_randomizer_list = []
 
   env_modifier_list = []
 
-  task = forward_task.ForwardTask()
+  task = forward_task_pos.ForwardTask()
 
   env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
                                             robot_class=robot_class,
@@ -72,7 +73,6 @@ def build_regular_env(robot_class,
                                             env_randomizers=env_randomizer_list,
                                             env_modifiers=env_modifier_list,)
 
-  # env = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(env)
   env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
   if (motor_control_mode
       == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
