@@ -19,7 +19,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_split_by_enco
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
 from blind_walking.envs.env_wrappers import simple_openloop
-from blind_walking.envs.env_wrappers import forward_task, forward_task_pos
+from blind_walking.envs.tasks import forward_task, forward_task_pos
 from blind_walking.envs.sensors import robot_sensors, environment_sensors
 from blind_walking.robots import a1
 from blind_walking.robots import laikago
