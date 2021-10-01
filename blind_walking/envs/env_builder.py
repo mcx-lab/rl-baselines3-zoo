@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for building environments."""
-from os import environ
 from blind_walking.envs import locomotion_gym_env
 from blind_walking.envs import locomotion_gym_config
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
