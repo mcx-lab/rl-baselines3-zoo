@@ -36,7 +36,7 @@ class HeightField():
         self.terrainShape = 0
         self.heightfieldData = [0] * numHeightfieldRows * numHeightfieldColumns
 
-    def _generate_field(self, env, heightPerturbationRange=0.08, friction=1.0):
+    def _generate_field(self, env, heightPerturbationRange=0.08, friction=0.5):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         env.pybullet_client.configureDebugVisualizer(
             env.pybullet_client.COV_ENABLE_RENDERING, 0)

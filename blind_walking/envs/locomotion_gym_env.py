@@ -28,6 +28,7 @@ from blind_walking.envs.sensors import sensor
 from blind_walking.envs.sensors import space_utils
 from blind_walking.envs.env_wrappers.heightfield import HeightField
 from blind_walking.envs.env_wrappers.collapsibleplatform import CollapsiblePlatform
+from blind_walking.envs.env_wrappers.stairs import Stairs
 
 
 _ACTION_EPS = 0.01
@@ -128,9 +129,11 @@ class LocomotionGymEnv(gym.Env):
     self._render_width = gym_config.simulation_parameters.render_width
     self._render_height = gym_config.simulation_parameters.render_height
 
+    # Update terrain options after reset
     self.height_field = False
     self.collapsible_tile = False
     self.collapsible_platform = False
+    self.stairs = False
 
     self._hard_reset = True
     self.reset()
@@ -147,9 +150,11 @@ class LocomotionGymEnv(gym.Env):
     self.height_field = self.terrain_type == 1
     self.collapsible_tile = self.terrain_type == 2
     self.collapsible_platform = self.terrain_type == 3
+    self.stairs = self.terrain_type == 4
     # Terrain generators
     self.hf = HeightField()
     self.cp = CollapsiblePlatform()
+    self.st = Stairs()
 
     # Set the default height field options.
     self.height_field_iters = gym_config.simulation_parameters.height_field_iters
@@ -168,6 +173,8 @@ class LocomotionGymEnv(gym.Env):
     elif self.collapsible_platform:
       self.cp._generate_soft_env(self)
       self._hard_reset = True
+    elif self.stairs:
+      self.st._generate_field(self)
 
   def _build_action_space(self):
     """Builds action space based on motor control mode."""
