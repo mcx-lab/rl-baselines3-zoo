@@ -391,7 +391,7 @@ class A1(minitaur.Minitaur):
       distance_to_ground = data[2] * 2 * max_height
     return max_height - distance_to_ground
 
-  def GetLocalDistancesToGround(self, grid_unit = 0.1, grid_size = 16):
+  def GetLocalDistancesToGround(self, grid_unit = 0.05, grid_size = 16):
     """ Get the vertical distance from base height to ground in a NxN grid around the robot. 
     
     Args:

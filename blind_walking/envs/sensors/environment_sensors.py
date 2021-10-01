@@ -313,7 +313,7 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
   """A sensor that detects the local terrain height around the robot """
 
   def __init__(self,
-               grid_unit: float = 0.1, 
+               grid_unit: float = 0.05, 
                grid_size: int = 16,
                lower_bound: _FLOAT_OR_ARRAY = -100,
                upper_bound: _FLOAT_OR_ARRAY = 100,
