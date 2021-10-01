@@ -32,7 +32,8 @@ class ControllableEnvRandomizerFromConfig(
                config=None,
                verbose=True,
                param_bounds=(-1., 1.),
-               randomization_seed=None):
+               randomization_seed=None,
+               step_sample_prob=0.004):
     if config is None:
       config = "all_params"
     try:
@@ -49,6 +50,7 @@ class ControllableEnvRandomizerFromConfig(
     self._suspend_randomization = False
     self._verbose = verbose
     self._rejection_param_range = {}
+    self._step_sample_prob = step_sample_prob
 
     self._np_random = np.random.RandomState()
 
@@ -79,6 +81,11 @@ class ControllableEnvRandomizerFromConfig(
           randomized_value > reject_random_range[1]):
         return False
     return True
+
+  def randomize_step(self, env):
+    gen = np.random.uniform()
+    if np.random.uniform() < self._step_sample_prob:
+      self.randomize_env(env)
 
   def randomize_env(self, env):
     """Randomize various physical properties of the environment.

@@ -84,8 +84,8 @@ class MotorVelocitySensor(sensor.BoxSpaceSensor):
   def __init__(self,
                num_motors: int,
                noisy_reading: bool = True,
-               lower_bound: _FLOAT_OR_ARRAY = -100,
-               upper_bound: _FLOAT_OR_ARRAY = 100,
+               lower_bound: _FLOAT_OR_ARRAY = -10,
+               upper_bound: _FLOAT_OR_ARRAY = 10,
                name: typing.Text = "MotorVelocity",
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs MotorVelocitySensor.

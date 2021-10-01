@@ -67,7 +67,7 @@ class ForwardTask(object):
         self.current_foot_contacts = env.robot.GetFootContacts()
 
         # Update relative target position
-        self._target_pos = env._observations['TargetPosition']
+        self._target_pos = env._observations['TargetPosition_flatten']
 
     def done(self, env):
         """Checks if the episode is over.

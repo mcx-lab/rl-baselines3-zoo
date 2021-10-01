@@ -66,7 +66,7 @@ class LastActionSensor(sensor.BoxSpaceSensor):
     """Returns the last action of the environment."""
     return self._env.last_action
 
-class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
+class ControllerKpSensor(sensor.BoxSpaceSensor):
   """ 
   A sensor that reports the Kp coefficients 
   used in the PD controller that converts angles to torques
@@ -76,11 +76,11 @@ class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
                num_motors: int,
                lower_bound: _FLOAT_OR_ARRAY = 0,
                upper_bound: _FLOAT_OR_ARRAY = 100,
-               name: typing.Text = "ControllerKpCoefficient",
+               name: typing.Text = "ControllerKp",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
 
-    """Constructs ControllerKpCoefficientSensor.
+    """Constructs ControllerKpSensor.
     Args:
       lower_bound: the lower bound of the gains
       upper_bound: the upper bound of the gains
@@ -89,12 +89,12 @@ class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
     """
     self._env = None
 
-    super(ControllerKpCoefficientSensor, self).__init__(name=name,
-                                                        shape=(num_motors,),
-                                                        enc_name=enc_name,
-                                                        lower_bound=lower_bound,
-                                                        upper_bound=upper_bound,
-                                                        dtype=dtype)
+    super(ControllerKpSensor, self).__init__(name=name,
+                                             shape=(num_motors,),
+                                             enc_name=enc_name,
+                                             lower_bound=lower_bound,
+                                             upper_bound=upper_bound,
+                                             dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -107,7 +107,7 @@ class ControllerKpCoefficientSensor(sensor.BoxSpaceSensor):
     """Returns the Kp coefficients. """
     return self._env.robot.GetMotorPositionGains()
 
-class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
+class ControllerKdSensor(sensor.BoxSpaceSensor):
   """ 
   A sensor that reports the Kd coefficients 
   used in the PD controller that converts angles to torques
@@ -117,10 +117,10 @@ class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
                num_motors: int,
                lower_bound: _FLOAT_OR_ARRAY = 0.0,
                upper_bound: _FLOAT_OR_ARRAY = 2.0,
-               name: typing.Text = "ControllerKdCoefficient",
+               name: typing.Text = "ControllerKd",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
-    """Constructs ControllerKdCoefficientSensor.
+    """Constructs ControllerKdSensor.
     Args:
       lower_bound: the lower bound of the gain
       upper_bound: the upper bound of the gain
@@ -129,12 +129,12 @@ class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
     """
     self._env = None
 
-    super(ControllerKdCoefficientSensor, self).__init__(name=name,
-                                                        shape=(num_motors,),
-                                                        enc_name=enc_name,
-                                                        lower_bound=lower_bound,
-                                                        upper_bound=upper_bound,
-                                                        dtype=dtype)
+    super(ControllerKdSensor, self).__init__(name=name,
+                                             shape=(num_motors,),
+                                             enc_name=enc_name,
+                                             lower_bound=lower_bound,
+                                             upper_bound=upper_bound,
+                                             dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -144,10 +144,10 @@ class ControllerKdCoefficientSensor(sensor.BoxSpaceSensor):
     self._env = env
  
   def _get_observation(self) -> _ARRAY:
-    """Returns the Kd coefficients. """
+    """Returns the Kd coefficients."""
     return self._env._robot.GetMotorVelocityGains()
 
-class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
+class MotorStrengthSensor(sensor.BoxSpaceSensor):
   """ 
   A sensor that reports the relative motor strength for each joint
   """
@@ -156,10 +156,10 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
                num_motors: int,
                lower_bound: _FLOAT_OR_ARRAY = 0.0,
                upper_bound: _FLOAT_OR_ARRAY = 1.5,
-               name: typing.Text = "MotorStrengthRatios",
+               name: typing.Text = "MotorStrength",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
-    """Constructs MotorStrengthRatiosSensor.
+    """Constructs MotorStrengthSensor.
     Args:
       lower_bound: the lower bound of the gains
       upper_bound: the upper bound of the gains
@@ -168,12 +168,12 @@ class MotorStrengthRatiosSensor(sensor.BoxSpaceSensor):
     """
     self._env = None
 
-    super(MotorStrengthRatiosSensor, self).__init__(name=name,
-                                                    shape=(num_motors,),
-                                                    enc_name=enc_name,
-                                                    lower_bound=lower_bound,
-                                                    upper_bound=upper_bound,
-                                                    dtype=dtype)
+    super(MotorStrengthSensor, self).__init__(name=name,
+                                              shape=(num_motors,),
+                                              enc_name=enc_name,
+                                              lower_bound=lower_bound,
+                                              upper_bound=upper_bound,
+                                              dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
