@@ -32,6 +32,7 @@ python -m pip install -e .
 To install developer dependencies:
 ```
 python -m pip install -e .[dev]
+pre-commit install
 ```
 
 ## Train an Agent
