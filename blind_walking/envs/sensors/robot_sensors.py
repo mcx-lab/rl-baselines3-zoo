@@ -14,11 +14,11 @@
 # limitations under the License.
 
 """Simple sensors related to the robot."""
-import numpy as np
 import typing
 
-from blind_walking.robots import minitaur_pose_utils
+import numpy as np
 from blind_walking.envs.sensors import sensor
+from blind_walking.robots import minitaur_pose_utils
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint: disable=invalid-name
@@ -216,11 +216,7 @@ class MinitaurLegPoseSensor(sensor.BoxSpaceSensor):
             )
 
     def _get_observation(self) -> _ARRAY:
-        motor_angles = (
-            self._robot.GetMotorAngles()
-            if self._noisy_reading
-            else self._robot.GetTrueMotorAngles()
-        )
+        motor_angles = self._robot.GetMotorAngles() if self._noisy_reading else self._robot.GetTrueMotorAngles()
         leg_pose = minitaur_pose_utils.motor_angles_to_leg_pose(motor_angles)
         if self._observe_sine_cosine:
             return np.hstack((np.cos(leg_pose), np.sin(leg_pose)))
@@ -330,9 +326,7 @@ class BaseDisplacementSensor(sensor.BoxSpaceSensor):
             dtype=dtype,
         )
 
-        datatype = [
-            ("{}_{}".format(name, channel), self._dtype) for channel in self._channels
-        ]
+        datatype = [("{}_{}".format(name, channel), self._dtype) for channel in self._channels]
         self._datatype = datatype
         self._convert_to_local_frame = convert_to_local_frame
 
@@ -434,9 +428,7 @@ class IMUSensor(sensor.BoxSpaceSensor):
         )
 
         # Compute the observation_datatype
-        datatype = [
-            ("{}_{}".format(name, channel), self._dtype) for channel in self._channels
-        ]
+        datatype = [("{}_{}".format(name, channel), self._dtype) for channel in self._channels]
 
         self._datatype = datatype
 

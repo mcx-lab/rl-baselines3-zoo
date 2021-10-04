@@ -15,8 +15,8 @@
 
 """Motor model for laikago."""
 import collections
-import numpy as np
 
+import numpy as np
 from blind_walking.robots import robot_config
 
 NUM_MOTORS = 12
@@ -131,9 +131,7 @@ class LaikagoMotorModel(object):
             motor_control_mode = self._motor_control_mode
 
         if motor_control_mode is robot_config.MotorControlMode.PWM:
-            raise ValueError(
-                "{} is not a supported motor control mode".format(motor_control_mode)
-            )
+            raise ValueError("{} is not a supported motor control mode".format(motor_control_mode))
 
         # No processing for motor torques
         if motor_control_mode is robot_config.MotorControlMode.TORQUE:
@@ -157,12 +155,8 @@ class LaikagoMotorModel(object):
             assert len(motor_commands) == MOTOR_COMMAND_DIMENSION * NUM_MOTORS
             kp = motor_commands[POSITION_GAIN_INDEX::MOTOR_COMMAND_DIMENSION]
             kd = motor_commands[VELOCITY_GAIN_INDEX::MOTOR_COMMAND_DIMENSION]
-            desired_motor_angles = motor_commands[
-                POSITION_INDEX::MOTOR_COMMAND_DIMENSION
-            ]
-            desired_motor_velocities = motor_commands[
-                VELOCITY_INDEX::MOTOR_COMMAND_DIMENSION
-            ]
+            desired_motor_angles = motor_commands[POSITION_INDEX::MOTOR_COMMAND_DIMENSION]
+            desired_motor_velocities = motor_commands[VELOCITY_INDEX::MOTOR_COMMAND_DIMENSION]
             additional_torques = motor_commands[TORQUE_INDEX::MOTOR_COMMAND_DIMENSION]
         motor_torques = (
             -1 * (kp * (motor_angle - desired_motor_angles))
@@ -172,11 +166,7 @@ class LaikagoMotorModel(object):
         motor_torques = self._strength_ratios * motor_torques
         if self._torque_limits is not None:
             if len(self._torque_limits) != len(motor_torques):
-                raise ValueError(
-                    "Torque limits dimension does not match the number of motors."
-                )
-            motor_torques = np.clip(
-                motor_torques, -1.0 * self._torque_limits, self._torque_limits
-            )
+                raise ValueError("Torque limits dimension does not match the number of motors.")
+            motor_torques = np.clip(motor_torques, -1.0 * self._torque_limits, self._torque_limits)
 
         return motor_torques, motor_torques

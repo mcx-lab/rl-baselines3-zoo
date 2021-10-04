@@ -16,19 +16,19 @@
 # Lint as: python2, python3
 """An environment randomizer that randomizes physical parameters from config."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-from absl import logging
 import functools
 import random
+
 import numpy as np
 import six
-from blind_walking.envs.utilities import env_randomizer_base
-from blind_walking.envs.utilities import minitaur_env_randomizer_config
+from absl import logging
+from blind_walking.envs.utilities import env_randomizer_base, minitaur_env_randomizer_config
 
 SIMULATION_TIME_STEP = 0.001
+
+# flake8: noqa
 
 
 class MinitaurEnvRandomizerFromConfig(env_randomizer_base.EnvRandomizerBase):
@@ -42,9 +42,7 @@ class MinitaurEnvRandomizerFromConfig(env_randomizer_base.EnvRandomizerBase):
         except AttributeError:
             raise ValueError("Config {} is not found.".format(config))
         self._randomization_param_dict = config()
-        logging.info(
-            "Randomization config is: {}".format(self._randomization_param_dict)
-        )
+        logging.info("Randomization config is: {}".format(self._randomization_param_dict))
 
     def randomize_env(self, env):
         """Randomize various physical properties of the environment.
@@ -56,12 +54,10 @@ class MinitaurEnvRandomizerFromConfig(env_randomizer_base.EnvRandomizerBase):
         """
         self._randomization_function_dict = self._build_randomization_function_dict(env)
         for param_name, random_range in six.iteritems(self._randomization_param_dict):
-            self._randomization_function_dict[param_name](
-                lower_bound=random_range[0], upper_bound=random_range[1]
-            )
+            self._randomization_function_dict[param_name](lower_bound=random_range[0], upper_bound=random_range[1])
 
     def _get_robot_from_env(self, env):
-        if hasattr(env, "minitaur"):  #  Compabible with v1 envs.
+        if hasattr(env, "minitaur"):  # Compabible with v1 envs.
             return env.minitaur
         elif hasattr(env, "robot"):  # Compatible with v2 envs.
             return env.robot
@@ -72,34 +68,16 @@ class MinitaurEnvRandomizerFromConfig(env_randomizer_base.EnvRandomizerBase):
         func_dict = {}
         robot = self._get_robot_from_env(env)
         func_dict["mass"] = functools.partial(self._randomize_masses, minitaur=robot)
-        func_dict["inertia"] = functools.partial(
-            self._randomize_inertia, minitaur=robot
-        )
-        func_dict["latency"] = functools.partial(
-            self._randomize_latency, minitaur=robot
-        )
-        func_dict["joint friction"] = functools.partial(
-            self._randomize_joint_friction, minitaur=robot
-        )
-        func_dict["motor friction"] = functools.partial(
-            self._randomize_motor_friction, minitaur=robot
-        )
-        func_dict["restitution"] = functools.partial(
-            self._randomize_contact_restitution, minitaur=robot
-        )
-        func_dict["lateral friction"] = functools.partial(
-            self._randomize_contact_friction, minitaur=robot
-        )
-        func_dict["battery"] = functools.partial(
-            self._randomize_battery_level, minitaur=robot
-        )
-        func_dict["motor strength"] = functools.partial(
-            self._randomize_motor_strength, minitaur=robot
-        )
+        func_dict["inertia"] = functools.partial(self._randomize_inertia, minitaur=robot)
+        func_dict["latency"] = functools.partial(self._randomize_latency, minitaur=robot)
+        func_dict["joint friction"] = functools.partial(self._randomize_joint_friction, minitaur=robot)
+        func_dict["motor friction"] = functools.partial(self._randomize_motor_friction, minitaur=robot)
+        func_dict["restitution"] = functools.partial(self._randomize_contact_restitution, minitaur=robot)
+        func_dict["lateral friction"] = functools.partial(self._randomize_contact_friction, minitaur=robot)
+        func_dict["battery"] = functools.partial(self._randomize_battery_level, minitaur=robot)
+        func_dict["motor strength"] = functools.partial(self._randomize_motor_strength, minitaur=robot)
         # Settinmg control step needs access to the environment.
-        func_dict["control step"] = functools.partial(
-            self._randomize_control_step, env=env
-        )
+        func_dict["control step"] = functools.partial(self._randomize_control_step, env=env)
         return func_dict
 
     def _randomize_control_step(self, env, lower_bound, upper_bound):
@@ -139,9 +117,7 @@ class MinitaurEnvRandomizerFromConfig(env_randomizer_base.EnvRandomizerBase):
 
     def _randomize_joint_friction(self, minitaur, lower_bound, upper_bound):
         num_knee_joints = minitaur.GetNumKneeJoints()
-        randomized_joint_frictions = np.random.uniform(
-            [lower_bound] * num_knee_joints, [upper_bound] * num_knee_joints
-        )
+        randomized_joint_frictions = np.random.uniform([lower_bound] * num_knee_joints, [upper_bound] * num_knee_joints)
         minitaur.SetJointFriction(randomized_joint_frictions)
         logging.info("joint friction is: {}".format(randomized_joint_frictions))
 

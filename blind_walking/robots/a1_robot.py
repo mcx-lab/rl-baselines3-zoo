@@ -15,18 +15,14 @@
 # pytype: disable=attribute-error
 """Real robot interface of A1 robot."""
 
-from absl import logging
 import math
 import re
-import numpy as np
 import time
 
-from blind_walking.robots import laikago_pose_utils
-from blind_walking.robots import a1
-from blind_walking.robots import a1_robot_velocity_estimator
-from blind_walking.robots import minitaur
-from blind_walking.robots import robot_config
+import numpy as np
+from absl import logging
 from blind_walking.envs import locomotion_gym_config
+from blind_walking.robots import a1, a1_robot_velocity_estimator, laikago_pose_utils, minitaur, robot_config
 from robot_interface import RobotInterface  # pytype: disable=import-error
 
 NUM_MOTORS = 12
@@ -52,9 +48,7 @@ HIP_JOINT_OFFSET = 0.0
 UPPER_LEG_JOINT_OFFSET = 0.0
 KNEE_JOINT_OFFSET = 0.0
 DOFS_PER_LEG = 3
-JOINT_OFFSETS = np.array(
-    [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4
-)
+JOINT_OFFSETS = np.array([HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4)
 PI = math.pi
 
 MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
@@ -105,45 +99,29 @@ class A1Robot(a1.A1):
 
     MPC_BODY_HEIGHT = 0.24
     ACTION_CONFIG = [
-        locomotion_gym_config.ScalarField(
-            name="FR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="FR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="FR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="FR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="FR_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="FL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="FL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="FL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="FL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="FL_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="RR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="RR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="RR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="RR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="RR_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="RL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="RL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="RL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="RL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="RL_lower_joint",
             upper_bound=-0.916297857297,
@@ -193,9 +171,7 @@ class A1Robot(a1.A1):
         self._base_orientation_rpy = np.array([rpy[0], rpy[1], rpy[2]])
         self._motor_angles = np.array([motor.q for motor in state.motorState[:12]])
         self._motor_velocities = np.array([motor.dq for motor in state.motorState[:12]])
-        self._joint_states = np.array(
-            list(zip(self._motor_angles, self._motor_velocities))
-        )
+        self._joint_states = np.array(list(zip(self._motor_angles, self._motor_velocities)))
         if self._init_complete:
             # self._SetRobotStateInSim(self._motor_angles, self._motor_velocities)
             self._velocity_estimator.update(self._raw_state)
@@ -205,9 +181,7 @@ class A1Robot(a1.A1):
             self.quadruped, self.GetBasePosition(), self.GetBaseOrientation()
         )
         for i, motor_id in enumerate(self._motor_id_list):
-            self._pybullet_client.resetJointState(
-                self.quadruped, motor_id, motor_angles[i], motor_velocities[i]
-            )
+            self._pybullet_client.resetJointState(self.quadruped, motor_id, motor_angles[i], motor_velocities[i])
 
     def GetTrueMotorAngles(self):
         return self._motor_angles.copy()
@@ -272,11 +246,7 @@ class A1Robot(a1.A1):
         elif motor_control_mode == robot_config.MotorControlMode.HYBRID:
             command = np.array(motor_commands, dtype=np.float32)
         else:
-            raise ValueError(
-                "Unknown motor control mode for A1 robot: {}.".format(
-                    motor_control_mode
-                )
-            )
+            raise ValueError("Unknown motor control mode for A1 robot: {}.".format(motor_control_mode))
 
         self._robot_interface.send_command(command)
 
@@ -298,10 +268,7 @@ class A1Robot(a1.A1):
         standup_time = min(reset_time, 1.5)
         for t in np.arange(0, reset_time, self.time_step * self._action_repeat):
             blend_ratio = min(t / standup_time, 1)
-            action = (
-                blend_ratio * default_motor_angles
-                + (1 - blend_ratio) * current_motor_angles
-            )
+            action = blend_ratio * default_motor_angles + (1 - blend_ratio) * current_motor_angles
             self.Step(action, robot_config.MotorControlMode.POSITION)
             time.sleep(self.time_step * self._action_repeat)
 

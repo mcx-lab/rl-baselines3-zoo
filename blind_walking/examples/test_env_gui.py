@@ -1,15 +1,11 @@
 """Simple script for executing random actions on A1 robot."""
 
-from absl import app
-from absl import flags
 import numpy as np
-from tqdm import tqdm
 import pybullet as p  # pytype: disable=import-error
-
+from absl import app, flags
 from blind_walking.envs import env_builder
-from blind_walking.robots import a1
-from blind_walking.robots import laikago
-from blind_walking.robots import robot_config
+from blind_walking.robots import a1, laikago, robot_config
+from tqdm import tqdm
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("robot_type", "A1", ["A1", "Laikago"], "Robot Type.")
@@ -61,9 +57,7 @@ def main(_):
     for _ in tqdm(range(800)):
         action = np.zeros(dim_action)
         for dim in range(dim_action):
-            action[dim] = env.pybullet_client.readUserDebugParameter(
-                action_selector_ids[dim]
-            )
+            action[dim] = env.pybullet_client.readUserDebugParameter(action_selector_ids[dim])
         env.step(action)
 
     if FLAGS.video_dir:

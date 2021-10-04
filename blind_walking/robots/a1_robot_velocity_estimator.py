@@ -76,9 +76,7 @@ class VelocityEstimator:
             if foot_contact[leg_id]:
                 jacobian = self.robot.ComputeJacobian(leg_id)
                 # Only pick the jacobian related to joint motors
-                joint_velocities = self.robot.motor_velocities[
-                    leg_id * 3 : (leg_id + 1) * 3
-                ]
+                joint_velocities = self.robot.motor_velocities[leg_id * 3 : (leg_id + 1) * 3]
                 leg_velocity_in_base_frame = jacobian.dot(joint_velocities)
                 base_velocity_in_base_frame = -leg_velocity_in_base_frame[:3]
                 observed_velocities.append(rot_mat.dot(base_velocity_in_base_frame))

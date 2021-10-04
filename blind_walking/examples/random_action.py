@@ -1,13 +1,9 @@
 """Simple script for executing random actions on A1 robot."""
 
-from absl import app
-from absl import flags
-from tqdm import tqdm
-
+from absl import app, flags
 from blind_walking.envs import env_builder
-from blind_walking.robots import a1
-from blind_walking.robots import laikago
-from blind_walking.robots import robot_config
+from blind_walking.robots import a1, laikago, robot_config
+from tqdm import tqdm
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("robot_type", "A1", ["A1", "Laikago"], "Robot Type.")

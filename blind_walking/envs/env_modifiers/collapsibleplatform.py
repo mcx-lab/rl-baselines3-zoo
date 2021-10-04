@@ -1,11 +1,11 @@
-import pybullet as p
-import pybullet_data as pd
 import os
-import numpy as np
-import pyquaternion
+import random
 import time
 
-import random
+import numpy as np
+import pybullet as p
+import pybullet_data as pd
+import pyquaternion
 
 random.seed(10)
 
@@ -95,17 +95,11 @@ class CollapsiblePlatform(EnvModifier):
                 assert resolution < testing_area_x and resolution < testing_area_y
                 n_x_grid = int(np.floor(testing_area_x / resolution))
                 n_y_grid = int(np.floor(testing_area_y / resolution))
-                assert (
-                    n_x_grid * n_y_grid < 32000 - 2
-                )  # assuming 2 other bodies in map, plane and robot
-                n_x_clear_grid = np.floor(
-                    clearance_area_x / resolution
-                )  # No. of clearance grids
+                assert n_x_grid * n_y_grid < 32000 - 2  # assuming 2 other bodies in map, plane and robot
+                n_x_clear_grid = np.floor(clearance_area_x / resolution)  # No. of clearance grids
                 break
             except:
-                print(
-                    "Invalid input. Please check recommended testing area size and resolution."
-                )
+                print("Invalid input. Please check recommended testing area size and resolution.")
 
         # Generate map matrix information structure
         map_mat = {
@@ -139,10 +133,7 @@ class CollapsiblePlatform(EnvModifier):
                     color_count[map_mat["color"][x][y]] += 1
             map_mat["color"][-1][-1] = "FG"
             # Check if sufficient collapsible ground
-            if (
-                color_count["R"]
-                < p_collapse_floor * (n_x_grid - n_x_clear_grid) * n_y_grid
-            ):
+            if color_count["R"] < p_collapse_floor * (n_x_grid - n_x_clear_grid) * n_y_grid:
                 continue
 
             # Verify if map is valid
@@ -160,12 +151,7 @@ class CollapsiblePlatform(EnvModifier):
                         for x, y in directions:
                             r_new = r + x
                             c_new = c + y
-                            if (
-                                r_new < 0
-                                or r_new >= n_x_grid
-                                or c_new < 0
-                                or c_new >= n_y_grid
-                            ):
+                            if r_new < 0 or r_new >= n_x_grid or c_new < 0 or c_new >= n_y_grid:
                                 continue
                             if res[r_new][c_new] == "FG":
                                 return True
@@ -285,22 +271,11 @@ class CollapsiblePlatform(EnvModifier):
                     )  # red - R
                 if map_mat["color"][x][y] != "G":
                     # ground anchor on vertices 4,5,6,7.
-                    env.pybullet_client.createSoftBodyAnchor(
-                        map_mat["obj_id"][x][y], 4, -1, -1
-                    )
-                    env.pybullet_client.createSoftBodyAnchor(
-                        map_mat["obj_id"][x][y], 5, -1, -1
-                    )
-                    env.pybullet_client.createSoftBodyAnchor(
-                        map_mat["obj_id"][x][y], 6, -1, -1
-                    )
-                    env.pybullet_client.createSoftBodyAnchor(
-                        map_mat["obj_id"][x][y], 7, -1, -1
-                    )
-                map_mat["collapsibility"][x].append(
-                    1041
-                    - (map_mat["sElasticStiff"][x][y] + map_mat["sDampingStiff"][x][y])
-                )
+                    env.pybullet_client.createSoftBodyAnchor(map_mat["obj_id"][x][y], 4, -1, -1)
+                    env.pybullet_client.createSoftBodyAnchor(map_mat["obj_id"][x][y], 5, -1, -1)
+                    env.pybullet_client.createSoftBodyAnchor(map_mat["obj_id"][x][y], 6, -1, -1)
+                    env.pybullet_client.createSoftBodyAnchor(map_mat["obj_id"][x][y], 7, -1, -1)
+                map_mat["collapsibility"][x].append(1041 - (map_mat["sElasticStiff"][x][y] + map_mat["sDampingStiff"][x][y]))
                 pos_y += resolution
             pos_x += resolution
             pos_y = start_base_pos_y
@@ -311,8 +286,6 @@ class CollapsiblePlatform(EnvModifier):
         print("Map generated.")
         print("TERRAIN TYPE: Collapsible Platform - Random")
 
-        env.pybullet_client.configureDebugVisualizer(
-            env.pybullet_client.COV_ENABLE_RENDERING, 1
-        )
+        env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 1)
         self.map_mat = map_mat
         # return map_mat

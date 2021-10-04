@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Converts a list of sensors to gym space."""
-import gym
-from gym import spaces
-import numpy as np
 import typing
 
+import gym
+import numpy as np
 from blind_walking.envs.sensors import sensor
+from gym import spaces
 
 
 class UnsupportedConversionError(Exception):
@@ -43,12 +43,7 @@ def convert_sensors_to_gym_space(sensors: typing.List[sensor.Sensor]) -> gym.Spa
         given list of sensors.
     """
 
-    if all(
-        [
-            isinstance(s, sensor.BoxSpaceSensor) and s.get_dimension() == 1
-            for s in sensors
-        ]
-    ):
+    if all([isinstance(s, sensor.BoxSpaceSensor) and s.get_dimension() == 1 for s in sensors]):
         return convert_1d_box_sensors_to_gym_space(sensors)
     raise UnsupportedConversionError("sensors = " + str(sensors))
 
@@ -71,12 +66,7 @@ def convert_1d_box_sensors_to_gym_space(
         data types because they are not uniform.
     """
     # Check if all sensors are 1D BoxSpaceSensors
-    if not all(
-        [
-            isinstance(s, sensor.BoxSpaceSensor) and s.get_dimension() == 1
-            for s in sensors
-        ]
-    ):
+    if not all([isinstance(s, sensor.BoxSpaceSensor) and s.get_dimension() == 1 for s in sensors]):
         raise UnsupportedConversionError("sensors = " + str(sensors))
 
     # Check if all sensors have the same data type
@@ -86,9 +76,7 @@ def convert_1d_box_sensors_to_gym_space(
 
     lower_bound = np.concatenate([s.get_lower_bound() for s in sensors])
     upper_bound = np.concatenate([s.get_upper_bound() for s in sensors])
-    observation_space = spaces.Box(
-        np.array(lower_bound), np.array(upper_bound), dtype=np.float32
-    )
+    observation_space = spaces.Box(np.array(lower_bound), np.array(upper_bound), dtype=np.float32)
     return observation_space
 
 

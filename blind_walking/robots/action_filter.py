@@ -30,13 +30,12 @@ The filter implements::
 We assume M == N.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import collections
-from absl import logging
+
 import numpy as np
+from absl import logging
 from scipy.signal import butter
 
 ACTION_FILTER_ORDER = 2
@@ -69,10 +68,7 @@ class ActionFilter(object):
 
         # Either a set of parameters per joint must be specified as a list
         # Or one filter is applied to every joint
-        if not (
-            (len(self.a) == len(self.b) == num_joints)
-            or (len(self.a) == len(self.b) == 1)
-        ):
+        if not ((len(self.a) == len(self.b) == num_joints) or (len(self.a) == len(self.b) == 1)):
             raise ValueError("Incorrect number of filter values specified")
 
         # Normalize by a[0]
@@ -160,20 +156,10 @@ class ActionFilterButter(ActionFilter):
           order: filter order
           num_joints: robot DOF
         """
-        self.lowcut = (
-            [float(x) for x in lowcut]
-            if lowcut is not None
-            else [ACTION_FILTER_LOW_CUT]
-        )
-        self.highcut = (
-            [float(x) for x in highcut]
-            if highcut is not None
-            else [ACTION_FILTER_HIGH_CUT]
-        )
+        self.lowcut = [float(x) for x in lowcut] if lowcut is not None else [ACTION_FILTER_LOW_CUT]
+        self.highcut = [float(x) for x in highcut] if highcut is not None else [ACTION_FILTER_HIGH_CUT]
         if len(self.lowcut) != len(self.highcut):
-            raise ValueError(
-                "Number of lowcut and highcut filter values should " "be the same"
-            )
+            raise ValueError("Number of lowcut and highcut filter values should " "be the same")
 
         if sampling_rate is None:
             raise ValueError("sampling_rate should be provided.")
@@ -183,9 +169,7 @@ class ActionFilterButter(ActionFilter):
 
         if np.any(self.lowcut):
             if not np.all(self.lowcut):
-                raise ValueError(
-                    "All the filters must be of the same type: " "lowpass or bandpass"
-                )
+                raise ValueError("All the filters must be of the same type: " "lowpass or bandpass")
             self.ftype = "bandpass"
         else:
             self.ftype = "lowpass"
@@ -198,8 +182,7 @@ class ActionFilterButter(ActionFilter):
 
             b, a = self.butter_filter(l, h, sampling_rate, order)
             logging.info(
-                "Butterworth filter: joint: %d, lowcut: %f, highcut: %f, "
-                "sampling rate: %d, order: %d, num joints: %d",
+                "Butterworth filter: joint: %d, lowcut: %f, highcut: %f, " "sampling rate: %d, order: %d, num joints: %d",
                 i,
                 l,
                 h,
@@ -210,9 +193,7 @@ class ActionFilterButter(ActionFilter):
             b_coeffs.append(b)
             a_coeffs.append(a)
 
-        super(ActionFilterButter, self).__init__(
-            a_coeffs, b_coeffs, order, num_joints, self.ftype
-        )
+        super(ActionFilterButter, self).__init__(a_coeffs, b_coeffs, order, num_joints, self.ftype)
 
     def butter_filter(self, lowcut, highcut, fs, order=5):
         """Returns the coefficients of a butterworth filter.
@@ -267,6 +248,4 @@ class ActionFilterExp(ActionFilter):
         order = 1
         self.ftype = "lowpass"
 
-        super(ActionFilterExp, self).__init__(
-            a_coeffs, b_coeffs, order, num_joints, self.ftype
-        )
+        super(ActionFilterExp, self).__init__(a_coeffs, b_coeffs, order, num_joints, self.ftype)

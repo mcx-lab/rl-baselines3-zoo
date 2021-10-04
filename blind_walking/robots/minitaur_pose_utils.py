@@ -15,11 +15,10 @@
 
 """Utility functions to calculate Minitaur's pose and motor angles."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import math
+
 import attr
 import numpy as np
 
@@ -67,9 +66,7 @@ def motor_angles_to_leg_pose(motor_angles):
     """
     motor_angles = np.array(motor_angles)
 
-    swings = 0.5 * np.multiply(
-        np.array(MOTOR_SIGNS), (motor_angles[1::2] - motor_angles[::2])
-    )
+    swings = 0.5 * np.multiply(np.array(MOTOR_SIGNS), (motor_angles[1::2] - motor_angles[::2]))
     extensions = 0.5 * (motor_angles[::2] + motor_angles[1::2])
 
     return np.concatenate((swings, extensions), axis=None)

@@ -1,8 +1,8 @@
-import numpy as np
-import unittest
 import collections
-import gym
+import unittest
 
+import gym
+import numpy as np
 from blind_walking.envs.env_wrappers.observation_dictionary_split_by_encoder_wrapper import (
     ObservationDictionarySplitByEncoderWrapper,
 )

@@ -1,23 +1,15 @@
-import numpy as np
-import gym
-
-from blind_walking.envs import locomotion_gym_env
-from blind_walking.envs import locomotion_gym_config
-from blind_walking.envs.env_wrappers import (
-    observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper,
-)
-from blind_walking.envs.env_wrappers import (
-    observation_dictionary_to_array_wrapper as obs_array_wrapper,
-)
-from blind_walking.envs.env_wrappers import trajectory_generator_wrapper_env
-from blind_walking.envs.env_wrappers import simple_openloop
-from blind_walking.envs.env_modifiers import heightfield, stairs
-from blind_walking.envs.tasks import forward_task, forward_task_pos
-from blind_walking.envs.sensors import robot_sensors, environment_sensors
-from blind_walking.robots import a1
-from blind_walking.robots import laikago
-from blind_walking.robots import robot_config
 from unittest import TestCase
+
+import gym
+import numpy as np
+from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
+from blind_walking.envs.env_modifiers import heightfield, stairs
+from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
+from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
+from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
+from blind_walking.envs.sensors import environment_sensors, robot_sensors
+from blind_walking.envs.tasks import forward_task, forward_task_pos
+from blind_walking.robots import a1, laikago, robot_config
 
 
 # Create a copy of _build_regular_env since this changes frequently in our codebase
@@ -40,9 +32,7 @@ def _build_regular_env(
     sim_params.enable_clip_motor_commands = True
     sim_params.robot_on_rack = on_rack
 
-    gym_config = locomotion_gym_config.LocomotionGymConfig(
-        simulation_parameters=sim_params
-    )
+    gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
 
     robot_sensor_list = [
         robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
@@ -73,22 +63,16 @@ def _build_regular_env(
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
-    if (
-        motor_control_mode == robot_config.MotorControlMode.POSITION
-    ) and wrap_trajectory_generator:
+    if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
                 env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
-                    action_limit=action_limit
-                ),
+                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
             )
         elif robot_class == a1.A1:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
                 env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
-                    action_limit=action_limit
-                ),
+                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
             )
     return env
 
@@ -128,9 +112,7 @@ class DummyA1GymEnv(gym.Env):
 def test_local_terrain_view_sensor():
     env = DummyA1GymEnv()
     grid_size = 32
-    local_terrain_view = env.robot.GetLocalTerrainViewBatch(
-        grid_unit=0.1, grid_size=grid_size
-    )
+    local_terrain_view = env.robot.GetLocalTerrainViewBatch(grid_unit=0.1, grid_size=grid_size)
     assert local_terrain_view.shape == (grid_size, grid_size)
 
     import matplotlib.pyplot as plt

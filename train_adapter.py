@@ -31,9 +31,7 @@ def main():  # noqa: C901
         required=False,
         choices=list(ALGOS.keys()),
     )
-    parser.add_argument(
-        "-n", "--n-timesteps", help="number of timesteps", default=1000, type=int
-    )
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
     parser.add_argument(
         "--num-threads",
         help="Number of threads for PyTorch (-1 to use default)",
@@ -85,9 +83,7 @@ def main():  # noqa: C901
         help="Normalize reward if applicable (trained with VecNormalize)",
     )
     parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
-    parser.add_argument(
-        "--reward-log", help="Where to log reward", default="", type=str
-    )
+    parser.add_argument("--reward-log", help="Where to log reward", default="", type=str)
     parser.add_argument(
         "--gym-packages",
         type=str,
@@ -136,17 +132,13 @@ def main():  # noqa: C901
         found = os.path.isfile(model_path)
 
     if args.load_checkpoint is not None:
-        model_path = os.path.join(
-            log_path, f"rl_model_{args.load_checkpoint}_steps.zip"
-        )
+        model_path = os.path.join(log_path, f"rl_model_{args.load_checkpoint}_steps.zip")
         found = os.path.isfile(model_path)
 
     if args.load_last_checkpoint:
         checkpoints = glob.glob(os.path.join(log_path, "rl_model_*_steps.zip"))
         if len(checkpoints) == 0:
-            raise ValueError(
-                f"No checkpoint found for {algo} on {env_id}, path: {log_path}"
-            )
+            raise ValueError(f"No checkpoint found for {algo} on {env_id}, path: {log_path}")
 
         def step_count(checkpoint_path: str) -> int:
             # path follow the pattern "rl_model_*_steps.zip", we count from the back to ignore any other _ in the path
@@ -175,18 +167,14 @@ def main():  # noqa: C901
     is_atari = ExperimentManager.is_atari(env_id)
 
     stats_path = os.path.join(log_path, env_id)
-    hyperparams, stats_path = get_saved_hyperparams(
-        stats_path, norm_reward=args.norm_reward, test_mode=True
-    )
+    hyperparams, stats_path = get_saved_hyperparams(stats_path, norm_reward=args.norm_reward, test_mode=True)
 
     # load env_kwargs if existing
     env_kwargs = {}
     args_path = os.path.join(log_path, env_id, "args.yml")
     if os.path.isfile(args_path):
         with open(args_path, "r") as f:
-            loaded_args = yaml.load(
-                f, Loader=yaml.UnsafeLoader
-            )  # pytype: disable=module-attr
+            loaded_args = yaml.load(f, Loader=yaml.UnsafeLoader)  # pytype: disable=module-attr
             if loaded_args["env_kwargs"] is not None:
                 env_kwargs = loaded_args["env_kwargs"]
     # overwrite with command line arguments
@@ -224,9 +212,7 @@ def main():  # noqa: C901
         }
 
     # Load trained model
-    trained_model = ALGOS[algo].load(
-        model_path, env=env, custom_objects=custom_objects, **kwargs
-    )
+    trained_model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
     # Get actor-critic policy which contains the feature extractor and ppo
     trained_policy = trained_model.policy
     trained_policy.eval()
@@ -258,9 +244,7 @@ def main():  # noqa: C901
         adapter_path = os.path.join(args.trained_agent_folder, "adapter.pth")
         adapter.load_state_dict(th.load(adapter_path))
         adapter.train()
-        optimizer_path = os.path.join(
-            args.trained_agent_folder, "adapter.optimizer.pth"
-        )
+        optimizer_path = os.path.join(args.trained_agent_folder, "adapter.optimizer.pth")
         optimizer.load_state_dict(th.load(optimizer_path))
 
     # File creation for saving

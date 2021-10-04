@@ -1,8 +1,8 @@
 """State estimator."""
 
-import numpy as np
 from typing import Any, Sequence
 
+import numpy as np
 from blind_walking.utilities.moving_window_filter import MovingWindowFilter
 
 _DEFAULT_WINDOW_SIZE = 20
@@ -63,13 +63,8 @@ class COMVelocityEstimator(object):
         self._com_velocity_world_frame = np.array((vx, vy, vz))
 
         base_orientation = self._robot.GetTrueBaseOrientation()
-        _, inverse_rotation = self._robot.pybullet_client.invertTransform(
-            (0, 0, 0), base_orientation
-        )
+        _, inverse_rotation = self._robot.pybullet_client.invertTransform((0, 0, 0), base_orientation)
 
-        (
-            self._com_velocity_body_frame,
-            _,
-        ) = self._robot.pybullet_client.multiplyTransforms(
+        (self._com_velocity_body_frame, _,) = self._robot.pybullet_client.multiplyTransforms(
             (0, 0, 0), inverse_rotation, self._com_velocity_world_frame, (0, 0, 0, 1)
         )

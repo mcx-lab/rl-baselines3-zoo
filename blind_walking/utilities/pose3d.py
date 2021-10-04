@@ -14,8 +14,8 @@
 # limitations under the License.
 """Utilities for 3D pose conversion."""
 import math
-import numpy as np
 
+import numpy as np
 from pybullet_utils import transformations
 
 VECTOR3_0 = np.zeros(3, dtype=np.float64)
@@ -98,10 +98,7 @@ def QuaternionNormalize(q):
     """
     q_norm = np.linalg.norm(q)
     if np.isclose(q_norm, 0.0):
-        raise ValueError(
-            "Quaternion may not be zero in QuaternionNormalize: |q| = %f, q = %s"
-            % (q_norm, q)
-        )
+        raise ValueError("Quaternion may not be zero in QuaternionNormalize: |q| = %f, q = %s" % (q_norm, q))
     return q / q_norm
 
 
@@ -125,9 +122,7 @@ def QuaternionFromAxisAngle(axis, angle):
         raise ValueError("Axis vector should have three components: %s" % axis)
     axis_norm = np.linalg.norm(axis)
     if np.isclose(axis_norm, 0.0):
-        raise ValueError(
-            "Axis vector may not have zero length: |v| = %f, v = %s" % (axis_norm, axis)
-        )
+        raise ValueError("Axis vector may not have zero length: |v| = %f, v = %s" % (axis_norm, axis))
     half_angle = angle * 0.5
     q = np.zeros(4, dtype=np.float64)
     q[0:3] = axis
@@ -160,14 +155,9 @@ def QuaternionToAxisAngle(quat, default_axis=VECTOR3_Z, direction_axis=None):
       angle: Angle in radians.
     """
     if len(quat) != 4:
-        raise ValueError(
-            "Quaternion should have four components [x, y, z, w]: %s" % quat
-        )
+        raise ValueError("Quaternion should have four components [x, y, z, w]: %s" % quat)
     if not np.isclose(1.0, np.linalg.norm(quat)):
-        raise ValueError(
-            "Quaternion should have unit length: |q| = %f, q = %s"
-            % (np.linalg.norm(quat), quat)
-        )
+        raise ValueError("Quaternion should have unit length: |q| = %f, q = %s" % (np.linalg.norm(quat), quat))
     axis = quat[:3].copy()
     axis_norm = np.linalg.norm(axis)
     min_axis_norm = 1e-8
@@ -176,10 +166,7 @@ def QuaternionToAxisAngle(quat, default_axis=VECTOR3_Z, direction_axis=None):
         if len(default_axis) != 3:
             raise ValueError("Axis vector should have three components: %s" % axis)
         if not np.isclose(np.linalg.norm(axis), 1.0):
-            raise ValueError(
-                "Axis vector should have unit length: |v| = %f, v = %s"
-                % (np.linalg.norm(axis), axis)
-            )
+            raise ValueError("Axis vector should have unit length: |v| = %f, v = %s" % (np.linalg.norm(axis), axis))
     else:
         axis /= axis_norm
     sin_half_angle = axis_norm
@@ -231,9 +218,7 @@ def QuaternionRotatePoint(point, quat):
 
     q_point = np.array([point[0], point[1], point[2], 0.0])
     quat_inverse = transformations.quaternion_inverse(quat)
-    q_point_rotated = transformations.quaternion_multiply(
-        transformations.quaternion_multiply(quat, q_point), quat_inverse
-    )
+    q_point_rotated = transformations.quaternion_multiply(transformations.quaternion_multiply(quat, q_point), quat_inverse)
     return q_point_rotated[:3]
 
 

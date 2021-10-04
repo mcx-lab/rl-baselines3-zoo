@@ -15,13 +15,12 @@
 
 """Utility functions to manipulate environment."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import collections
-from gym import spaces
+
 import numpy as np
+from gym import spaces
 
 
 def flatten_observations(observation_dict, observation_excluded=()):
@@ -53,9 +52,7 @@ def flatten_observations(observation_dict, observation_excluded=()):
         observation_dict_after_flatten = {"other": flat_observations}
         for key in observation_excluded:
             observation_dict_after_flatten[key] = observation_dict[key]
-        return collections.OrderedDict(
-            sorted(list(observation_dict_after_flatten.items()))
-        )
+        return collections.OrderedDict(sorted(list(observation_dict_after_flatten.items())))
 
 
 def flatten_observation_spaces(observation_spaces, observation_excluded=()):
@@ -84,9 +81,7 @@ def flatten_observation_spaces(observation_spaces, observation_excluded=()):
             upper_bound.append(np.asarray(value.high).flatten())
     lower_bound = np.concatenate(lower_bound)
     upper_bound = np.concatenate(upper_bound)
-    observation_space = spaces.Box(
-        np.array(lower_bound), np.array(upper_bound), dtype=np.float32
-    )
+    observation_space = spaces.Box(np.array(lower_bound), np.array(upper_bound), dtype=np.float32)
     if not observation_excluded:
         return observation_space
     else:

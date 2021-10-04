@@ -21,9 +21,7 @@ from blind_walking.net.adapter import Adapter
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
-    parser.add_argument(
-        "-f", "--folder", help="Log folder", type=str, default="rl-trained-agents"
-    )
+    parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
     parser.add_argument(
         "--algo",
         help="RL Algorithm",
@@ -32,9 +30,7 @@ def main():  # noqa: C901
         required=False,
         choices=list(ALGOS.keys()),
     )
-    parser.add_argument(
-        "-n", "--n-timesteps", help="number of timesteps", default=1000, type=int
-    )
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
     parser.add_argument(
         "--num-threads",
         help="Number of threads for PyTorch (-1 to use default)",
@@ -48,12 +44,8 @@ def main():  # noqa: C901
         default=0,
         type=int,
     )
-    parser.add_argument(
-        "--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int
-    )
-    parser.add_argument(
-        "--record", action="store_true", default=False, help="Record video"
-    )
+    parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int)
+    parser.add_argument("--record", action="store_true", default=False, help="Record video")
     parser.add_argument("-o", "--output-folder", help="Video output folder", type=str)
     parser.add_argument(
         "--no-render",
@@ -104,9 +96,7 @@ def main():  # noqa: C901
         help="Normalize reward if applicable (trained with VecNormalize)",
     )
     parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
-    parser.add_argument(
-        "--reward-log", help="Where to log reward", default="", type=str
-    )
+    parser.add_argument("--reward-log", help="Where to log reward", default="", type=str)
     parser.add_argument(
         "--gym-packages",
         type=str,
@@ -159,18 +149,14 @@ def main():  # noqa: C901
         name_prefix = f"best-model-{algo}-{env_id}"
 
     if args.load_checkpoint is not None:
-        model_path = os.path.join(
-            log_path, f"rl_model_{args.load_checkpoint}_steps.zip"
-        )
+        model_path = os.path.join(log_path, f"rl_model_{args.load_checkpoint}_steps.zip")
         found = os.path.isfile(model_path)
         name_prefix = f"checkpoint-{args.load_checkpoint}-{algo}-{env_id}"
 
     if args.load_last_checkpoint:
         checkpoints = glob.glob(os.path.join(log_path, "rl_model_*_steps.zip"))
         if len(checkpoints) == 0:
-            raise ValueError(
-                f"No checkpoint found for {algo} on {env_id}, path: {log_path}"
-            )
+            raise ValueError(f"No checkpoint found for {algo} on {env_id}, path: {log_path}")
 
         def step_count(checkpoint_path: str) -> int:
             # path follow the pattern "rl_model_*_steps.zip", we count from the back to ignore any other _ in the path
@@ -204,18 +190,14 @@ def main():  # noqa: C901
     is_atari = ExperimentManager.is_atari(env_id)
 
     stats_path = os.path.join(log_path, env_id)
-    hyperparams, stats_path = get_saved_hyperparams(
-        stats_path, norm_reward=args.norm_reward, test_mode=True
-    )
+    hyperparams, stats_path = get_saved_hyperparams(stats_path, norm_reward=args.norm_reward, test_mode=True)
 
     # load env_kwargs if existing
     env_kwargs = {}
     args_path = os.path.join(log_path, env_id, "args.yml")
     if os.path.isfile(args_path):
         with open(args_path, "r") as f:
-            loaded_args = yaml.load(
-                f, Loader=yaml.UnsafeLoader
-            )  # pytype: disable=module-attr
+            loaded_args = yaml.load(f, Loader=yaml.UnsafeLoader)  # pytype: disable=module-attr
             if loaded_args["env_kwargs"] is not None:
                 env_kwargs = loaded_args["env_kwargs"]
     # overwrite with command line arguments
@@ -272,9 +254,7 @@ def main():  # noqa: C901
             "clip_range": lambda _: 0.0,
         }
 
-    model = ALGOS[algo].load(
-        model_path, env=env, custom_objects=custom_objects, **kwargs
-    )
+    model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
     if args.adapter:
         # Get actor-critic policy which contains the feature extractor and ppo
@@ -286,9 +266,7 @@ def main():  # noqa: C901
         base_policy_value = policy.value_net
         # Load adapter module
         adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
-        adapter = Adapter(
-            policy.observation_space, output_size=feature_encoder.mlp_output_size
-        )
+        adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
         adapter.load_state_dict(th.load(adapter_path))
         adapter.eval()
 
@@ -315,14 +293,10 @@ def main():  # noqa: C901
                 # Clip and perform action
                 clipped_action = action.detach().cpu().numpy()
                 if isinstance(model.action_space, gym.spaces.Box):
-                    clipped_action = np.clip(
-                        clipped_action, model.action_space.low, model.action_space.high
-                    )
+                    clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
                 obs, reward, done, infos = env.step(clipped_action)
             else:
-                action, state = model.predict(
-                    obs, state=state, deterministic=deterministic
-                )
+                action, state = model.predict(obs, state=state, deterministic=deterministic)
                 obs, reward, done, infos = env.step(action)
 
             if not args.no_render:
@@ -369,14 +343,10 @@ def main():  # noqa: C901
 
     if args.verbose > 0 and len(episode_rewards) > 0:
         print(f"{len(episode_rewards)} Episodes")
-        print(
-            f"Mean reward: {np.mean(episode_rewards):.2f} +/- {np.std(episode_rewards):.2f}"
-        )
+        print(f"Mean reward: {np.mean(episode_rewards):.2f} +/- {np.std(episode_rewards):.2f}")
 
     if args.verbose > 0 and len(episode_lengths) > 0:
-        print(
-            f"Mean episode length: {np.mean(episode_lengths):.2f} +/- {np.std(episode_lengths):.2f}"
-        )
+        print(f"Mean episode length: {np.mean(episode_lengths):.2f} +/- {np.std(episode_lengths):.2f}")
 
     env.close()
 

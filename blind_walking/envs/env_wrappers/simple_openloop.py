@@ -14,11 +14,9 @@
 # limitations under the License.
 """Simple openloop trajectory generators."""
 import attr
-from gym import spaces
 import numpy as np
-
-from blind_walking.robots import laikago_pose_utils
-from blind_walking.robots import minitaur_pose_utils
+from blind_walking.robots import laikago_pose_utils, minitaur_pose_utils
+from gym import spaces
 
 
 class MinitaurPoseOffsetGenerator(object):
@@ -78,9 +76,7 @@ class MinitaurPoseOffsetGenerator(object):
           A numpy array. The desired motor angles.
         """
         del current_time
-        return minitaur_pose_utils.leg_pose_to_motor_angles(
-            self._pose + self._action_scale * np.array(input_action)
-        )
+        return minitaur_pose_utils.leg_pose_to_motor_angles(self._pose + self._action_scale * np.array(input_action))
 
     def get_observation(self, input_observation):
         """Get the trajectory generator's observation."""

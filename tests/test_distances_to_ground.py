@@ -1,4 +1,5 @@
 import unittest
+
 import numpy as np
 from blind_walking.robots.a1 import get_grid_coordinates
 

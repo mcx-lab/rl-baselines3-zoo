@@ -77,14 +77,9 @@ class ForwardTask(object):
         local_up_vec = rot_matrix[6:]
         shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
         # Penalty for energy usage.
-        energy_reward = (
-            -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities))
-            * self._env._sim_time_step
-        )
+        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._sim_time_step
         energy_rot_reward = (
-            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities))
-            * self._env._sim_time_step
-            * 0.5
+            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._sim_time_step * 0.5
         )
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2

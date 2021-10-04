@@ -1,9 +1,7 @@
 """Wrapper to make the a1 environment suitable for OpenAI gym."""
 import gym
-
 from blind_walking.envs import env_builder
-from blind_walking.robots import a1
-from blind_walking.robots import robot_config
+from blind_walking.robots import a1, robot_config
 
 
 class A1GymEnv(gym.Env):

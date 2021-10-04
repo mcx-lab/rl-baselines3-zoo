@@ -1,7 +1,8 @@
 import random
-import numpy as np
-from dataclasses import dataclass
 from copy import deepcopy
+from dataclasses import dataclass
+
+import numpy as np
 from blind_walking.envs.utilities import env_randomizer_base
 
 

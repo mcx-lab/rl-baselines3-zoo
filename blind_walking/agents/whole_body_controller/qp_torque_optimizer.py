@@ -41,15 +41,9 @@ class QPTorqueOptimizer:
             row_id = 8 + leg_id * 4
             col_id = leg_id * 3
             self.A[row_id, col_id : col_id + 3] = np.array([1, 0, self.friction_coef])
-            self.A[row_id + 1, col_id : col_id + 3] = np.array(
-                [-1, 0, self.friction_coef]
-            )
-            self.A[row_id + 2, col_id : col_id + 3] = np.array(
-                [0, 1, self.friction_coef]
-            )
-            self.A[row_id + 3, col_id : col_id + 3] = np.array(
-                [0, -1, self.friction_coef]
-            )
+            self.A[row_id + 1, col_id : col_id + 3] = np.array([-1, 0, self.friction_coef])
+            self.A[row_id + 2, col_id : col_id + 3] = np.array([0, 1, self.friction_coef])
+            self.A[row_id + 3, col_id : col_id + 3] = np.array([0, -1, self.friction_coef])
 
     def compute_mass_matrix(self, foot_positions):
         mass_mat = np.zeros((6, 12))
@@ -57,12 +51,8 @@ class QPTorqueOptimizer:
 
         for leg_id in range(4):
             x = foot_positions[leg_id]
-            foot_position_skew = np.array(
-                [[0, -x[2], x[1]], [x[2], 0, -x[0]], [-x[1], x[0], 0]]
-            )
-            mass_mat[3:6, leg_id * 3 : leg_id * 3 + 3] = self.inv_inertia.dot(
-                foot_position_skew
-            )
+            foot_position_skew = np.array([[0, -x[2], x[1]], [x[2], 0, -x[0]], [-x[1], x[0], 0]])
+            mass_mat[3:6, leg_id * 3 : leg_id * 3 + 3] = self.inv_inertia.dot(foot_position_skew)
         return mass_mat
 
     def compute_constraint_matrix(self, contacts):
@@ -74,9 +64,7 @@ class QPTorqueOptimizer:
         lb[contact_ids * 2 + 1] = -f_max
         return self.A.T, lb
 
-    def compute_objective_matrix(
-        self, mass_matrix, desired_acc, acc_weight, reg_weight
-    ):
+    def compute_objective_matrix(self, mass_matrix, desired_acc, acc_weight, reg_weight):
         g = np.array([0.0, 0.0, 9.8, 0.0, 0.0, 0.0])
         Q = np.diag(acc_weight)
         R = np.ones(12) * reg_weight
@@ -94,9 +82,7 @@ class QPTorqueOptimizer:
         reg_weight=1e-4,
     ):
         mass_matrix = self.compute_mass_matrix(foot_positions)
-        G, a = self.compute_objective_matrix(
-            mass_matrix, desired_acc, acc_weight, reg_weight
-        )
+        G, a = self.compute_objective_matrix(mass_matrix, desired_acc, acc_weight, reg_weight)
         C, b = self.compute_constraint_matrix(contacts)
         G += 1e-4 * np.eye(12)
         result = quadprog.solve_qp(G, a, C, b)

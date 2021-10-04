@@ -15,18 +15,16 @@
 """This file implements the locomotion gym env."""
 import collections
 import time
+
 import gym
-from gym import spaces
-from gym.utils import seeding
 import numpy as np
 import pybullet  # pytype: disable=import-error
-import pybullet_utils.bullet_client as bullet_client
 import pybullet_data as pd
-
+import pybullet_utils.bullet_client as bullet_client
+from blind_walking.envs.sensors import sensor, space_utils
 from blind_walking.robots import robot_config
-from blind_walking.envs.sensors import sensor
-from blind_walking.envs.sensors import space_utils
-
+from gym import spaces
+from gym.utils import seeding
 
 _ACTION_EPS = 0.01
 _NUM_SIMULATION_ITERATION_STEPS = 300
@@ -97,9 +95,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_time_step = self._num_action_repeat * self._sim_time_step
         self._env_step_counter = 0
 
-        self._num_bullet_solver_iterations = int(
-            _NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat
-        )
+        self._num_bullet_solver_iterations = int(_NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat)
         self._is_render = gym_config.simulation_parameters.enable_rendering
 
         # The wall-clock time at which the last frame is rendered.
@@ -107,17 +103,13 @@ class LocomotionGymEnv(gym.Env):
         self._show_reference_id = -1
 
         if self._is_render:
-            self._pybullet_client = bullet_client.BulletClient(
-                connection_mode=pybullet.GUI
-            )
+            self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.GUI)
             pybullet.configureDebugVisualizer(
                 pybullet.COV_ENABLE_GUI,
                 gym_config.simulation_parameters.enable_rendering_gui,
             )
         else:
-            self._pybullet_client = bullet_client.BulletClient(
-                connection_mode=pybullet.DIRECT
-            )
+            self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
         self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         if gym_config.simulation_parameters.egl_rendering:
             self._pybullet_client.loadPlugin("eglRendererPlugin")
@@ -138,9 +130,7 @@ class LocomotionGymEnv(gym.Env):
 
         # Construct the observation space from the list of sensors. Note that we
         # will reconstruct the observation_space after the robot is created.
-        self.observation_space = space_utils.convert_sensors_to_gym_space_dictionary(
-            self.all_sensors()
-        )
+        self.observation_space = space_utils.convert_sensors_to_gym_space_dictionary(self.all_sensors())
 
         # Generate modifications
         for modifier in self._env_modifiers:
@@ -167,9 +157,7 @@ class LocomotionGymEnv(gym.Env):
         elif motor_mode == robot_config.MotorControlMode.TORQUE:
             # TODO (yuxiangy): figure out the torque limits of robots.
             torque_limits = np.array([100] * len(self._robot_class.ACTION_CONFIG))
-            self.action_space = spaces.Box(
-                -torque_limits, torque_limits, dtype=np.float32
-            )
+            self.action_space = spaces.Box(-torque_limits, torque_limits, dtype=np.float32)
         else:
             # Position mode
             action_upper_bound = []
@@ -226,35 +214,23 @@ class LocomotionGymEnv(gym.Env):
           A numpy array contains the initial observation after reset.
         """
         if self._is_render:
-            self._pybullet_client.configureDebugVisualizer(
-                self._pybullet_client.COV_ENABLE_RENDERING, 0
-            )
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_RENDERING, 0)
 
         # Clear the simulation world and rebuild the robot interface.
         if self._hard_reset:
             if any([m.deformable for m in self._env_modifiers]):
-                self._pybullet_client.resetSimulation(
-                    self._pybullet_client.RESET_USE_DEFORMABLE_WORLD
-                )
+                self._pybullet_client.resetSimulation(self._pybullet_client.RESET_USE_DEFORMABLE_WORLD)
             else:
                 self._pybullet_client.resetSimulation()
-            self._pybullet_client.setPhysicsEngineParameter(
-                numSolverIterations=self._num_bullet_solver_iterations
-            )
+            self._pybullet_client.setPhysicsEngineParameter(numSolverIterations=self._num_bullet_solver_iterations)
             self._pybullet_client.setTimeStep(self._sim_time_step)
             self._pybullet_client.setGravity(0, 0, -10)
 
             # Rebuild the world.
-            self._world_dict = {
-                "ground": self._pybullet_client.loadURDF("plane_implicit.urdf")
-            }
+            self._world_dict = {"ground": self._pybullet_client.loadURDF("plane_implicit.urdf")}
 
             # Assume that all env modifiers have the same adjust_position
-            adjust_position = (
-                self._env_modifiers[0].adjust_position
-                if self._env_modifiers
-                else [0, 0, 0]
-            )
+            adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else [0, 0, 0]
 
             # Rebuild the robot
             self._robot = self._robot_class(
@@ -287,9 +263,7 @@ class LocomotionGymEnv(gym.Env):
         self._last_action = np.zeros(self.action_space.shape)
 
         if self._is_render:
-            self._pybullet_client.configureDebugVisualizer(
-                self._pybullet_client.COV_ENABLE_RENDERING, 1
-            )
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_RENDERING, 1)
 
         for s in self.all_sensors():
             s.on_reset(self)
@@ -341,9 +315,7 @@ class LocomotionGymEnv(gym.Env):
             # Also keep the previous orientation of the camera set by the user.
             [yaw, pitch, dist] = self._pybullet_client.getDebugVisualizerCamera()[8:11]
             self._pybullet_client.resetDebugVisualizerCamera(dist, yaw, pitch, base_pos)
-            self._pybullet_client.configureDebugVisualizer(
-                self._pybullet_client.COV_ENABLE_SINGLE_STEP_RENDERING, 1
-            )
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
 
         # robot class and put the logics here.
         self._robot.Step(action)
@@ -477,12 +449,8 @@ class LocomotionGymEnv(gym.Env):
         self._sim_time_step = sim_step
         self._num_action_repeat = num_action_repeat
         self._env_time_step = sim_step * num_action_repeat
-        self._num_bullet_solver_iterations = (
-            _NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat
-        )
-        self._pybullet_client.setPhysicsEngineParameter(
-            numSolverIterations=int(np.round(self._num_bullet_solver_iterations))
-        )
+        self._num_bullet_solver_iterations = _NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat
+        self._pybullet_client.setPhysicsEngineParameter(numSolverIterations=int(np.round(self._num_bullet_solver_iterations)))
         self._pybullet_client.setTimeStep(self._sim_time_step)
         self._robot.SetTimeSteps(self._num_action_repeat, self._sim_time_step)
 

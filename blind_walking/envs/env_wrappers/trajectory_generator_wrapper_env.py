@@ -15,9 +15,7 @@
 
 """A wrapped MinitaurGymEnv with a built-in controller."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 
 class TrajectoryGeneratorWrapperEnv(object):
@@ -39,12 +37,8 @@ class TrajectoryGeneratorWrapperEnv(object):
 
         """
         self._gym_env = gym_env
-        if not hasattr(trajectory_generator, "get_action") or not hasattr(
-            trajectory_generator, "get_observation"
-        ):
-            raise ValueError(
-                "The controller does not have the necessary interface(s) implemented."
-            )
+        if not hasattr(trajectory_generator, "get_action") or not hasattr(trajectory_generator, "get_observation"):
+            raise ValueError("The controller does not have the necessary interface(s) implemented.")
 
         self._trajectory_generator = trajectory_generator
 
@@ -85,9 +79,7 @@ class TrajectoryGeneratorWrapperEnv(object):
         if action is None:
             raise ValueError("Action cannot be None")
 
-        new_action = self._trajectory_generator.get_action(
-            self._gym_env.robot.GetTimeSinceReset(), action
-        )
+        new_action = self._trajectory_generator.get_action(self._gym_env.robot.GetTimeSinceReset(), action)
 
         original_observation, reward, done, _ = self._gym_env.step(new_action)
 

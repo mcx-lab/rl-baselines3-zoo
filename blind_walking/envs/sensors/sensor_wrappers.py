@@ -14,10 +14,9 @@
 # limitations under the License.
 """Wrapper classes for extending sensor information."""
 import collections
-
-import numpy as np
 import typing
 
+import numpy as np
 from blind_walking.envs.sensors import sensor
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name

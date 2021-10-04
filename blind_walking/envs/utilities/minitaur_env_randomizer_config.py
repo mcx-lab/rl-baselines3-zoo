@@ -15,9 +15,7 @@
 
 """A config file for parameters and their ranges in dynamics randomization."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 
 def all_params():

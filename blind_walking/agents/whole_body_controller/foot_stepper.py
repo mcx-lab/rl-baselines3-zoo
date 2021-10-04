@@ -6,6 +6,8 @@ import math
 
 import numpy as np
 
+# flake8: noqa
+
 
 class StepInput(object):
     def __init__(self):
@@ -28,9 +30,7 @@ class FootStepper(object):
         self.state_time = 0.0
         self.toe_ids = toe_ids
         self.toe_pos_local_ref = toe_pos_local_ref
-        self.sphere_uid = self.bullet_client.loadURDF(
-            "sphere_small.urdf", [0, 0, 0], useFixedBase=True
-        )
+        self.sphere_uid = self.bullet_client.loadURDF("sphere_small.urdf", [0, 0, 0], useFixedBase=True)
         self.is_far = True
         self.max_shift = 0.0008
         self.far_bound = 0.005
@@ -42,25 +42,15 @@ class FootStepper(object):
 
         # Loads/draws spheres for debugging purpose. The spheres visualize the
         # target COM, the current COM and the target foothold location.
-        self.sphere_uid_centroid = self.bullet_client.loadURDF(
-            "sphere_small.urdf", [0, 0, 0], useFixedBase=True
-        )
-        self.bullet_client.changeVisualShape(
-            self.sphere_uid_centroid, -1, rgbaColor=[1, 1, 0, alpha]
-        )
+        self.sphere_uid_centroid = self.bullet_client.loadURDF("sphere_small.urdf", [0, 0, 0], useFixedBase=True)
+        self.bullet_client.changeVisualShape(self.sphere_uid_centroid, -1, rgbaColor=[1, 1, 0, alpha])
 
         # Disable collision since visualization spheres should not collide with the
         # robot.
-        self.bullet_client.setCollisionFilterGroupMask(
-            self.sphere_uid_centroid, -1, 0, 0
-        )
+        self.bullet_client.setCollisionFilterGroupMask(self.sphere_uid_centroid, -1, 0, 0)
 
-        self.sphere_uid_com = self.bullet_client.loadURDF(
-            "sphere_small.urdf", [0, 0, 0], useFixedBase=True
-        )
-        self.bullet_client.changeVisualShape(
-            self.sphere_uid_com, -1, rgbaColor=[1, 0, 1, alpha]
-        )
+        self.sphere_uid_com = self.bullet_client.loadURDF("sphere_small.urdf", [0, 0, 0], useFixedBase=True)
+        self.bullet_client.changeVisualShape(self.sphere_uid_com, -1, rgbaColor=[1, 0, 1, alpha])
         self.bullet_client.setCollisionFilterGroupMask(self.sphere_uid_com, -1, 0, 0)
 
         self.bullet_client.setCollisionFilterGroupMask(self.sphere_uid, -1, 0, 0)
@@ -98,17 +88,11 @@ class FootStepper(object):
         """Updates the state machine and toe movements per state."""
         base_com_pos = step_input.base_com_pos
         base_com_orn = step_input.base_com_orn
-        base_com_pos_inv, base_com_orn_inv = self.bullet_client.invertTransform(
-            base_com_pos, base_com_orn
-        )
+        base_com_pos_inv, base_com_orn_inv = self.bullet_client.invertTransform(base_com_pos, base_com_orn)
 
         dt = step_input.dt
-        self.bullet_client.resetBasePositionAndOrientation(
-            self.sphere_uid, step_input.new_pos_world, [0, 0, 0, 1]
-        )
-        self.bullet_client.changeVisualShape(
-            self.sphere_uid, -1, rgbaColor=self.colors[self.swing_foot_index]
-        )
+        self.bullet_client.resetBasePositionAndOrientation(self.sphere_uid, step_input.new_pos_world, [0, 0, 0, 1])
+        self.bullet_client.changeVisualShape(self.sphere_uid, -1, rgbaColor=self.colors[self.swing_foot_index])
 
         all_toes_pos_locals = []
         for toe_pos_world in step_input.toe_pos_world:
@@ -126,9 +110,7 @@ class FootStepper(object):
         sphere_z_offset = 0.05
         self.diff_world = base_com_pos - centroid_world
         self.diff_world[2] = 0.0
-        self.bullet_client.resetBasePositionAndOrientation(
-            self.sphere_uid_centroid, centroid_world, [0, 0, 0, 1]
-        )
+        self.bullet_client.resetBasePositionAndOrientation(self.sphere_uid_centroid, centroid_world, [0, 0, 0, 1])
         self.bullet_client.resetBasePositionAndOrientation(
             self.sphere_uid_com,
             [base_com_pos[0], base_com_pos[1], sphere_z_offset],
@@ -178,9 +160,7 @@ class FootStepper(object):
         if not self.is_far:
             for i in range(len(self.toe_pos_local_ref)):
                 toe = self.toe_pos_local_ref[i]
-                toe, _ = self.bullet_client.multiplyTransforms(
-                    [0, 0, 0], yaw_trans, toe, [0, 0, 0, 1]
-                )
+                toe, _ = self.bullet_client.multiplyTransforms([0, 0, 0], yaw_trans, toe, [0, 0, 0, 1])
                 self.toe_pos_local_ref[i] = toe
 
         new_toe_pos_world = []
@@ -196,10 +176,8 @@ class FootStepper(object):
         toe_pos_local_ref_copy = copy.deepcopy(self.toe_pos_local_ref)
         old_pos = self.toe_pos_local_ref[self.swing_foot_index]
         new_pos = [
-            old_pos[0] * (1 - self.state_time)
-            + self.new_pos_local[0] * (self.state_time),
-            old_pos[1] * (1 - self.state_time)
-            + self.new_pos_local[1] * (self.state_time),
+            old_pos[0] * (1 - self.state_time) + self.new_pos_local[0] * (self.state_time),
+            old_pos[1] * (1 - self.state_time) + self.new_pos_local[1] * (self.state_time),
             old_pos[2] * (1 - self.state_time)
             + self.new_pos_local[2] * (self.state_time)
             + self.amp * math.sin(self.state_time * math.pi),
@@ -207,9 +185,7 @@ class FootStepper(object):
         toe_pos_local_ref_copy[self.swing_foot_index] = new_pos
         for toe_pos_local in toe_pos_local_ref_copy:
             new_toe_pos_world.append(
-                self.bullet_client.multiplyTransforms(
-                    base_com_pos, base_com_orn, toe_pos_local, [0, 0, 0, 1]
-                )[0]
+                self.bullet_client.multiplyTransforms(base_com_pos, base_com_orn, toe_pos_local, [0, 0, 0, 1])[0]
             )
 
         step_output = StepOutput(new_toe_pos_world)

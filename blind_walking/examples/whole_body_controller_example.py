@@ -1,35 +1,30 @@
 """Example of whole body controller on A1 robot."""
-from absl import app
-from absl import flags
-from absl import logging
-from datetime import datetime
-import numpy as np
 import os
-import scipy.interpolate
-import time
-
 import pickle
-import pybullet_data
-from pybullet_utils import bullet_client
+import time
+from datetime import datetime
+
+import numpy as np
 import pybullet  # pytype:disable=import-error
-
+import pybullet_data
+import scipy.interpolate
+from absl import app, flags, logging
 from blind_walking.agents.whole_body_controller import com_velocity_estimator
+from blind_walking.agents.whole_body_controller import gait_generator as gait_generator_lib
 from blind_walking.agents.whole_body_controller import (
-    gait_generator as gait_generator_lib,
+    locomotion_controller,
+    openloop_gait_generator,
+    raibert_swing_leg_controller,
+    torque_stance_leg_controller,
 )
-from blind_walking.agents.whole_body_controller import locomotion_controller
-from blind_walking.agents.whole_body_controller import openloop_gait_generator
-from blind_walking.agents.whole_body_controller import raibert_swing_leg_controller
-from blind_walking.agents.whole_body_controller import torque_stance_leg_controller
-
-from blind_walking.robots import a1
-from blind_walking.robots import robot_config
+from blind_walking.robots import a1, a1_robot, robot_config
 from blind_walking.robots.gamepad import gamepad_reader
+from pybullet_utils import bullet_client
+
+# flake8: noqa
 
 flags.DEFINE_string("logdir", None, "where to log trajectories.")
-flags.DEFINE_bool(
-    "use_gamepad", False, "whether to use gamepad to provide control input."
-)
+flags.DEFINE_bool("use_gamepad", False, "whether to use gamepad to provide control input.")
 flags.DEFINE_bool("use_real_robot", False, "whether to use real robot or simulation")
 flags.DEFINE_bool("show_gui", True, "whether to show GUI.")
 flags.DEFINE_float("max_time_secs", 1.0, "maximum time to run the robot.")
@@ -38,9 +33,7 @@ FLAGS = flags.FLAGS
 _NUM_SIMULATION_ITERATION_STEPS = 300
 _MAX_TIME_SECONDS = 30.0
 
-_STANCE_DURATION_SECONDS = [
-    0.13
-] * 4  # For faster trotting (v > 1.5 ms reduce this to 0.13s).
+_STANCE_DURATION_SECONDS = [0.13] * 4  # For faster trotting (v > 1.5 ms reduce this to 0.13s).
 
 # Standing
 # _DUTY_FACTOR = [1.] * 4
@@ -93,9 +86,7 @@ def _generate_example_linear_angular_speed(t):
         (0, 0, 0, wz),
     )
 
-    speed = scipy.interpolate.interp1d(
-        time_points, speed_points, kind="previous", fill_value="extrapolate", axis=0
-    )(t)
+    speed = scipy.interpolate.interp1d(time_points, speed_points, kind="previous", fill_value="extrapolate", axis=0)(t)
 
     return speed[0:3], speed[3], False
 
@@ -113,9 +104,7 @@ def _setup_controller(robot):
         initial_leg_state=_INIT_LEG_STATE,
     )
     window_size = 20 if not FLAGS.use_real_robot else 60
-    state_estimator = com_velocity_estimator.COMVelocityEstimator(
-        robot, window_size=window_size
-    )
+    state_estimator = com_velocity_estimator.COMVelocityEstimator(robot, window_size=window_size)
     sw_controller = raibert_swing_leg_controller.RaibertSwingLegController(
         robot,
         gait_generator,
@@ -198,9 +187,7 @@ def main(argv):
         command_function = _generate_example_linear_angular_speed
 
     if FLAGS.logdir:
-        logdir = os.path.join(
-            FLAGS.logdir, datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        )
+        logdir = os.path.join(FLAGS.logdir, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
         os.makedirs(logdir)
 
     start_time = robot.GetTimeSinceReset()

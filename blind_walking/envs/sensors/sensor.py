@@ -16,13 +16,11 @@
 """A sensor prototype class.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import numpy as np
 import typing
 
+import numpy as np
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint: disable=invalid-name

@@ -1,6 +1,6 @@
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.stairs import Stairs
 from blind_walking.envs.env_modifiers.heightfield import HeightField
+from blind_walking.envs.env_modifiers.stairs import Stairs
 
 
 class TrainCourse(EnvModifier):

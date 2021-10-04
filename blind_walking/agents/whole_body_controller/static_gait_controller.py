@@ -3,6 +3,7 @@
 
 import gin
 import numpy as np
+
 from . import foot_stepper
 
 toe_pos_local_ref = np.array(
@@ -23,9 +24,7 @@ class StaticGaitController(object):
         self._robot = robot
         self._toe_ids = tuple(robot.urdf_loader.get_end_effector_id_dict().values())
         self._wait_count = 0
-        self._stepper = foot_stepper.FootStepper(
-            self._robot.pybullet_client, self._toe_ids, toe_pos_local_ref
-        )
+        self._stepper = foot_stepper.FootStepper(self._robot.pybullet_client, self._toe_ids, toe_pos_local_ref)
 
     def act(self, observation):
         """Computes actions based on observations."""
@@ -45,16 +44,10 @@ class StaticGaitController(object):
             if self._wait_count > 50:
                 self._wait_count = 0
                 step_dist = 0.15
-                print(
-                    "time {}, make a step of {}".format(
-                        self._robot.GetTimeSinceReset(), step_dist
-                    )
-                )
+                print("time {}, make a step of {}".format(self._robot.GetTimeSinceReset(), step_dist))
                 new_pos_local = self._stepper.get_reference_pos_swing_foot()
                 new_pos_local[0] += step_dist
-                new_pos_world, _ = p.multiplyTransforms(
-                    base_com_pos, base_com_orn, new_pos_local, [0, 0, 0, 1]
-                )
+                new_pos_world, _ = p.multiplyTransforms(base_com_pos, base_com_orn, new_pos_local, [0, 0, 0, 1])
                 self._stepper.swing_foot()
 
         step_input.new_pos_world = new_pos_world

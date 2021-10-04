@@ -14,10 +14,10 @@
 # limitations under the License.
 
 """Simple sensors related to the environment."""
-import numpy as np
-import typing
 import csv
+import typing
 
+import numpy as np
 from blind_walking.envs.sensors import sensor
 
 _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
@@ -322,9 +322,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
         dx_target = target_pos[0] - self._current_base_pos[0]
         dy_target = target_pos[1] - self._current_base_pos[1]
         # Transform to local frame
-        dx_target_local, dy_target_local = self.to_local_frame(
-            dx_target, dy_target, self._current_yaw
-        )
+        dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
         target_distance = np.linalg.norm([dx_target_local, dy_target_local])
         # If target is too far, scale down to maximum possible
         if target_distance and abs(target_distance) > self._distance:
@@ -386,9 +384,7 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        return self._env.robot.GetLocalDistancesToGround(
-            grid_unit=self.grid_unit, grid_size=self.grid_size
-        ).reshape(-1)
+        return self._env.robot.GetLocalDistancesToGround(grid_unit=self.grid_unit, grid_size=self.grid_size).reshape(-1)
 
 
 class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
@@ -436,6 +432,4 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        return self._env.robot.GetLocalTerrainView(
-            grid_unit=self.grid_unit, grid_size=self.grid_size
-        ).reshape(-1)
+        return self._env.robot.GetLocalTerrainView(grid_unit=self.grid_unit, grid_size=self.grid_size).reshape(-1)

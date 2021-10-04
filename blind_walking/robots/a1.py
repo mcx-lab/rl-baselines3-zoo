@@ -13,18 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pybullet simulation of a Laikago robot."""
+import copy
 import math
 import re
-import copy
+
 import numba
 import numpy as np
 import pybullet as pyb  # pytype: disable=import-error
-
-from blind_walking.robots import laikago_constants
-from blind_walking.robots import laikago_motor
-from blind_walking.robots import minitaur
-from blind_walking.robots import robot_config
 from blind_walking.envs import locomotion_gym_config
+from blind_walking.robots import laikago_constants, laikago_motor, minitaur, robot_config
 
 NUM_MOTORS = 12
 NUM_LEGS = 4
@@ -49,9 +46,7 @@ HIP_JOINT_OFFSET = 0.0
 UPPER_LEG_JOINT_OFFSET = 0.0
 KNEE_JOINT_OFFSET = 0.0
 DOFS_PER_LEG = 3
-JOINT_OFFSETS = np.array(
-    [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4
-)
+JOINT_OFFSETS = np.array([HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4)
 PI = math.pi
 
 MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
@@ -61,6 +56,8 @@ _DEFAULT_HIP_POSITIONS = (
     (-0.195, -0.135, 0),
     (-0.195, 0.13, 0),
 )
+
+# flake8: noqa
 
 COM_OFFSET = -np.array([0.012731, 0.002186, 0.000515])
 HIP_OFFSETS = (
@@ -104,10 +101,7 @@ def foot_position_in_hip_frame_to_joint_angle(foot_position, l_hip_sign=1):
     l_low = 0.2
     l_hip = 0.08505 * l_hip_sign
     x, y, z = foot_position[0], foot_position[1], foot_position[2]
-    theta_knee = -np.arccos(
-        (x ** 2 + y ** 2 + z ** 2 - l_hip ** 2 - l_low ** 2 - l_up ** 2)
-        / (2 * l_low * l_up)
-    )
+    theta_knee = -np.arccos((x ** 2 + y ** 2 + z ** 2 - l_hip ** 2 - l_low ** 2 - l_up ** 2) / (2 * l_low * l_up))
     l = np.sqrt(l_up ** 2 + l_low ** 2 + 2 * l_up * l_low * np.cos(theta_knee))
     theta_hip = np.arcsin(-x / l) - theta_knee / 2
     c1 = l_hip * y - l * np.cos(theta_hip + theta_knee / 2) * z
@@ -122,9 +116,7 @@ def foot_position_in_hip_frame(angles, l_hip_sign=1):
     l_up = 0.2
     l_low = 0.2
     l_hip = 0.08505 * l_hip_sign
-    leg_distance = np.sqrt(
-        l_up ** 2 + l_low ** 2 + 2 * l_up * l_low * np.cos(theta_knee)
-    )
+    leg_distance = np.sqrt(l_up ** 2 + l_low ** 2 + 2 * l_up * l_low * np.cos(theta_knee))
     eff_swing = theta_hip + theta_knee / 2
 
     off_x_hip = -leg_distance * np.sin(eff_swing)
@@ -155,21 +147,13 @@ def analytical_leg_jacobian(leg_angles, leg_id):
     J = np.zeros((3, 3))
     J[0, 0] = 0
     J[0, 1] = -l_eff * np.cos(t_eff)
-    J[0, 2] = (
-        l_low * l_up * np.sin(t3) * np.sin(t_eff) / l_eff - l_eff * np.cos(t_eff) / 2
-    )
+    J[0, 2] = l_low * l_up * np.sin(t3) * np.sin(t_eff) / l_eff - l_eff * np.cos(t_eff) / 2
     J[1, 0] = -l_hip * np.sin(t1) + l_eff * np.cos(t1) * np.cos(t_eff)
     J[1, 1] = -l_eff * np.sin(t1) * np.sin(t_eff)
-    J[1, 2] = (
-        -l_low * l_up * np.sin(t1) * np.sin(t3) * np.cos(t_eff) / l_eff
-        - l_eff * np.sin(t1) * np.sin(t_eff) / 2
-    )
+    J[1, 2] = -l_low * l_up * np.sin(t1) * np.sin(t3) * np.cos(t_eff) / l_eff - l_eff * np.sin(t1) * np.sin(t_eff) / 2
     J[2, 0] = l_hip * np.cos(t1) + l_eff * np.sin(t1) * np.cos(t_eff)
     J[2, 1] = l_eff * np.sin(t_eff) * np.cos(t1)
-    J[2, 2] = (
-        l_low * l_up * np.sin(t3) * np.cos(t1) * np.cos(t_eff) / l_eff
-        + l_eff * np.sin(t_eff) * np.cos(t1) / 2
-    )
+    J[2, 2] = l_low * l_up * np.sin(t3) * np.cos(t1) * np.cos(t_eff) / l_eff + l_eff * np.sin(t_eff) * np.cos(t1) / 2
     return J
 
 
@@ -178,9 +162,7 @@ def foot_positions_in_base_frame(foot_angles):
     foot_angles = foot_angles.reshape((4, 3))
     foot_positions = np.zeros((4, 3))
     for i in range(4):
-        foot_positions[i] = foot_position_in_hip_frame(
-            foot_angles[i], l_hip_sign=(-1) ** (i + 1)
-        )
+        foot_positions[i] = foot_position_in_hip_frame(foot_angles[i], l_hip_sign=(-1) ** (i + 1))
     return foot_positions + HIP_OFFSETS
 
 
@@ -226,45 +208,29 @@ class A1(minitaur.Minitaur):
     MPC_BODY_HEIGHT = 0.24
     MPC_VELOCITY_MULTIPLIER = 0.5
     ACTION_CONFIG = [
-        locomotion_gym_config.ScalarField(
-            name="FR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="FR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="FR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="FR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="FR_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="FL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="FL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="FL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="FL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="FL_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="RR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="RR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="RR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="RR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="RR_lower_joint",
             upper_bound=-0.916297857297,
             lower_bound=-2.69653369433,
         ),
-        locomotion_gym_config.ScalarField(
-            name="RL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
-        ),
-        locomotion_gym_config.ScalarField(
-            name="RL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
-        ),
+        locomotion_gym_config.ScalarField(name="RL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917),
+        locomotion_gym_config.ScalarField(name="RL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512),
         locomotion_gym_config.ScalarField(
             name="RL_lower_joint",
             upper_bound=-0.916297857297,
@@ -391,9 +357,7 @@ class A1(minitaur.Minitaur):
             if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
                 continue
             try:
-                toe_link_index = self._foot_link_ids.index(
-                    contact[_LINK_A_FIELD_NUMBER]
-                )
+                toe_link_index = self._foot_link_ids.index(contact[_LINK_A_FIELD_NUMBER])
                 contacts[toe_link_index] = True
             except ValueError:
                 continue
@@ -409,9 +373,7 @@ class A1(minitaur.Minitaur):
             if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
                 continue
             try:
-                toe_link_index = self._foot_link_ids.index(
-                    contact[_LINK_A_FIELD_NUMBER]
-                )
+                toe_link_index = self._foot_link_ids.index(contact[_LINK_A_FIELD_NUMBER])
                 contact_forces[toe_link_index] = contact[_NORMAL_FORCE_FIELD_NUMBER]
             except ValueError:
                 continue
@@ -422,17 +384,11 @@ class A1(minitaur.Minitaur):
         distances = [0] * NUM_LEGS
         for foot_id in self._foot_link_ids:
             toe_link_index = self._foot_link_ids.index(foot_id)
-            foot_position = self._pybullet_client.getLinkState(self.quadruped, foot_id)[
-                0
-            ]  # index 0 is linkWorldPosition
+            foot_position = self._pybullet_client.getLinkState(self.quadruped, foot_id)[0]  # index 0 is linkWorldPosition
             projection_position = copy.copy(foot_position)
-            projection_position[2] = (
-                projection_position[2] - max_detection_distance
-            )  # always pointing downwards
+            projection_position[2] = projection_position[2] - max_detection_distance  # always pointing downwards
             data = self._pybullet_client.rayTest(foot_position, projection_position)
-            if (
-                data[0] == -1
-            ):  # -1 if did not detect anything within detectable distance (out of range)
+            if data[0] == -1:  # -1 if did not detect anything within detectable distance (out of range)
                 distances[toe_link_index] = max_detection_distance
             else:
                 distances[toe_link_index] = (
@@ -449,9 +405,7 @@ class A1(minitaur.Minitaur):
         lower_bound[2] = lower_bound[2] - 2 * max_height
 
         data = self._pybullet_client.rayTest(upper_bound, lower_bound)[0]
-        if (
-            data[0] == -1
-        ):  # -1 if did not detect anything within detectable distance (out of range)
+        if data[0] == -1:  # -1 if did not detect anything within detectable distance (out of range)
             distance_to_ground = 2 * max_height
         else:
             distance_to_ground = data[2] * 2 * max_height
@@ -469,22 +423,14 @@ class A1(minitaur.Minitaur):
         """
         base_position_world = self.GetBasePosition()[:2]
         base_position_base = world_frame_to_base_frame(base_position_world, self)
-        grid_coordinates_base = (
-            get_grid_coordinates(grid_unit, grid_size) + base_position_base
-        )
-        grid_coordinates_world = np.array(
-            [base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base]
-        )
-        grid_coordinates_world_3d = [
-            np.concatenate([gcw, [0]]) for gcw in grid_coordinates_world
-        ]
+        grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
+        grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
+        grid_coordinates_world_3d = [np.concatenate([gcw, [0]]) for gcw in grid_coordinates_world]
 
         robot_positions = [self.GetBasePosition()] * len(grid_coordinates_world_3d)
 
         z_coordinates = []
-        ray_intersection_infos = self._pybullet_client.rayTestBatch(
-            robot_positions, grid_coordinates_world_3d
-        )
+        ray_intersection_infos = self._pybullet_client.rayTestBatch(robot_positions, grid_coordinates_world_3d)
         for info in ray_intersection_infos:
             hit_position = info[3]
             z_coordinates.append(hit_position[2])
@@ -504,12 +450,8 @@ class A1(minitaur.Minitaur):
         base_position_world = self.GetBasePosition()[:2]
         base_height = self.GetBasePosition()[2]
         base_position_base = world_frame_to_base_frame(base_position_world, self)
-        grid_coordinates_base = (
-            get_grid_coordinates(grid_unit, grid_size) + base_position_base
-        )
-        grid_coordinates_world = np.array(
-            [base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base]
-        )
+        grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
+        grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
 
         heights = []
         for coord in grid_coordinates_world:
@@ -536,12 +478,8 @@ class A1(minitaur.Minitaur):
             elif "lower_joint" in name:
                 angle = INIT_MOTOR_ANGLES[i] + KNEE_JOINT_OFFSET
             else:
-                raise ValueError(
-                    "The name %s is not recognized as a motor joint." % name
-                )
-            self._pybullet_client.resetJointState(
-                self.quadruped, self._joint_name_to_id[name], angle, targetVelocity=0
-            )
+                raise ValueError("The name %s is not recognized as a motor joint." % name)
+            self._pybullet_client.resetJointState(self.quadruped, self._joint_name_to_id[name], angle, targetVelocity=0)
 
     def GetURDFFile(self):
         return self._urdf_filename
@@ -674,9 +612,7 @@ class A1(minitaur.Minitaur):
         # toe_id = self._foot_link_ids[leg_id]
 
         motors_per_leg = self.num_motors // self.num_legs
-        joint_position_idxs = list(
-            range(leg_id * motors_per_leg, leg_id * motors_per_leg + motors_per_leg)
-        )
+        joint_position_idxs = list(range(leg_id * motors_per_leg, leg_id * motors_per_leg + motors_per_leg))
 
         joint_angles = foot_position_in_hip_frame_to_joint_angle(
             foot_local_position - HIP_OFFSETS[leg_id], l_hip_sign=(-1) ** (leg_id + 1)
@@ -684,8 +620,7 @@ class A1(minitaur.Minitaur):
 
         # Joint offset is necessary for Laikago.
         joint_angles = np.multiply(
-            np.asarray(joint_angles)
-            - np.asarray(self._motor_offset)[joint_position_idxs],
+            np.asarray(joint_angles) - np.asarray(self._motor_offset)[joint_position_idxs],
             self._motor_direction[joint_position_idxs],
         )
 

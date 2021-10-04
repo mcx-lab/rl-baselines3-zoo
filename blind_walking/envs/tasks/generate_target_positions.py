@@ -1,10 +1,10 @@
-import os
-import math
-import numpy as np
 import csv
-import pandas as pd
-import matplotlib.pyplot as plt
+import math
+import os
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # ######################### Parameters ######################### #
 
@@ -71,10 +71,7 @@ f.close()
 if plot_graph:
     # Plot target positions for visualisation
     df = pd.read_csv(filepath_csv)
-    df["distance"] = [
-        np.linalg.norm([x, y], 2)
-        for (x, y) in list(zip(df.iloc[:, 0].diff(), df.iloc[:, 1].diff()))
-    ]
+    df["distance"] = [np.linalg.norm([x, y], 2) for (x, y) in list(zip(df.iloc[:, 0].diff(), df.iloc[:, 1].diff()))]
     fig = df.plot(
         kind="scatter",
         x=0,

@@ -1,10 +1,11 @@
 import math
+from collections import deque
+
 import gym
 import torch as th
-from torch import nn
-from collections import deque
-from stable_baselines3.common.type_aliases import TensorDict
 from stable_baselines3.common.torch_layers import create_mlp
+from stable_baselines3.common.type_aliases import TensorDict
+from torch import nn
 
 
 class Adapter(nn.Module):
@@ -21,9 +22,7 @@ class Adapter(nn.Module):
         obs_flatten_input_size = math.prod(observation_space.spaces["flatten"].shape)
 
         self.flatten_encoder = nn.Flatten()
-        adapter_mlp_layers = create_mlp(
-            input_dim=obs_flatten_input_size, output_dim=32, net_arch=[256]
-        )
+        adapter_mlp_layers = create_mlp(input_dim=obs_flatten_input_size, output_dim=32, net_arch=[256])
         self.adapter_mlp_encoder = nn.Sequential(*adapter_mlp_layers)
         adapter_cnn_layers = [
             nn.Conv1d(32, 32, 5, stride=1),

@@ -24,9 +24,7 @@ class ObservationDictionaryToArrayWrapper(gym.Env):
         """Initializes the wrapper."""
         self.observation_excluded = observation_excluded
         self._gym_env = gym_env
-        self.observation_space = self._flatten_observation_spaces(
-            self._gym_env.observation_space
-        )
+        self.observation_space = self._flatten_observation_spaces(self._gym_env.observation_space)
         self.action_space = self._gym_env.action_space
 
     def __getattr__(self, attr):
@@ -47,9 +45,7 @@ class ObservationDictionaryToArrayWrapper(gym.Env):
         )
 
     def reset(self, initial_motor_angles=None, reset_duration=0.0):
-        observation = self._gym_env.reset(
-            initial_motor_angles=initial_motor_angles, reset_duration=reset_duration
-        )
+        observation = self._gym_env.reset(initial_motor_angles=initial_motor_angles, reset_duration=reset_duration)
         return self._flatten_observation(observation)
 
     def step(self, action):

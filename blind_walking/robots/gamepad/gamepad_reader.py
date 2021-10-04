@@ -1,8 +1,8 @@
-from absl import app
-from absl import flags
-from inputs import get_gamepad
 import threading
 import time
+
+from absl import app, flags
+from inputs import get_gamepad
 
 FLAGS = flags.FLAGS
 MAX_ABS_RX = 32768
@@ -84,11 +84,7 @@ class Gamepad:
 def main(_):
     gamepad = Gamepad()
     while True:
-        print(
-            "Vx: {}, Vy: {}, Wz: {}, Estop: {}".format(
-                gamepad.vx, gamepad.vy, gamepad.wz, gamepad.estop_flagged
-            )
-        )
+        print("Vx: {}, Vy: {}, Wz: {}, Estop: {}".format(gamepad.vx, gamepad.vy, gamepad.wz, gamepad.estop_flagged))
         time.sleep(0.1)
 
 

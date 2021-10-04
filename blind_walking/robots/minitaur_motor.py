@@ -15,7 +15,6 @@
 """This file implements an accurate motor model."""
 
 import numpy as np
-
 from blind_walking.robots import robot_config
 
 VOLTAGE_CLIPPING = 50
@@ -128,9 +127,7 @@ class MotorModel(object):
         if (motor_control_mode is robot_config.MotorControlMode.TORQUE) or (
             motor_control_mode is robot_config.MotorControlMode.HYBRID
         ):
-            raise ValueError(
-                "{} is not a supported motor control mode".format(motor_control_mode)
-            )
+            raise ValueError("{} is not a supported motor control mode".format(motor_control_mode))
 
         kp = self._kp
         kd = self._kd
@@ -163,21 +160,17 @@ class MotorModel(object):
           observed_torque: The torque observed by the sensor.
         """
         observed_torque = np.clip(
-            self._torque_constant
-            * (np.asarray(pwm) * self._voltage / self._resistance),
+            self._torque_constant * (np.asarray(pwm) * self._voltage / self._resistance),
             -OBSERVED_TORQUE_LIMIT,
             OBSERVED_TORQUE_LIMIT,
         )
         if self._torque_limits is not None:
-            observed_torque = np.clip(
-                observed_torque, -1.0 * self._torque_limits, self._torque_limits
-            )
+            observed_torque = np.clip(observed_torque, -1.0 * self._torque_limits, self._torque_limits)
 
         # Net voltage is clipped at 50V by diodes on the motor controller.
         voltage_net = np.clip(
             np.asarray(pwm) * self._voltage
-            - (self._torque_constant + self._viscous_damping)
-            * np.asarray(true_motor_velocity),
+            - (self._torque_constant + self._viscous_damping) * np.asarray(true_motor_velocity),
             -VOLTAGE_CLIPPING,
             VOLTAGE_CLIPPING,
         )
@@ -185,13 +178,9 @@ class MotorModel(object):
         current_sign = np.sign(current)
         current_magnitude = np.absolute(current)
         # Saturate torque based on empirical current relation.
-        actual_torque = np.interp(
-            current_magnitude, self._current_table, self._torque_table
-        )
+        actual_torque = np.interp(current_magnitude, self._current_table, self._torque_table)
         actual_torque = np.multiply(current_sign, actual_torque)
         actual_torque = np.multiply(self._strength_ratios, actual_torque)
         if self._torque_limits is not None:
-            actual_torque = np.clip(
-                actual_torque, -1.0 * self._torque_limits, self._torque_limits
-            )
+            actual_torque = np.clip(actual_torque, -1.0 * self._torque_limits, self._torque_limits)
         return actual_torque, observed_torque

@@ -16,12 +16,11 @@
 # Lint as: python3
 """Defines the laikago robot related constants and URDF specs."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import collections
 import math
+
 import pybullet as pyb  # pytype: disable=import-error
 
 NUM_MOTORS = 12
@@ -67,9 +66,7 @@ INIT_JOINT_ANGLES = collections.OrderedDict(
 )
 
 # Used to convert the robot SDK joint angles to URDF joint angles.
-JOINT_DIRECTIONS = collections.OrderedDict(
-    zip(JOINT_NAMES, (-1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1))
-)
+JOINT_DIRECTIONS = collections.OrderedDict(zip(JOINT_NAMES, (-1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1)))
 
 HIP_JOINT_OFFSET = 0.0
 UPPER_LEG_JOINT_OFFSET = -0.6

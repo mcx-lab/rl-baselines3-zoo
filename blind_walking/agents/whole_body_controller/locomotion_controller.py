@@ -1,10 +1,9 @@
 """A model based controller framework."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 from typing import Any
+
 import numpy as np
 
 # import time

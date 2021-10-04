@@ -1,11 +1,11 @@
-import gym
-import torch
-import numpy as np
 import unittest
 
-from gym import spaces
+import gym
+import numpy as np
+import torch
 from blind_walking.envs.gym_envs.a1_gym_env import A1GymEnv
 from blind_walking.net.feature_encoder import LocomotionFeatureEncoder
+from gym import spaces
 
 
 class TestA1GymEnv(unittest.TestCase):
@@ -30,9 +30,7 @@ class TestA1GymEnv(unittest.TestCase):
         assert np.all(self.robot.GetMotorPositionGains() == 55.0)
         assert np.all(self.robot.GetMotorVelocityGains() == 0.6)
         assert np.all(self.robot.GetMotorStrengthRatios() == 1)
-        assert np.all(
-            self.robot.GetFootFriction() == 0.5
-        ), f"{self.robot.GetFootFriction()}"
+        assert np.all(self.robot.GetFootFriction() == 0.5), f"{self.robot.GetFootFriction()}"
 
     def test_controller_kp_getter_setter(self):
         self.env.reset()
@@ -72,7 +70,5 @@ class TestLocomotionFeatureEncoder(unittest.TestCase):
         obs = self.env.reset()
         # Observation is a 1-level dictionary of np arrays
         # Cast to tensor, dtype float32, and add batch dimension
-        obs_tensor = {
-            k: torch.from_numpy(v).to(torch.float32).view(1, -1) for k, v in obs.items()
-        }
+        obs_tensor = {k: torch.from_numpy(v).to(torch.float32).view(1, -1) for k, v in obs.items()}
         features = self.extractor(obs_tensor)

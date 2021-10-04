@@ -1,19 +1,16 @@
 """Gait pattern planning module."""
 
-from __future__ import absolute_import
-from __future__ import division
-
 # from __future__ import google_type_annotations
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import os
-import sys
 import inspect
 import logging
 import math
+import os
+import sys
+from typing import Any, Sequence
 
 import numpy as np
-from typing import Any, Sequence
 from blind_walking.agents.whole_body_controller import gait_generator
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -70,18 +67,12 @@ class OpenloopGaitGenerator(gait_generator.GaitGenerator):
         self._robot = robot
         self._stance_duration = stance_duration
         self._duty_factor = duty_factor
-        self._swing_duration = np.array(stance_duration) / np.array(
-            duty_factor
-        ) - np.array(stance_duration)
+        self._swing_duration = np.array(stance_duration) / np.array(duty_factor) - np.array(stance_duration)
         if len(initial_leg_phase) != self._robot.num_legs:
-            raise ValueError(
-                "The number of leg phases should be the same as number of legs."
-            )
+            raise ValueError("The number of leg phases should be the same as number of legs.")
         self._initial_leg_phase = initial_leg_phase
         if len(initial_leg_state) != self._robot.num_legs:
-            raise ValueError(
-                "The number of leg states should be the same of number of legs."
-            )
+            raise ValueError("The number of leg states should be the same of number of legs.")
         self._initial_leg_state = initial_leg_state
         self._next_leg_state = []
         # The ratio in cycle is duty factor if initial state of the leg is STANCE,
@@ -160,17 +151,11 @@ class OpenloopGaitGenerator(gait_generator.GaitGenerator):
             # explained before. If the current phase is less than the initial state
             # ratio, the leg is either in the initial state or has switched back after
             # one or more full cycles.
-            full_cycle_period = (
-                self._stance_duration[leg_id] / self._duty_factor[leg_id]
-            )
+            full_cycle_period = self._stance_duration[leg_id] / self._duty_factor[leg_id]
             # To account for the non-zero initial phase, we offset the time duration
             # with the effect time contribution from the initial leg phase.
-            augmented_time = (
-                current_time + self._initial_leg_phase[leg_id] * full_cycle_period
-            )
-            phase_in_full_cycle = (
-                math.fmod(augmented_time, full_cycle_period) / full_cycle_period
-            )
+            augmented_time = current_time + self._initial_leg_phase[leg_id] * full_cycle_period
+            phase_in_full_cycle = math.fmod(augmented_time, full_cycle_period) / full_cycle_period
             ratio = self._initial_state_ratio_in_cycle[leg_id]
             if phase_in_full_cycle < ratio:
                 self._desired_leg_state[leg_id] = self._initial_leg_state[leg_id]
@@ -178,9 +163,7 @@ class OpenloopGaitGenerator(gait_generator.GaitGenerator):
             else:
                 # A phase switch happens for this leg.
                 self._desired_leg_state[leg_id] = self._next_leg_state[leg_id]
-                self._normalized_phase[leg_id] = (phase_in_full_cycle - ratio) / (
-                    1 - ratio
-                )
+                self._normalized_phase[leg_id] = (phase_in_full_cycle - ratio) / (1 - ratio)
 
             self._leg_state[leg_id] = self._desired_leg_state[leg_id]
 
@@ -188,15 +171,9 @@ class OpenloopGaitGenerator(gait_generator.GaitGenerator):
             if self._normalized_phase[leg_id] < self._contact_detection_phase_threshold:
                 continue
 
-            if (
-                self._leg_state[leg_id] == gait_generator.LegState.SWING
-                and contact_state[leg_id]
-            ):
+            if self._leg_state[leg_id] == gait_generator.LegState.SWING and contact_state[leg_id]:
                 logging.info("early touch down detected.")
                 self._leg_state[leg_id] = gait_generator.LegState.EARLY_CONTACT
-            if (
-                self._leg_state[leg_id] == gait_generator.LegState.STANCE
-                and not contact_state[leg_id]
-            ):
+            if self._leg_state[leg_id] == gait_generator.LegState.STANCE and not contact_state[leg_id]:
                 logging.info("lost contact detected.")
                 self._leg_state[leg_id] = gait_generator.LegState.LOSE_CONTACT

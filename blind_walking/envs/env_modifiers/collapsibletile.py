@@ -1,22 +1,21 @@
-import pybullet as p
-import pybullet_data as pd
 import os
-import numpy as np
-import pyquaternion
+import random
 import time
 
-import random
+import numpy as np
+import pybullet as p
+import pybullet_data as pd
+import pyquaternion
 
 random.seed(10)
 
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
-
 """ Collapsible Tile Env
 Using _generate_field():
 Case 1: Front right feet damping platform (Height above ground 0.50m)
 Case 2: Front left feed damping platform (Height above ground 0.50m)
-Usage: 
+Usage:
 self.cp._generate_field(self,
                         case=1,
                         sElasticStiffness=8,
@@ -54,24 +53,16 @@ class CollapsibleTile(EnvModifier):
 
     def _reset(self, env):
         for index, blockId in enumerate(self.damping_platform):
-            env.pybullet_client.resetBasePositionAndOrientation(
-                blockId, self.damping_tile_pos[index], [0, 0, 0, 1]
-            )
+            env.pybullet_client.resetBasePositionAndOrientation(blockId, self.damping_tile_pos[index], [0, 0, 0, 1])
             env.pybullet_client.resetBaseVelocity(blockId, [0, 0, 0], [0, 0, 0])
             if self.textureId:
-                env.pybullet_client.changeVisualShape(
-                    blockId, -1, textureUniqueId=self.textureId
-                )
+                env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
                 env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
             elif self.color == "O":
-                env.pybullet_client.changeVisualShape(
-                    blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0
-                )
+                env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0)
                 env.pybullet_client.changeDynamics(blockId, -1, mass=0.25)
             elif self.color == "R":
-                env.pybullet_client.changeVisualShape(
-                    blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0
-                )
+                env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0)
                 env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
         for index, blockId in enumerate(self.collapsible_platform):
             print(f"{index}, {blockId}")
@@ -93,21 +84,13 @@ class CollapsibleTile(EnvModifier):
                 frictionCoeff=0.5,
                 useFaceContact=1,
             )
-            self.collapsible_platform = np.insert(
-                self.collapsible_platform, index, regenerated_body, axis=0
-            )
+            self.collapsible_platform = np.insert(self.collapsible_platform, index, regenerated_body, axis=0)
             if self.textureId:
-                env.pybullet_client.changeVisualShape(
-                    regenerated_body, -1, textureUniqueId=self.textureId
-                )
+                env.pybullet_client.changeVisualShape(regenerated_body, -1, textureUniqueId=self.textureId)
             elif self.color == "O":
-                env.pybullet_client.changeVisualShape(
-                    regenerated_body, -1, rgbaColor=[1, 0.5, 0, 1], flags=0
-                )
+                env.pybullet_client.changeVisualShape(regenerated_body, -1, rgbaColor=[1, 0.5, 0, 1], flags=0)
             elif self.color == "R":
-                env.pybullet_client.changeVisualShape(
-                    regenerated_body, -1, rgbaColor=[1, 0.25, 0, 1], flags=0
-                )
+                env.pybullet_client.changeVisualShape(regenerated_body, -1, rgbaColor=[1, 0.25, 0, 1], flags=0)
             # Anchor Soft Body at the bottom 4 corners
             # ground anchor on vertices 4,5,6,7.
             env.pybullet_client.createSoftBodyAnchor(regenerated_body, 4, -1, -1)
@@ -115,9 +98,7 @@ class CollapsibleTile(EnvModifier):
             env.pybullet_client.createSoftBodyAnchor(regenerated_body, 6, -1, -1)
             env.pybullet_client.createSoftBodyAnchor(regenerated_body, 7, -1, -1)
 
-    def _generate(
-        self, env, case=1, sElasticStiffness=8, sDampingStiffness=1, texture=None
-    ):
+    def _generate(self, env, case=1, sElasticStiffness=8, sDampingStiffness=1, texture=None):
         # env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         # env.pybullet_client.configureDebugVisualizer(
         #     env.pybullet_client.COV_ENABLE_RENDERING, 0)
@@ -551,45 +532,29 @@ class CollapsibleTile(EnvModifier):
         if case in [1, 2]:
             for index, blockId in enumerate(damping_platform):
                 if texture:
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, textureUniqueId=self.textureId
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
                     env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
                 elif self.color == "O":
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0)
                     env.pybullet_client.changeDynamics(blockId, -1, mass=0.25)
                 elif self.color == "R":
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0)
                     env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
             for index, blockId in enumerate(collapsible_platform):
                 if texture:
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, textureUniqueId=self.textureId
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
                 elif self.color == "O":
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.5, 0, 1], flags=0)
                 elif self.color == "R":
-                    env.pybullet_client.changeVisualShape(
-                        blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0
-                    )
+                    env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0)
                 # Anchor Soft Body at the bottom 4 corners
-                env.pybullet_client.createSoftBodyAnchor(
-                    blockId, 4, -1, -1
-                )  # ground anchor on vertices 4,5,6,7.
+                env.pybullet_client.createSoftBodyAnchor(blockId, 4, -1, -1)  # ground anchor on vertices 4,5,6,7.
                 env.pybullet_client.createSoftBodyAnchor(blockId, 5, -1, -1)
                 env.pybullet_client.createSoftBodyAnchor(blockId, 6, -1, -1)
                 env.pybullet_client.createSoftBodyAnchor(blockId, 7, -1, -1)
         print("TERRAIN TYPE: Collapsible Platform - Case {}".format(case))
 
-        env.pybullet_client.configureDebugVisualizer(
-            env.pybullet_client.COV_ENABLE_RENDERING, 1
-        )
+        env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 1)
 
         self.platform = platform
         self.damping_platform = damping_platform

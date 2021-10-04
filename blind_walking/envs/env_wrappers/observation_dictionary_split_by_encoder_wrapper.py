@@ -14,11 +14,11 @@
 # limitations under the License.
 
 """An env wrapper that splits and flattens the A1GymEnv observations to an array based on its encoder """
-import gym
 import collections
-from gym import spaces
 
+import gym
 from blind_walking.envs.utilities import env_utils
+from gym import spaces
 
 
 def get_encoder_from_sensor_name(sensor_name: str):
@@ -34,9 +34,7 @@ def get_all_encoders_from_observation_space(observation_space: spaces.dict.Dict)
     return encoders
 
 
-def filter_observation_space_by_encoder(
-    observation_space: spaces.dict.Dict, encoder_name: str
-):
+def filter_observation_space_by_encoder(observation_space: spaces.dict.Dict, encoder_name: str):
     filtered_observation_space = {}
     for sensor_name, sensor in observation_space.spaces.items():
         if encoder_name == get_encoder_from_sensor_name(sensor_name):
@@ -67,9 +65,7 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         """Initializes the wrapper."""
         self.observation_excluded = observation_excluded
         self._gym_env = gym_env
-        self.observation_space = self._split_observation_spaces(
-            self._gym_env.observation_space
-        )
+        self.observation_space = self._split_observation_spaces(self._gym_env.observation_space)
         self.action_space = self._gym_env.action_space
 
     def __getattr__(self, attr):
@@ -96,9 +92,7 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         return split_obs
 
     def reset(self, initial_motor_angles=None, reset_duration=0.0):
-        observation = self._gym_env.reset(
-            initial_motor_angles=initial_motor_angles, reset_duration=reset_duration
-        )
+        observation = self._gym_env.reset(initial_motor_angles=initial_motor_angles, reset_duration=reset_duration)
         return self._split_observation(observation)
 
     def step(self, action):

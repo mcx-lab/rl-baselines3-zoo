@@ -15,12 +15,11 @@
 
 """The inverse kinematic utilities."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
+import typing
 
 import numpy as np
-import typing
 
 _IDENTITY_ORIENTATION = (0, 0, 0, 1)
 
@@ -89,9 +88,7 @@ def link_position_in_base_frame(
         robot.GetBasePosition(),
         robot.GetBaseOrientation(),
     )
-    inverse_translation, inverse_rotation = robot.pybullet_client.invertTransform(
-        base_position, base_orientation
-    )
+    inverse_translation, inverse_rotation = robot.pybullet_client.invertTransform(base_position, base_orientation)
 
     link_state = robot.pybullet_client.getLinkState(robot.quadruped, link_id)
     link_position = link_state[0]
@@ -121,8 +118,6 @@ def compute_jacobian(
 
     all_joint_angles = [state[0] for state in robot.joint_states]
     zero_vec = [0] * len(all_joint_angles)
-    jv, _ = robot.pybullet_client.calculateJacobian(
-        robot.quadruped, link_id, (0, 0, 0), all_joint_angles, zero_vec, zero_vec
-    )
+    jv, _ = robot.pybullet_client.calculateJacobian(robot.quadruped, link_id, (0, 0, 0), all_joint_angles, zero_vec, zero_vec)
     jacobian = np.array(jv)
     return jacobian
