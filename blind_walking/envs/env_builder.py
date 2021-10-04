@@ -57,7 +57,6 @@ def build_regular_env(robot_class,
   env_sensor_list = [
     environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
     environment_sensors.TargetPositionSensor(),
-    environment_sensors.LocalDistancesToGroundSensor()
   ]
 
   env_randomizer_list = []
