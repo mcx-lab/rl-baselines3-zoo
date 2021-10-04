@@ -391,12 +391,12 @@ class A1(minitaur.Minitaur):
       distance_to_ground = data[2] * 2 * max_height
     return max_height - distance_to_ground
 
-  def GetLocalTerrainViewBatch(self, grid_unit = 0.1, grid_size = 32):
+  def GetLocalTerrainView(self, grid_unit = 0.1, grid_size = 32):
     """ Returns a view of the local terrain as seen from a single point. 
 
     Args:
-      grid_unit:    Side length of one square in the grid
-      grid_size:    Number of squares along one side of grid
+      grid_unit: Side length of one square in the grid
+      grid_size: Number of squares along one side of grid
 
     Returns:
       N x N numpy array of floats
@@ -421,8 +421,8 @@ class A1(minitaur.Minitaur):
     """ Get the vertical distance from base height to ground in a NxN grid around the robot. 
     
     Args:
-      grid_unit:    Side length of one square in the grid
-      grid_size:    Number of squares along one side of grid
+      grid_unit: Side length of one square in the grid
+      grid_size: Number of squares along one side of grid
 
     Returns:
       N x N numpy array of floats
