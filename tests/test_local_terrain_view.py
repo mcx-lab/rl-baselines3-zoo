@@ -112,5 +112,15 @@ class DummyA1GymEnv(gym.Env):
 
 def test_local_terrain_view_sensor():
     env = DummyA1GymEnv()
-    local_terrain_view = env.robot.GetLocalTerrainViewBatch(grid_unit = 0.05, grid_size = 16)
-    assert local_terrain_view.shape == (16, 16)
+    grid_size = 32
+    local_terrain_view = env.robot.GetLocalTerrainViewBatch(grid_unit = 0.1, grid_size = grid_size)
+    assert local_terrain_view.shape == (grid_size, grid_size)
+
+    import matplotlib.pyplot as plt
+    cs = [i for i in range(grid_size)]
+    coords = [(x,y) for x in cs for y in cs]
+    xs = [c[0] for c in coords]
+    ys = [c[1] for c in coords]
+    plt.figure()
+    plt.scatter(xs, ys, c = local_terrain_view)
+    plt.savefig('plot.png')
