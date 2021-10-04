@@ -41,13 +41,10 @@ jobs:
         pip install git+https://github.com/eleurent/highway-env
     - name: Check format with black
       run: |
-        black --check blind_walking
+        black --check blind_walking --line-length=127
     - name: Lint with flake8
       run: |
-        flake8 blind_walking --extend-ignore=F401,F841 --max-line-length=127
-    - name: Lint with mypy
-      run: |
-        mypy blind_walking --no-strict-optional --ignore-missing-imports
+        flake8 blind_walking --ignore=W503,W504,E203,E231,F841,F401,E402
     - name: Test with pytest
       run: |
         python -m pytest tests
