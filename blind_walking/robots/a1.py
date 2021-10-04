@@ -414,6 +414,7 @@ class A1(minitaur.Minitaur):
     for info in ray_intersection_infos:
       hit_position = info[3]
       z_coordinates.append(hit_position[2]) 
+    return z_coordinates
 
   def GetLocalDistancesToGround(self, grid_unit = 0.05, grid_size = 16):
     """ Get the vertical distance from base height to ground in a NxN grid around the robot. 
