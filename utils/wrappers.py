@@ -1,18 +1,23 @@
 import gym
 import numpy as np
-from sb3_contrib.common.wrappers import TimeFeatureWrapper  # noqa: F401 (backward compatibility)
+from sb3_contrib.common.wrappers import (
+    TimeFeatureWrapper,
+)  # noqa: F401 (backward compatibility)
 from scipy.signal import iirfilter, sosfilt, zpk2sos
 
+
 class DummyWrapper(gym.Wrapper):
-    """ Placeholder wrapper for when we don't want any of the other wrappers """
+    """Placeholder wrapper for when we don't want any of the other wrappers"""
+
     def __init__(self, env: gym.Env):
         super(DummyWrapper, self).__init__(env)
-    
+
     def reset(self):
         return self.env.reset()
 
     def step(self, action):
         return self.env.step(action)
+
 
 class DoneOnSuccessWrapper(gym.Wrapper):
     """

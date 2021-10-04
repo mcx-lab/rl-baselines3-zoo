@@ -17,15 +17,16 @@ from blind_walking.envs.utilities import env_randomizer_base
 
 
 class ControllableEnvRandomizerBase(env_randomizer_base.EnvRandomizerBase):
-  """Base class for environment randomizer that can be manipulated explicitly.
+    """Base class for environment randomizer that can be manipulated explicitly.
 
-  Randomizes physical parameters of the objects in the simulation and adds
-  perturbations to the stepping of the simulation.
-  """
-  def get_randomization_parameters(self):
-    """Get the parameters of the randomization."""
-    raise NotImplementedError
+    Randomizes physical parameters of the objects in the simulation and adds
+    perturbations to the stepping of the simulation.
+    """
 
-  def set_randomization_from_parameters(self, env, randomization_parameters):
-    """Set the parameters of the randomization."""
-    raise NotImplementedError
+    def get_randomization_parameters(self):
+        """Get the parameters of the randomization."""
+        raise NotImplementedError
+
+    def set_randomization_from_parameters(self, env, randomization_parameters):
+        """Set the parameters of the randomization."""
+        raise NotImplementedError

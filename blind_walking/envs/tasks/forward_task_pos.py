@@ -1,5 +1,6 @@
-import numpy as np
 import math
+
+import numpy as np
 
 
 class ForwardTask(object):
@@ -67,7 +68,7 @@ class ForwardTask(object):
         self.current_foot_contacts = env.robot.GetFootContacts()
 
         # Update relative target position
-        self._target_pos = env._observations['TargetPosition_flatten']
+        self._target_pos = env._observations["TargetPosition_flatten"]
 
     def done(self, env):
         """Checks if the episode is over.
@@ -93,10 +94,10 @@ class ForwardTask(object):
             distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
             distance_reward = min(distance_towards / distance_target, 1)
         else:
-            distance_reward = - np.linalg.norm(dxy_local)
+            distance_reward = -np.linalg.norm(dxy_local)
         # Reward closeness to target position.
         dxy_err = np.linalg.norm(self._target_pos - dxy_local, 2)
-        dxy_reward = math.exp(math.log(alpha)*(dxy_err/0.01)**2)
+        dxy_reward = math.exp(math.log(alpha) * (dxy_err / 0.01) ** 2)
         # Penalty for upward translation.
         dz_reward = -abs(dz)
 
@@ -106,19 +107,24 @@ class ForwardTask(object):
         local_up_vec = rot_matrix[6:]
         shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
         # Penalty for energy usage.
-        energy_reward = -np.abs(
-            np.dot(self.current_motor_torques,
-                   self.current_motor_velocities)) * self._env._sim_time_step
-        energy_rot_reward = -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) \
-            * self._env._sim_time_step * 0.5
+        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._sim_time_step
+        energy_rot_reward = (
+            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._sim_time_step * 0.5
+        )
 
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
 
-        objectives = [distance_reward, dxy_reward, dz_reward,
-                      shake_reward, energy_reward, energy_rot_reward, contact_reward]
-        objective_weights = [0.01, 0.01, 0.001,
-                             0.001, 0.005, 0.005, 0.0]
+        objectives = [
+            distance_reward,
+            dxy_reward,
+            dz_reward,
+            shake_reward,
+            energy_reward,
+            energy_rot_reward,
+            contact_reward,
+        ]
+        objective_weights = [0.01, 0.01, 0.001, 0.001, 0.005, 0.005, 0.0]
         weighted_objectives = [o * w for o, w in zip(objectives, objective_weights)]
         reward = sum(weighted_objectives)
         return reward
