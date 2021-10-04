@@ -17,7 +17,9 @@ class TestLocomotionFeatureEncoder(unittest.TestCase):
                 environment_sensors.TargetPositionSensor(enc_name="mlp"),
                 environment_sensors.LocalTerrainViewSensor(enc_name="cnn"),
             ],
-            obs_wrapper=lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(x, encoder_excluded="cnn"),
+            obs_wrapper=lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(
+                x, observation_excluded="LocalTerrainView_cnn"
+            ),
         )
         self.extractor = LocomotionFeatureEncoder(self.env.observation_space)
 

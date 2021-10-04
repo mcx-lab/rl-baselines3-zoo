@@ -14,7 +14,7 @@
 # limitations under the License.
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs
+from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
@@ -61,19 +61,25 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.TargetPositionSensor(),
+            environment_sensors.ControllerKpSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
+            environment_sensors.ControllerKdSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
+            environment_sensors.MotorStrengthSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
+            environment_sensors.LocalTerrainViewSensor(enc_name="cnn"),
         ]
 
     if env_randomizer_list is None:
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = []
+        env_modifier_list = [train_course.TrainCourse()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
+        obs_wrapper = lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(  # noqa: E731
+            x, observation_excluded=("LocalTerrainView_cnn",)
+        )
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,

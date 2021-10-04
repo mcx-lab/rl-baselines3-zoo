@@ -62,12 +62,14 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
     """An env wrapper that splits and flattens the observation dictionary to an array based on its encoder.
 
     Args:
-        encoder_excluded: A list of encoder names to not flatten.
+        observation_excluded: A list of observations to skip splitting and flattening.
+        These will be passed directly to the final output.
     """
 
-    def __init__(self, gym_env, encoder_excluded=()):
+    def __init__(self, gym_env, encoder_excluded=(), observation_excluded=()):
         """Initializes the wrapper."""
         self.encoder_excluded = encoder_excluded
+        self.observation_excluded = observation_excluded
         self._gym_env = gym_env
         self.observation_space = self._split_observation_spaces(self._gym_env.observation_space)
         self.action_space = self._gym_env.action_space
@@ -76,7 +78,14 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         return getattr(self._gym_env, attr)
 
     def _split_observation_spaces(self, observation_spaces):
-        encoder_names = get_all_encoders_from_observation_space(observation_spaces)
+        included_observation_spaces = spaces.dict.Dict(
+            {k: v for k, v in observation_spaces.spaces.items() if k not in self.observation_excluded}
+        )
+        excluded_observation_spaces = spaces.dict.Dict(
+            {k: v for k, v in observation_spaces.spaces.items() if k in self.observation_excluded}
+        )
+
+        encoder_names = get_all_encoders_from_observation_space(included_observation_spaces)
         split_space = {}
         for enc_name in encoder_names:
             subspace = filter_observation_space_by_encoder(observation_spaces, enc_name)
@@ -86,10 +95,16 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
             else:
                 split_space[enc_name] = subspace
 
+        for name, space in excluded_observation_spaces.spaces.items():
+            split_space[name] = space
+
         return spaces.dict.Dict(split_space)
 
     def _split_observation(self, input_observation):
-        encoder_names = get_all_encoders_from_observation(input_observation)
+        included_observations = {k: v for k, v in input_observation.items() if k not in self.observation_excluded}
+        excluded_observations = {k: v for k, v in input_observation.items() if k in self.observation_excluded}
+
+        encoder_names = get_all_encoders_from_observation(included_observations)
         split_obs = collections.OrderedDict()
         for enc_name in encoder_names:
             subobs = filter_observation_by_encoder(input_observation, enc_name)
@@ -98,6 +113,9 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
                 split_obs[enc_name] = flattened_subspace
             else:
                 split_obs[enc_name] = subobs
+
+        for name, obs in excluded_observations.items():
+            split_obs[name] = obs
 
         return split_obs
 

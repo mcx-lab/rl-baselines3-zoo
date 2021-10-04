@@ -46,7 +46,7 @@ class LocomotionFeatureEncoder(BaseFeaturesExtractor):
             nn.Flatten(),
         )
         # Get the output shape by doing a forward pass
-        _inp = torch.zeros(observation_space["cnn"]["LocalTerrainView_cnn"].shape).unsqueeze(0)
+        _inp = torch.zeros(observation_space["LocalTerrainView_cnn"].shape).unsqueeze(0)
         _oup = cnn_backbone(_inp)
         _oup_dim = _oup.view(-1).shape[0]
         cnn_head = nn.Sequential(nn.Flatten(), nn.Linear(_oup_dim, cnn_output_size))
@@ -55,6 +55,6 @@ class LocomotionFeatureEncoder(BaseFeaturesExtractor):
     def forward(self, observations: TensorDict) -> th.Tensor:
         flatten_embedding = self.flatten_encoder(observations["flatten"])
         mlp_embedding = self.mlp_encoder(observations["mlp"])
-        cnn_embedding = self.cnn_encoder(observations["cnn"]["LocalTerrainView_cnn"])
+        cnn_embedding = self.cnn_encoder(observations["LocalTerrainView_cnn"])
 
         return th.cat([flatten_embedding, mlp_embedding, cnn_embedding], dim=1)
