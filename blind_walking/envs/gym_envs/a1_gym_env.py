@@ -9,13 +9,14 @@ class A1GymEnv(gym.Env):
 
     metadata = {"render.modes": ["rgb_array"]}
 
-    def __init__(self, action_limit=(0.3, 0.3, 0.3), render=False, on_rack=False):
+    def __init__(self, action_limit=(0.3, 0.3, 0.3), render=False, on_rack=False, **kwargs):
         self._env = env_builder.build_regular_env(
             a1.A1,
             motor_control_mode=robot_config.MotorControlMode.POSITION,
             enable_rendering=render,
             action_limit=action_limit,
             on_rack=on_rack,
+            **kwargs,
         )
         self.observation_space = self._env.observation_space
         self.action_space = self._env.action_space

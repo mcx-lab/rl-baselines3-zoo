@@ -30,6 +30,20 @@ def build_regular_env(
     on_rack=False,
     action_limit=(0.75, 0.75, 0.75),
     wrap_trajectory_generator=True,
+    robot_sensor_list=[
+        robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
+        robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
+        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+        robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+    ],
+    env_sensor_list=[
+        environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+        environment_sensors.TargetPositionSensor(),
+    ],
+    env_randomizer_list=[],
+    env_modifier_list=[],
+    task=forward_task_pos.ForwardTask(),
+    obs_wrapper=obs_array_wrapper.ObservationDictionaryToArrayWrapper,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -44,24 +58,6 @@ def build_regular_env(
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
 
-    robot_sensor_list = [
-        robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
-        robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
-        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-        robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
-    ]
-
-    env_sensor_list = [
-        environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-        environment_sensors.TargetPositionSensor(),
-    ]
-
-    env_randomizer_list = []
-
-    env_modifier_list = []
-
-    task = forward_task_pos.ForwardTask()
-
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
         robot_class=robot_class,
@@ -72,7 +68,7 @@ def build_regular_env(
         env_modifiers=env_modifier_list,
     )
 
-    env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
+    env = obs_wrapper(env)
     if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
