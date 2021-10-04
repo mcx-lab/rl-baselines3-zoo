@@ -317,7 +317,7 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
                grid_size: int = 16,
                lower_bound: _FLOAT_OR_ARRAY = -100,
                upper_bound: _FLOAT_OR_ARRAY = 100,
-               name: typing.Text = "LocalDistancesToGroundSensor",
+               name: typing.Text = "LocalDistancesToGround",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs LocalDistancesToGroundSensor.
@@ -325,8 +325,8 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
     Args:
       grid_unit: Side length of one square in the grid
       grid_size: Number of squares along one side of grid
-      lower_bound: the lower bound of the pose of the robot.
-      upper_bound: the upper bound of the pose of the robot.
+      lower_bound: the lower bound of the distance to ground.
+      upper_bound: the upper bound of the distance to ground.
       name: the name of the sensor.
       dtype: data type of sensor value.
     """
@@ -335,11 +335,11 @@ class LocalDistancesToGroundSensor(sensor.BoxSpaceSensor):
     self.grid_size = grid_size
 
     super(LocalDistancesToGroundSensor, self).__init__(name=name,
-                                                    shape=(grid_size ** 2,),
-                                                    enc_name=enc_name,
-                                                    lower_bound=lower_bound,
-                                                    upper_bound=upper_bound,
-                                                    dtype=dtype)
+                                                       shape=(grid_size ** 2,),
+                                                       enc_name=enc_name,
+                                                       lower_bound=lower_bound,
+                                                       upper_bound=upper_bound,
+                                                       dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -363,7 +363,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
                grid_size: int = 32,
                lower_bound: _FLOAT_OR_ARRAY = -100,
                upper_bound: _FLOAT_OR_ARRAY = 100,
-               name: typing.Text = "LocalDistancesToGroundSensor",
+               name: typing.Text = "LocalTerrainView",
                enc_name: typing.Text = 'flatten',
                dtype: typing.Type[typing.Any] = np.float64) -> None:
     """Constructs LocalTerrainViewSensor.
@@ -371,8 +371,8 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
     Args:
       grid_unit: Side length of one square in the grid
       grid_size: Number of squares along one side of grid
-      lower_bound: the lower bound of the pose of the robot.
-      upper_bound: the upper bound of the pose of the robot.
+      lower_bound: the lower bound of the terrain view.
+      upper_bound: the upper bound of the terrain view.
       name: the name of the sensor.
       dtype: data type of sensor value.
     """
@@ -381,11 +381,11 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
     self.grid_size = grid_size
 
     super(LocalTerrainViewSensor, self).__init__(name=name,
-                                                shape=(grid_size ** 2,),
-                                                enc_name=enc_name,
-                                                lower_bound=lower_bound,
-                                                upper_bound=upper_bound,
-                                                dtype=dtype)
+                                                 shape=(grid_size ** 2,),
+                                                 enc_name=enc_name,
+                                                 lower_bound=lower_bound,
+                                                 upper_bound=upper_bound,
+                                                 dtype=dtype)
 
   def on_reset(self, env):
     """From the callback, the sensor remembers the environment.
@@ -396,7 +396,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
   def _get_observation(self) -> _ARRAY:
     """ Returns the local distances to ground """
-    return self._env.robot.GetLocalTerrainViewBatch(
+    return self._env.robot.GetLocalTerrainView(
       grid_unit = self.grid_unit, 
       grid_size = self.grid_size
     ).reshape(-1)
