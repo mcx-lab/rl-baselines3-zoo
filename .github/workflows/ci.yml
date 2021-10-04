@@ -44,7 +44,7 @@ jobs:
         black --check blind_walking
     - name: Lint with flake8
       run: |
-        flake8 blind_walking --ignore=E203,W503 --max-line-length=127
+        flake8 blind_walking --extend-ignore=F401,F841 --max-line-length=127
     - name: Lint with mypy
       run: |
         mypy blind_walking --no-strict-optional --ignore-missing-imports
