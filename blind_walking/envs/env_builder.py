@@ -30,19 +30,11 @@ def build_regular_env(
     on_rack=False,
     action_limit=(0.75, 0.75, 0.75),
     wrap_trajectory_generator=True,
-    robot_sensor_list=[
-        robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
-        robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
-        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-        robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
-    ],
-    env_sensor_list=[
-        environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-        environment_sensors.TargetPositionSensor(),
-    ],
-    env_randomizer_list=[],
-    env_modifier_list=[],
-    task=forward_task_pos.ForwardTask(),
+    robot_sensor_list=None,
+    env_sensor_list=None,
+    env_randomizer_list=None,
+    env_modifier_list=None,
+    task=None,
     obs_wrapper=obs_array_wrapper.ObservationDictionaryToArrayWrapper,
 ):
 
@@ -57,6 +49,28 @@ def build_regular_env(
     sim_params.robot_on_rack = on_rack
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
+
+    if robot_sensor_list is None:
+        robot_sensor_list = [
+            robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
+            robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
+            robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+            robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+        ]
+    if env_sensor_list is None:
+        env_sensor_list = [
+            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+            environment_sensors.TargetPositionSensor(),
+        ]
+
+    if env_randomizer_list is None:
+        env_randomizer_list = []
+
+    if env_modifier_list is None:
+        env_modifier_list = []
+
+    if task is None:
+        task = forward_task_pos.ForwardTask()
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
