@@ -15,18 +15,16 @@
 """This file implements the locomotion gym env."""
 import collections
 import time
+
 import gym
-from gym import spaces
-from gym.utils import seeding
 import numpy as np
 import pybullet  # pytype: disable=import-error
-import pybullet_utils.bullet_client as bullet_client
 import pybullet_data as pd
-
+import pybullet_utils.bullet_client as bullet_client
+from blind_walking.envs.sensors import sensor, space_utils
 from blind_walking.robots import robot_config
-from blind_walking.envs.sensors import sensor
-from blind_walking.envs.sensors import space_utils
-
+from gym import spaces
+from gym.utils import seeding
 
 _ACTION_EPS = 0.01
 _NUM_SIMULATION_ITERATION_STEPS = 300
@@ -34,475 +32,464 @@ _LOG_BUFFER_LENGTH = 5000
 
 
 class LocomotionGymEnv(gym.Env):
-  """The gym environment for the locomotion tasks."""
-  metadata = {
-      'render.modes': ['human', 'rgb_array'],
-      'video.frames_per_second': 100
-  }
+    """The gym environment for the locomotion tasks."""
 
-  def __init__(self,
-               gym_config,
-               robot_class=None,
-               env_sensors=None,
-               robot_sensors=None,
-               task=None,
-               env_randomizers=None,
-               env_modifiers=None):
-    """Initializes the locomotion gym environment.
+    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 100}
 
-    Args:
-      gym_config: An instance of LocomotionGymConfig.
-      robot_class: A class of a robot. We provide a class rather than an
-        instance due to hard_reset functionality. Parameters are expected to be
-        configured with gin.
-      sensors: A list of environmental sensors for observation.
-      task: A callable function/class to calculate the reward and termination
-        condition. Takes the gym env as the argument when calling.
-      env_randomizers: A list of EnvRandomizer(s). An EnvRandomizer may
-        randomize the physical property of minitaur, change the terrrain during
-        reset(), or add perturbation forces during step().
+    def __init__(
+        self,
+        gym_config,
+        robot_class=None,
+        env_sensors=None,
+        robot_sensors=None,
+        task=None,
+        env_randomizers=None,
+        env_modifiers=None,
+    ):
+        """Initializes the locomotion gym environment.
 
-    Raises:
-      ValueError: If the num_action_repeat is less than 1.
+        Args:
+          gym_config: An instance of LocomotionGymConfig.
+          robot_class: A class of a robot. We provide a class rather than an
+            instance due to hard_reset functionality. Parameters are expected to be
+            configured with gin.
+          sensors: A list of environmental sensors for observation.
+          task: A callable function/class to calculate the reward and termination
+            condition. Takes the gym env as the argument when calling.
+          env_randomizers: A list of EnvRandomizer(s). An EnvRandomizer may
+            randomize the physical property of minitaur, change the terrrain during
+            reset(), or add perturbation forces during step().
 
-    """
+        Raises:
+          ValueError: If the num_action_repeat is less than 1.
 
-    self.seed()
-    self._gym_config = gym_config
-    self._robot_class = robot_class
-    self._robot_sensors = robot_sensors
-    self._observations = None
+        """
 
-    self._sensors = env_sensors if env_sensors is not None else list()
-    if self._robot_class is None:
-      raise ValueError('robot_class cannot be None.')
+        self.seed()
+        self._gym_config = gym_config
+        self._robot_class = robot_class
+        self._robot_sensors = robot_sensors
+        self._observations = None
 
-    # A dictionary containing the objects in the world other than the robot.
-    self._world_dict = {}
-    self._task = task
+        self._sensors = env_sensors if env_sensors is not None else list()
+        if self._robot_class is None:
+            raise ValueError("robot_class cannot be None.")
 
-    self._env_randomizers = env_randomizers if env_randomizers else []
-    self._env_modifiers = env_modifiers if env_modifiers else []
+        # A dictionary containing the objects in the world other than the robot.
+        self._world_dict = {}
+        self._task = task
 
-    # This is a workaround due to the issue in b/130128505#comment5
-    if isinstance(self._task, sensor.Sensor):
-      self._sensors.append(self._task)
+        self._env_randomizers = env_randomizers if env_randomizers else []
+        self._env_modifiers = env_modifiers if env_modifiers else []
 
-    # Simulation related parameters.
-    self._num_action_repeat = gym_config.simulation_parameters.num_action_repeat
-    self._on_rack = gym_config.simulation_parameters.robot_on_rack
-    if self._num_action_repeat < 1:
-      raise ValueError('number of action repeats should be at least 1.')
-    self._sim_time_step = gym_config.simulation_parameters.sim_time_step_s
-    self._env_time_step = self._num_action_repeat * self._sim_time_step
-    self._env_step_counter = 0
+        # This is a workaround due to the issue in b/130128505#comment5
+        if isinstance(self._task, sensor.Sensor):
+            self._sensors.append(self._task)
 
-    self._num_bullet_solver_iterations = int(_NUM_SIMULATION_ITERATION_STEPS /
-                                             self._num_action_repeat)
-    self._is_render = gym_config.simulation_parameters.enable_rendering
+        # Simulation related parameters.
+        self._num_action_repeat = gym_config.simulation_parameters.num_action_repeat
+        self._on_rack = gym_config.simulation_parameters.robot_on_rack
+        if self._num_action_repeat < 1:
+            raise ValueError("number of action repeats should be at least 1.")
+        self._sim_time_step = gym_config.simulation_parameters.sim_time_step_s
+        self._env_time_step = self._num_action_repeat * self._sim_time_step
+        self._env_step_counter = 0
 
-    # The wall-clock time at which the last frame is rendered.
-    self._last_frame_time = 0.0
-    self._show_reference_id = -1
+        self._num_bullet_solver_iterations = int(_NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat)
+        self._is_render = gym_config.simulation_parameters.enable_rendering
 
-    if self._is_render:
-      self._pybullet_client = bullet_client.BulletClient(
-          connection_mode=pybullet.GUI)
-      pybullet.configureDebugVisualizer(
-          pybullet.COV_ENABLE_GUI,
-          gym_config.simulation_parameters.enable_rendering_gui)
-    else:
-      self._pybullet_client = bullet_client.BulletClient(
-          connection_mode=pybullet.DIRECT)
-    self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
-    if gym_config.simulation_parameters.egl_rendering:
-      self._pybullet_client.loadPlugin('eglRendererPlugin')
+        # The wall-clock time at which the last frame is rendered.
+        self._last_frame_time = 0.0
+        self._show_reference_id = -1
 
-    # The action list contains the name of all actions.
-    self._build_action_space()
+        if self._is_render:
+            self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.GUI)
+            pybullet.configureDebugVisualizer(
+                pybullet.COV_ENABLE_GUI,
+                gym_config.simulation_parameters.enable_rendering_gui,
+            )
+        else:
+            self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
+        self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
+        if gym_config.simulation_parameters.egl_rendering:
+            self._pybullet_client.loadPlugin("eglRendererPlugin")
 
-    # Set the default render options.
-    self._camera_dist = gym_config.simulation_parameters.camera_distance
-    self._camera_yaw = gym_config.simulation_parameters.camera_yaw
-    self._camera_pitch = gym_config.simulation_parameters.camera_pitch
-    self._render_width = gym_config.simulation_parameters.render_width
-    self._render_height = gym_config.simulation_parameters.render_height
+        # The action list contains the name of all actions.
+        self._build_action_space()
 
-    self._hard_reset = True
-    self.reset()
-    self._hard_reset = gym_config.simulation_parameters.enable_hard_reset
+        # Set the default render options.
+        self._camera_dist = gym_config.simulation_parameters.camera_distance
+        self._camera_yaw = gym_config.simulation_parameters.camera_yaw
+        self._camera_pitch = gym_config.simulation_parameters.camera_pitch
+        self._render_width = gym_config.simulation_parameters.render_width
+        self._render_height = gym_config.simulation_parameters.render_height
 
-    # Construct the observation space from the list of sensors. Note that we
-    # will reconstruct the observation_space after the robot is created.
-    self.observation_space = (
-        space_utils.convert_sensors_to_gym_space_dictionary(
-            self.all_sensors()))
-
-    # Generate modifications
-    for modifier in self._env_modifiers:
-      modifier._generate(self)
-      # If any of modifier is deformable, set hard reset to true
-      if modifier.deformable:
         self._hard_reset = True
+        self.reset()
+        self._hard_reset = gym_config.simulation_parameters.enable_hard_reset
 
-  def _build_action_space(self):
-    """Builds action space based on motor control mode."""
-    motor_mode = self._gym_config.simulation_parameters.motor_control_mode
-    if motor_mode == robot_config.MotorControlMode.HYBRID:
-      action_upper_bound = []
-      action_lower_bound = []
-      action_config = self._robot_class.ACTION_CONFIG
-      for action in action_config:
-        action_upper_bound.extend([6.28] * 5)
-        action_lower_bound.extend([-6.28] * 5)
-      self.action_space = spaces.Box(np.array(action_lower_bound),
-                                     np.array(action_upper_bound),
-                                     dtype=np.float32)
-    elif motor_mode == robot_config.MotorControlMode.TORQUE:
-      # TODO (yuxiangy): figure out the torque limits of robots.
-      torque_limits = np.array([100] * len(self._robot_class.ACTION_CONFIG))
-      self.action_space = spaces.Box(-torque_limits,
-                                     torque_limits,
-                                     dtype=np.float32)
-    else:
-      # Position mode
-      action_upper_bound = []
-      action_lower_bound = []
-      action_config = self._robot_class.ACTION_CONFIG
-      for action in action_config:
-        action_upper_bound.append(action.upper_bound)
-        action_lower_bound.append(action.lower_bound)
+        # Construct the observation space from the list of sensors. Note that we
+        # will reconstruct the observation_space after the robot is created.
+        self.observation_space = space_utils.convert_sensors_to_gym_space_dictionary(self.all_sensors())
 
-      self.action_space = spaces.Box(np.array(action_lower_bound),
-                                     np.array(action_upper_bound),
-                                     dtype=np.float32)
+        # Generate modifications
+        for modifier in self._env_modifiers:
+            modifier._generate(self)
+            # If any of modifier is deformable, set hard reset to true
+            if modifier.deformable:
+                self._hard_reset = True
 
-  def close(self):
-    if hasattr(self, '_robot') and self._robot:
-      self._robot.Terminate()
+    def _build_action_space(self):
+        """Builds action space based on motor control mode."""
+        motor_mode = self._gym_config.simulation_parameters.motor_control_mode
+        if motor_mode == robot_config.MotorControlMode.HYBRID:
+            action_upper_bound = []
+            action_lower_bound = []
+            action_config = self._robot_class.ACTION_CONFIG
+            for _action in action_config:
+                action_upper_bound.extend([6.28] * 5)
+                action_lower_bound.extend([-6.28] * 5)
+            self.action_space = spaces.Box(
+                np.array(action_lower_bound),
+                np.array(action_upper_bound),
+                dtype=np.float32,
+            )
+        elif motor_mode == robot_config.MotorControlMode.TORQUE:
+            # TODO (yuxiangy): figure out the torque limits of robots.
+            torque_limits = np.array([100] * len(self._robot_class.ACTION_CONFIG))
+            self.action_space = spaces.Box(-torque_limits, torque_limits, dtype=np.float32)
+        else:
+            # Position mode
+            action_upper_bound = []
+            action_lower_bound = []
+            action_config = self._robot_class.ACTION_CONFIG
+            for action in action_config:
+                action_upper_bound.append(action.upper_bound)
+                action_lower_bound.append(action.lower_bound)
 
-  def seed(self, seed=None):
-    self.np_random, self.np_random_seed = seeding.np_random(seed)
-    return [self.np_random_seed]
+            self.action_space = spaces.Box(
+                np.array(action_lower_bound),
+                np.array(action_upper_bound),
+                dtype=np.float32,
+            )
 
-  def all_sensors(self):
-    """Returns all robot and environmental sensors."""
-    return self._robot.GetAllSensors() + self._sensors
+    def close(self):
+        if hasattr(self, "_robot") and self._robot:
+            self._robot.Terminate()
 
-  def sensor_by_name(self, name):
-    """Returns the sensor with the given name, or None if not exist."""
-    for sensor_ in self.all_sensors():
-      if sensor_.get_name() == name:
-        return sensor_
-    return None
+    def seed(self, seed=None):
+        self.np_random, self.np_random_seed = seeding.np_random(seed)
+        return [self.np_random_seed]
 
-  def reset(self,
-            initial_motor_angles=None,
-            reset_duration=0.0,
-            reset_visualization_camera=True):
-    """Resets the robot's position in the world or rebuild the sim world.
+    def all_sensors(self):
+        """Returns all robot and environmental sensors."""
+        return self._robot.GetAllSensors() + self._sensors
 
-    The simulation world will be rebuilt if self._hard_reset is True.
+    def sensor_by_name(self, name):
+        """Returns the sensor with the given name, or None if not exist."""
+        for sensor_ in self.all_sensors():
+            if sensor_.get_name() == name:
+                return sensor_
+        return None
 
-    Args:
-      initial_motor_angles: A list of Floats. The desired joint angles after
-        reset. If None, the robot will use its built-in value.
-      reset_duration: Float. The time (in seconds) needed to rotate all motors
-        to the desired initial values.
-      reset_visualization_camera: Whether to reset debug visualization camera on
-        reset.
+    def reset(
+        self,
+        initial_motor_angles=None,
+        reset_duration=0.0,
+        reset_visualization_camera=True,
+    ):
+        """Resets the robot's position in the world or rebuild the sim world.
 
-    Returns:
-      A numpy array contains the initial observation after reset.
-    """
-    if self._is_render:
-      self._pybullet_client.configureDebugVisualizer(
-          self._pybullet_client.COV_ENABLE_RENDERING, 0)
+        The simulation world will be rebuilt if self._hard_reset is True.
 
-    # Clear the simulation world and rebuild the robot interface.
-    if self._hard_reset:
-      if any([m.deformable for m in self._env_modifiers]):
-        self._pybullet_client.resetSimulation(self._pybullet_client.RESET_USE_DEFORMABLE_WORLD)
-      else:
-        self._pybullet_client.resetSimulation()
-      self._pybullet_client.setPhysicsEngineParameter(
-          numSolverIterations=self._num_bullet_solver_iterations)
-      self._pybullet_client.setTimeStep(self._sim_time_step)
-      self._pybullet_client.setGravity(0, 0, -10)
+        Args:
+          initial_motor_angles: A list of Floats. The desired joint angles after
+            reset. If None, the robot will use its built-in value.
+          reset_duration: Float. The time (in seconds) needed to rotate all motors
+            to the desired initial values.
+          reset_visualization_camera: Whether to reset debug visualization camera on
+            reset.
 
-      # Rebuild the world.
-      self._world_dict = {
-          "ground": self._pybullet_client.loadURDF("plane_implicit.urdf")
-      }
+        Returns:
+          A numpy array contains the initial observation after reset.
+        """
+        if self._is_render:
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_RENDERING, 0)
 
-      # Assume that all env modifiers have the same adjust_position
-      adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else [0, 0, 0]
+        # Clear the simulation world and rebuild the robot interface.
+        if self._hard_reset:
+            if any([m.deformable for m in self._env_modifiers]):
+                self._pybullet_client.resetSimulation(self._pybullet_client.RESET_USE_DEFORMABLE_WORLD)
+            else:
+                self._pybullet_client.resetSimulation()
+            self._pybullet_client.setPhysicsEngineParameter(numSolverIterations=self._num_bullet_solver_iterations)
+            self._pybullet_client.setTimeStep(self._sim_time_step)
+            self._pybullet_client.setGravity(0, 0, -10)
 
-      # Rebuild the robot
-      self._robot = self._robot_class(
-          pybullet_client=self._pybullet_client,
-          sensors=self._robot_sensors,
-          on_rack=self._on_rack,
-          action_repeat=self._gym_config.simulation_parameters.
-          num_action_repeat,
-          motor_control_mode=self._gym_config.simulation_parameters.
-          motor_control_mode,
-          reset_time=self._gym_config.simulation_parameters.reset_time,
-          enable_clip_motor_commands=self._gym_config.simulation_parameters.
-          enable_clip_motor_commands,
-          enable_action_filter=self._gym_config.simulation_parameters.
-          enable_action_filter,
-          enable_action_interpolation=self._gym_config.simulation_parameters.
-          enable_action_interpolation,
-          allow_knee_contact=self._gym_config.simulation_parameters.
-          allow_knee_contact,
-          adjust_position=adjust_position)
+            # Rebuild the world.
+            self._world_dict = {"ground": self._pybullet_client.loadURDF("plane_implicit.urdf")}
 
-    # Reset the pose of the robot.
-    self._robot.Reset(reload_urdf=False,
-                      default_motor_angles=initial_motor_angles,
-                      reset_time=reset_duration)
+            # Assume that all env modifiers have the same adjust_position
+            adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else [0, 0, 0]
 
-    self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)
-    self._env_step_counter = 0
-    if reset_visualization_camera:
-      self._pybullet_client.resetDebugVisualizerCamera(self._camera_dist,
-                                                       self._camera_yaw,
-                                                       self._camera_pitch,
-                                                       [0, 0, 0])
-    self._last_action = np.zeros(self.action_space.shape)
+            # Rebuild the robot
+            self._robot = self._robot_class(
+                pybullet_client=self._pybullet_client,
+                sensors=self._robot_sensors,
+                on_rack=self._on_rack,
+                action_repeat=self._gym_config.simulation_parameters.num_action_repeat,
+                motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode,
+                reset_time=self._gym_config.simulation_parameters.reset_time,
+                enable_clip_motor_commands=self._gym_config.simulation_parameters.enable_clip_motor_commands,
+                enable_action_filter=self._gym_config.simulation_parameters.enable_action_filter,
+                enable_action_interpolation=self._gym_config.simulation_parameters.enable_action_interpolation,
+                allow_knee_contact=self._gym_config.simulation_parameters.allow_knee_contact,
+                adjust_position=adjust_position,
+            )
 
-    if self._is_render:
-      self._pybullet_client.configureDebugVisualizer(
-          self._pybullet_client.COV_ENABLE_RENDERING, 1)
+        # Reset the pose of the robot.
+        self._robot.Reset(
+            reload_urdf=False,
+            default_motor_angles=initial_motor_angles,
+            reset_time=reset_duration,
+        )
 
-    for s in self.all_sensors():
-      s.on_reset(self)
+        self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)
+        self._env_step_counter = 0
+        if reset_visualization_camera:
+            self._pybullet_client.resetDebugVisualizerCamera(
+                self._camera_dist, self._camera_yaw, self._camera_pitch, [0, 0, 0]
+            )
+        self._last_action = np.zeros(self.action_space.shape)
 
-    if self._task and hasattr(self._task, 'reset'):
-      self._task.reset(self)
+        if self._is_render:
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_RENDERING, 1)
 
-    # Loop over all env randomizers.
-    for env_randomizer in self._env_randomizers:
-      env_randomizer.randomize_env(self)
+        for s in self.all_sensors():
+            s.on_reset(self)
 
-    return self._get_observation()
+        if self._task and hasattr(self._task, "reset"):
+            self._task.reset(self)
 
-  def step(self, action):
-    """Step forward the simulation, given the action.
+        # Loop over all env randomizers.
+        for env_randomizer in self._env_randomizers:
+            env_randomizer.randomize_env(self)
 
-    Args:
-      action: Can be a list of desired motor angles for all motors when the
-        robot is in position control mode; A list of desired motor torques. Or a
-        list of tuples (q, qdot, kp, kd, tau) for hybrid control mode. The
-        action must be compatible with the robot's motor control mode. Also, we
-        are not going to use the leg space (swing/extension) definition at the
-        gym level, since they are specific to Minitaur.
+        return self._get_observation()
 
-    Returns:
-      observations: The observation dictionary. The keys are the sensor names
-        and the values are the sensor readings.
-      reward: The reward for the current state-action pair.
-      done: Whether the episode has ended.
-      info: A dictionary that stores diagnostic information.
+    def step(self, action):
+        """Step forward the simulation, given the action.
 
-    Raises:
-      ValueError: The action dimension is not the same as the number of motors.
-      ValueError: The magnitude of actions is out of bounds.
-    """
-    self._last_base_position = self._robot.GetBasePosition()
-    self._last_action = action
+        Args:
+          action: Can be a list of desired motor angles for all motors when the
+            robot is in position control mode; A list of desired motor torques. Or a
+            list of tuples (q, qdot, kp, kd, tau) for hybrid control mode. The
+            action must be compatible with the robot's motor control mode. Also, we
+            are not going to use the leg space (swing/extension) definition at the
+            gym level, since they are specific to Minitaur.
 
-    if self._is_render:
-      # Sleep, otherwise the computation takes less time than real time,
-      # which will make the visualization like a fast-forward video.
-      time_spent = time.time() - self._last_frame_time
-      self._last_frame_time = time.time()
-      time_to_sleep = self._env_time_step - time_spent
-      if time_to_sleep > 0:
-        time.sleep(time_to_sleep)
-      base_pos = self._robot.GetBasePosition()
+        Returns:
+          observations: The observation dictionary. The keys are the sensor names
+            and the values are the sensor readings.
+          reward: The reward for the current state-action pair.
+          done: Whether the episode has ended.
+          info: A dictionary that stores diagnostic information.
 
-      # Also keep the previous orientation of the camera set by the user.
-      [yaw, pitch,
-       dist] = self._pybullet_client.getDebugVisualizerCamera()[8:11]
-      self._pybullet_client.resetDebugVisualizerCamera(dist, yaw, pitch,
-                                                       base_pos)
-      self._pybullet_client.configureDebugVisualizer(
-          self._pybullet_client.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
+        Raises:
+          ValueError: The action dimension is not the same as the number of motors.
+          ValueError: The magnitude of actions is out of bounds.
+        """
+        self._last_base_position = self._robot.GetBasePosition()
+        self._last_action = action
 
-    # robot class and put the logics here.
-    self._robot.Step(action)
+        if self._is_render:
+            # Sleep, otherwise the computation takes less time than real time,
+            # which will make the visualization like a fast-forward video.
+            time_spent = time.time() - self._last_frame_time
+            self._last_frame_time = time.time()
+            time_to_sleep = self._env_time_step - time_spent
+            if time_to_sleep > 0:
+                time.sleep(time_to_sleep)
+            base_pos = self._robot.GetBasePosition()
 
-    for s in self.all_sensors():
-      s.on_step(self)
+            # Also keep the previous orientation of the camera set by the user.
+            [yaw, pitch, dist] = self._pybullet_client.getDebugVisualizerCamera()[8:11]
+            self._pybullet_client.resetDebugVisualizerCamera(dist, yaw, pitch, base_pos)
+            self._pybullet_client.configureDebugVisualizer(self._pybullet_client.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
 
-    if self._task and hasattr(self._task, 'update'):
-      self._task.update(self)
+        # robot class and put the logics here.
+        self._robot.Step(action)
 
-    reward = self._reward()
+        for s in self.all_sensors():
+            s.on_step(self)
 
-    done = self._termination()
-    self._env_step_counter += 1
-    if done:
-      self._robot.Terminate()
+        if self._task and hasattr(self._task, "update"):
+            self._task.update(self)
 
-    for env_randomizer in self._env_randomizers:
-      env_randomizer.randomize_step(self)
-    return self._get_observation(), reward, done, {}
+        reward = self._reward()
 
-  def render(self, mode='rgb_array'):
-    if mode != 'rgb_array':
-      raise ValueError('Unsupported render mode:{}'.format(mode))
-    base_pos = self._robot.GetBasePosition()
-    view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
-        cameraTargetPosition=base_pos,
-        distance=self._camera_dist,
-        yaw=self._camera_yaw,
-        pitch=self._camera_pitch,
-        roll=0,
-        upAxisIndex=2)
-    proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(
-        fov=60,
-        aspect=float(self._render_width) / self._render_height,
-        nearVal=0.1,
-        farVal=100.0)
-    (w, h, px, _, _) = self._pybullet_client.getCameraImage(
-        width=self._render_width,
-        height=self._render_height,
-        renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
-        viewMatrix=view_matrix,
-        projectionMatrix=proj_matrix)
-    
-    rgb_array = np.array(px)
-    rgb_array = rgb_array.reshape(h,w,4)
-    rgb_array = rgb_array.astype(np.uint8)
-    return rgb_array
+        done = self._termination()
+        self._env_step_counter += 1
+        if done:
+            self._robot.Terminate()
 
-  def get_ground(self):
-    """Get simulation ground model."""
-    return self._world_dict['ground']
+        for env_randomizer in self._env_randomizers:
+            env_randomizer.randomize_step(self)
+        return self._get_observation(), reward, done, {}
 
-  def set_ground(self, ground_id):
-    """Set simulation ground model."""
-    self._world_dict['ground'] = ground_id
+    def render(self, mode="rgb_array"):
+        if mode != "rgb_array":
+            raise ValueError("Unsupported render mode:{}".format(mode))
+        base_pos = self._robot.GetBasePosition()
+        view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
+            cameraTargetPosition=base_pos,
+            distance=self._camera_dist,
+            yaw=self._camera_yaw,
+            pitch=self._camera_pitch,
+            roll=0,
+            upAxisIndex=2,
+        )
+        proj_matrix = self._pybullet_client.computeProjectionMatrixFOV(
+            fov=60,
+            aspect=float(self._render_width) / self._render_height,
+            nearVal=0.1,
+            farVal=100.0,
+        )
+        (w, h, px, _, _) = self._pybullet_client.getCameraImage(
+            width=self._render_width,
+            height=self._render_height,
+            renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
+            viewMatrix=view_matrix,
+            projectionMatrix=proj_matrix,
+        )
 
-  def get_state(self):
-    """ Bullet internally saves an in-memory copy of the world state and return a state_id referencing it """
-    return self._pybullet_client.saveState()
+        rgb_array = np.array(px)
+        rgb_array = rgb_array.reshape(h, w, 4)
+        rgb_array = rgb_array.astype(np.uint8)
+        return rgb_array
 
-  def set_state(self, state_id):
-    """ Takes the state_id returned from get_state() and restores the associated world state """
-    return self._pybullet_client.restoreState(stateId = state_id)
+    def get_ground(self):
+        """Get simulation ground model."""
+        return self._world_dict["ground"]
 
-  @property
-  def rendering_enabled(self):
-    return self._is_render
+    def set_ground(self, ground_id):
+        """Set simulation ground model."""
+        self._world_dict["ground"] = ground_id
 
-  @property
-  def last_base_position(self):
-    return self._last_base_position
+    def get_state(self):
+        """Bullet internally saves an in-memory copy of the world state and return a state_id referencing it"""
+        return self._pybullet_client.saveState()
 
-  @property
-  def world_dict(self):
-    return self._world_dict.copy()
+    def set_state(self, state_id):
+        """Takes the state_id returned from get_state() and restores the associated world state"""
+        return self._pybullet_client.restoreState(stateId=state_id)
 
-  @world_dict.setter
-  def world_dict(self, new_dict):
-    self._world_dict = new_dict.copy()
+    @property
+    def rendering_enabled(self):
+        return self._is_render
 
-  def _termination(self):
-    if not self._robot.is_safe:
-      return True
+    @property
+    def last_base_position(self):
+        return self._last_base_position
 
-    if self._task and hasattr(self._task, 'done'):
-      return self._task.done(self)
+    @property
+    def world_dict(self):
+        return self._world_dict.copy()
 
-    for s in self.all_sensors():
-      s.on_terminate(self)
+    @world_dict.setter
+    def world_dict(self, new_dict):
+        self._world_dict = new_dict.copy()
 
-    return False
+    def _termination(self):
+        if not self._robot.is_safe:
+            return True
 
-  def _reward(self):
-    if self._task:
-      return self._task(self)
-    return 0
+        if self._task and hasattr(self._task, "done"):
+            return self._task.done(self)
 
-  def _get_observation(self):
-    """Get observation of this environment from a list of sensors.
+        for s in self.all_sensors():
+            s.on_terminate(self)
 
-    Returns:
-      observations: sensory observation in the numpy array format
-    """
-    sensors_dict = {}
-    for s in self.all_sensors():
-      sensors_dict[s.get_name()] = s.get_observation()
+        return False
 
-    observations = collections.OrderedDict(list(sensors_dict.items()))
-    self._observations = observations
-    return observations
+    def _reward(self):
+        if self._task:
+            return self._task(self)
+        return 0
 
-  def set_time_step(self, num_action_repeat, sim_step=0.001):
-    """Sets the time step of the environment.
+    def _get_observation(self):
+        """Get observation of this environment from a list of sensors.
 
-    Args:
-      num_action_repeat: The number of simulation steps/action repeats to be
-        executed when calling env.step().
-      sim_step: The simulation time step in PyBullet. By default, the simulation
-        step is 0.001s, which is a good trade-off between simulation speed and
-        accuracy.
+        Returns:
+          observations: sensory observation in the numpy array format
+        """
+        sensors_dict = {}
+        for s in self.all_sensors():
+            sensors_dict[s.get_name()] = s.get_observation()
 
-    Raises:
-      ValueError: If the num_action_repeat is less than 1.
-    """
-    if num_action_repeat < 1:
-      raise ValueError('number of action repeats should be at least 1.')
-    self._sim_time_step = sim_step
-    self._num_action_repeat = num_action_repeat
-    self._env_time_step = sim_step * num_action_repeat
-    self._num_bullet_solver_iterations = (_NUM_SIMULATION_ITERATION_STEPS /
-                                          self._num_action_repeat)
-    self._pybullet_client.setPhysicsEngineParameter(
-        numSolverIterations=int(np.round(self._num_bullet_solver_iterations)))
-    self._pybullet_client.setTimeStep(self._sim_time_step)
-    self._robot.SetTimeSteps(self._num_action_repeat, self._sim_time_step)
+        observations = collections.OrderedDict(list(sensors_dict.items()))
+        self._observations = observations
+        return observations
 
-  def get_time_since_reset(self):
-    """Get the time passed (in seconds) since the last reset.
+    def set_time_step(self, num_action_repeat, sim_step=0.001):
+        """Sets the time step of the environment.
 
-    Returns:
-      Time in seconds since the last reset.
-    """
-    return self._robot.GetTimeSinceReset()
+        Args:
+          num_action_repeat: The number of simulation steps/action repeats to be
+            executed when calling env.step().
+          sim_step: The simulation time step in PyBullet. By default, the simulation
+            step is 0.001s, which is a good trade-off between simulation speed and
+            accuracy.
 
-  @property
-  def pybullet_client(self):
-    return self._pybullet_client
+        Raises:
+          ValueError: If the num_action_repeat is less than 1.
+        """
+        if num_action_repeat < 1:
+            raise ValueError("number of action repeats should be at least 1.")
+        self._sim_time_step = sim_step
+        self._num_action_repeat = num_action_repeat
+        self._env_time_step = sim_step * num_action_repeat
+        self._num_bullet_solver_iterations = _NUM_SIMULATION_ITERATION_STEPS / self._num_action_repeat
+        self._pybullet_client.setPhysicsEngineParameter(numSolverIterations=int(np.round(self._num_bullet_solver_iterations)))
+        self._pybullet_client.setTimeStep(self._sim_time_step)
+        self._robot.SetTimeSteps(self._num_action_repeat, self._sim_time_step)
 
-  @property
-  def robot(self):
-    return self._robot
+    def get_time_since_reset(self):
+        """Get the time passed (in seconds) since the last reset.
 
-  @property
-  def env_step_counter(self):
-    return self._env_step_counter
+        Returns:
+          Time in seconds since the last reset.
+        """
+        return self._robot.GetTimeSinceReset()
 
-  @property
-  def hard_reset(self):
-    return self._hard_reset
+    @property
+    def pybullet_client(self):
+        return self._pybullet_client
 
-  @property
-  def last_action(self):
-    return self._last_action
+    @property
+    def robot(self):
+        return self._robot
 
-  @property
-  def env_time_step(self):
-    return self._env_time_step
+    @property
+    def env_step_counter(self):
+        return self._env_step_counter
 
-  @property
-  def task(self):
-    return self._task
+    @property
+    def hard_reset(self):
+        return self._hard_reset
 
-  @property
-  def robot_class(self):
-    return self._robot_class
+    @property
+    def last_action(self):
+        return self._last_action
+
+    @property
+    def env_time_step(self):
+        return self._env_time_step
+
+    @property
+    def task(self):
+        return self._task
+
+    @property
+    def robot_class(self):
+        return self._robot_class
