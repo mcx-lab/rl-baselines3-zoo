@@ -391,6 +391,30 @@ class A1(minitaur.Minitaur):
       distance_to_ground = data[2] * 2 * max_height
     return max_height - distance_to_ground
 
+  def GetLocalTerrainViewBatch(self, grid_unit = 0.05, grid_size = 16):
+    """ Returns a view of the local terrain as seen from a single point. 
+
+    Args:
+      grid_unit:    Side length of one square in the grid
+      grid_size:    Number of squares along one side of grid
+
+    Returns:
+      N x N numpy array of floats
+    """
+    base_position_world = self.GetBasePosition()[:2]
+    base_position_base = world_frame_to_base_frame(base_position_world, self)
+    grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
+    grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
+    grid_coordinates_world_3d = [np.concatenate(gcw, [0]) for gcw in grid_coordinates_world]
+
+    robot_positions = [self.GetBasePosition()] * len(grid_coordinates_world_3d)
+
+    z_coordinates = []
+    ray_intersection_infos = self._pybullet_client.rayTestBatch(robot_positions, grid_coordinates_world_3d)
+    for info in ray_intersection_infos:
+      hit_position = info[3]
+      z_coordinates.append(hit_position[2]) 
+
   def GetLocalDistancesToGround(self, grid_unit = 0.05, grid_size = 16):
     """ Get the vertical distance from base height to ground in a NxN grid around the robot. 
     
