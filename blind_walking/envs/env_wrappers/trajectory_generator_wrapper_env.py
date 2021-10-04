@@ -56,7 +56,7 @@ class TrajectoryGeneratorWrapperEnv(object):
         return self._trajectory_generator.get_observation(observation)
 
     def reset(self, initial_motor_angles=None, reset_duration=0.0):
-        if getattr(self._trajectory_generator, "reset"):
+        if hasattr(self._trajectory_generator, "reset"):
             self._trajectory_generator.reset()
         observation = self._gym_env.reset(initial_motor_angles, reset_duration)
         return self._modify_observation(observation)

@@ -530,7 +530,7 @@ class CollapsibleTile(EnvModifier):
 
         # Assign color
         if case in [1, 2]:
-            for index, blockId in enumerate(damping_platform):
+            for _index, blockId in enumerate(damping_platform):
                 if texture:
                     env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
                     env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
@@ -540,7 +540,7 @@ class CollapsibleTile(EnvModifier):
                 elif self.color == "R":
                     env.pybullet_client.changeVisualShape(blockId, -1, rgbaColor=[1, 0.25, 0, 1], flags=0)
                     env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
-            for index, blockId in enumerate(collapsible_platform):
+            for _index, blockId in enumerate(collapsible_platform):
                 if texture:
                     env.pybullet_client.changeVisualShape(blockId, -1, textureUniqueId=self.textureId)
                 elif self.color == "O":

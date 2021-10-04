@@ -28,7 +28,7 @@ def get_encoder_from_sensor_name(sensor_name: str):
 
 def get_all_encoders_from_observation_space(observation_space: spaces.dict.Dict):
     encoders = set()
-    for sensor_name, sensor in observation_space.spaces.items():
+    for sensor_name, _sensor in observation_space.spaces.items():
         encoder_name = get_encoder_from_sensor_name(sensor_name)
         encoders.add(encoder_name)
     return encoders
@@ -44,7 +44,7 @@ def filter_observation_space_by_encoder(observation_space: spaces.dict.Dict, enc
 
 def get_all_encoders_from_observation(observation: dict):
     encoders = set()
-    for sensor_name, sensor in observation.items():
+    for sensor_name, _sensor in observation.items():
         encoder_name = get_encoder_from_sensor_name(sensor_name)
         encoders.add(encoder_name)
     return encoders

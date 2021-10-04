@@ -146,7 +146,7 @@ class LocomotionGymEnv(gym.Env):
             action_upper_bound = []
             action_lower_bound = []
             action_config = self._robot_class.ACTION_CONFIG
-            for action in action_config:
+            for _action in action_config:
                 action_upper_bound.extend([6.28] * 5)
                 action_lower_bound.extend([-6.28] * 5)
             self.action_space = spaces.Box(

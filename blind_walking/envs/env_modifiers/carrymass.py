@@ -13,7 +13,7 @@ class CarryMass(EnvModifier):
         self.cm_id = 0
         super().__init__()
 
-    def _generate(self, env, mass=1, mass_pos=[0, 0, 0]):
+    def _generate(self, env, mass=1, mass_pos=(0, 0, 0)):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
 
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 0)

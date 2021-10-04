@@ -7,10 +7,8 @@ import abc
 from typing import Any
 
 
-class LegController(object):  # pytype: disable=ignored-metaclass
+class LegController(object, metaclass=abc.ABCMeta):  # pytype: disable=ignored-metaclass
     """Generates the leg control signal."""
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def reset(self, current_time: float):
