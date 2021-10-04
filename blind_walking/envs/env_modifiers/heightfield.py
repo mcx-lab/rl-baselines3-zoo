@@ -17,6 +17,7 @@ import math
 import time
 
 import random
+
 random.seed(10)
 
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
@@ -33,6 +34,7 @@ heightfieldSource = useProgrammatic
 numHeightfieldRows = 256
 numHeightfieldColumns = 256
 
+
 class HeightField(EnvModifier):
     def __init__(self):
         self.hf_id = 0
@@ -43,100 +45,107 @@ class HeightField(EnvModifier):
     def _generate(self, env, start_x=0, heightPerturbationRange=0.08, friction=0.5):
         env.pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         env.pybullet_client.configureDebugVisualizer(
-            env.pybullet_client.COV_ENABLE_RENDERING, 0)
+            env.pybullet_client.COV_ENABLE_RENDERING, 0
+        )
         heightPerturbationRange = heightPerturbationRange
         if heightfieldSource == useProgrammatic:
             for j in range(int(numHeightfieldColumns / 2)):
                 for i in range(int(numHeightfieldRows / 2)):
                     height = random.uniform(0, heightPerturbationRange)
-                    self.heightfieldData[2 * i +
-                                         2 * j * numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + 1 +
-                                         2 * j * numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + (2 * j + 1) *
-                                         numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + 1 + (2 * j + 1) *
-                                         numHeightfieldRows] = height
+                    self.heightfieldData[2 * i + 2 * j * numHeightfieldRows] = height
+                    self.heightfieldData[
+                        2 * i + 1 + 2 * j * numHeightfieldRows
+                    ] = height
+                    self.heightfieldData[
+                        2 * i + (2 * j + 1) * numHeightfieldRows
+                    ] = height
+                    self.heightfieldData[
+                        2 * i + 1 + (2 * j + 1) * numHeightfieldRows
+                    ] = height
 
             terrainShape = env.pybullet_client.createCollisionShape(
                 shapeType=env.pybullet_client.GEOM_HEIGHTFIELD,
-                meshScale=[.07, .07, 1.6],
+                meshScale=[0.07, 0.07, 1.6],
                 heightfieldTextureScaling=(numHeightfieldRows - 1) / 2,
                 heightfieldData=self.heightfieldData,
                 numHeightfieldRows=numHeightfieldRows,
-                numHeightfieldColumns=numHeightfieldColumns)
+                numHeightfieldColumns=numHeightfieldColumns,
+            )
             terrain = env.pybullet_client.createMultiBody(0, terrainShape)
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [start_x, 0, 0.0], [0, 0, 0, 1])
-            env.pybullet_client.changeDynamics(terrain,
-                                               -1,
-                                               lateralFriction=friction)
+                terrain, [start_x, 0, 0.0], [0, 0, 0, 1]
+            )
+            env.pybullet_client.changeDynamics(terrain, -1, lateralFriction=friction)
 
         if heightfieldSource == useDeepLocoCSV:
             terrainShape = env.pybullet_client.createCollisionShape(
                 shapeType=env.pybullet_client.GEOM_HEIGHTFIELD,
-                meshScale=[.5, .5, 2.5],
+                meshScale=[0.5, 0.5, 2.5],
                 fileName="heightmaps/ground0.txt",
-                heightfieldTextureScaling=128)
+                heightfieldTextureScaling=128,
+            )
             terrain = env.pybullet_client.createMultiBody(0, terrainShape)
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [start_x, 0, 0], [0, 0, 0, 1])
-            env.pybullet_client.changeDynamics(terrain,
-                                               -1,
-                                               lateralFriction=friction)
+                terrain, [start_x, 0, 0], [0, 0, 0, 1]
+            )
+            env.pybullet_client.changeDynamics(terrain, -1, lateralFriction=friction)
 
         if heightfieldSource == useTerrainFromPNG:
             terrainShape = env.pybullet_client.createCollisionShape(
                 shapeType=env.pybullet_client.GEOM_HEIGHTFIELD,
-                meshScale=[.05, .05, 1.8],
-                fileName="heightmaps/wm_height_out.png")
+                meshScale=[0.05, 0.05, 1.8],
+                fileName="heightmaps/wm_height_out.png",
+            )
             textureId = env.pybullet_client.loadTexture(
-                "heightmaps/gimp_overlay_out.png")
+                "heightmaps/gimp_overlay_out.png"
+            )
             terrain = env.pybullet_client.createMultiBody(0, terrainShape)
-            env.pybullet_client.changeVisualShape(terrain,
-                                                  -1,
-                                                  textureUniqueId=textureId)
+            env.pybullet_client.changeVisualShape(
+                terrain, -1, textureUniqueId=textureId
+            )
             env.pybullet_client.resetBasePositionAndOrientation(
-                terrain, [start_x, 0, 0.1], [0, 0, 0, 1])
-            env.pybullet_client.changeDynamics(terrain,
-                                               -1,
-                                               lateralFriction=friction)
+                terrain, [start_x, 0, 0.1], [0, 0, 0, 1]
+            )
+            env.pybullet_client.changeDynamics(terrain, -1, lateralFriction=friction)
 
         self.hf_id = terrainShape
         self.terrainShape = terrainShape
         print("TERRAIN SHAPE: {}".format(terrainShape))
 
-        env.pybullet_client.changeVisualShape(terrain,
-                                              -1,
-                                              rgbaColor=[1, 1, 1, 1])
+        env.pybullet_client.changeVisualShape(terrain, -1, rgbaColor=[1, 1, 1, 1])
 
         env.pybullet_client.configureDebugVisualizer(
-            env.pybullet_client.COV_ENABLE_RENDERING, 1)
+            env.pybullet_client.COV_ENABLE_RENDERING, 1
+        )
 
     def _reset(self, heightPerturbationRange=0.08):
         if heightfieldSource == useProgrammatic:
             for j in range(int(numHeightfieldColumns / 2)):
                 for i in range(int(numHeightfieldRows / 2)):
                     height = random.uniform(
-                        0, heightPerturbationRange)  # +math.sin(time.time())
-                    self.heightfieldData[2 * i +
-                                         2 * j * numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + 1 +
-                                         2 * j * numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + (2 * j + 1) *
-                                         numHeightfieldRows] = height
-                    self.heightfieldData[2 * i + 1 + (2 * j + 1) *
-                                         numHeightfieldRows] = height
-            #GEOM_CONCAVE_INTERNAL_EDGE may help avoid getting stuck at an internal (shared) edge of the triangle/heightfield.
-            #GEOM_CONCAVE_INTERNAL_EDGE is a bit slower to build though.
-            #flags = p.GEOM_CONCAVE_INTERNAL_EDGE
+                        0, heightPerturbationRange
+                    )  # +math.sin(time.time())
+                    self.heightfieldData[2 * i + 2 * j * numHeightfieldRows] = height
+                    self.heightfieldData[
+                        2 * i + 1 + 2 * j * numHeightfieldRows
+                    ] = height
+                    self.heightfieldData[
+                        2 * i + (2 * j + 1) * numHeightfieldRows
+                    ] = height
+                    self.heightfieldData[
+                        2 * i + 1 + (2 * j + 1) * numHeightfieldRows
+                    ] = height
+            # GEOM_CONCAVE_INTERNAL_EDGE may help avoid getting stuck at an internal (shared) edge of the triangle/heightfield.
+            # GEOM_CONCAVE_INTERNAL_EDGE is a bit slower to build though.
+            # flags = p.GEOM_CONCAVE_INTERNAL_EDGE
             flags = 0
             self.terrainShape = p.createCollisionShape(
                 shapeType=p.GEOM_HEIGHTFIELD,
                 flags=flags,
-                meshScale=[.05, .05, 1],
+                meshScale=[0.05, 0.05, 1],
                 heightfieldTextureScaling=(numHeightfieldRows - 1) / 2,
                 heightfieldData=self.heightfieldData,
                 numHeightfieldRows=numHeightfieldRows,
                 numHeightfieldColumns=numHeightfieldColumns,
-                replaceHeightfieldIndex=self.terrainShape)
+                replaceHeightfieldIndex=self.terrainShape,
+            )

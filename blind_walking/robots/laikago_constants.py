@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import collections
 import math
-import pybullet as pyb # pytype: disable=import-error
+import pybullet as pyb  # pytype: disable=import-error
 
 NUM_MOTORS = 12
 NUM_LEGS = 4
@@ -63,12 +63,13 @@ INIT_KNEE_ANGLE = -1.25
 # offsets and directions. The conversion formula is (sdk_joint_angle + offset) *
 # joint direction.
 INIT_JOINT_ANGLES = collections.OrderedDict(
-    zip(JOINT_NAMES,
-        (INIT_ABDUCTION_ANGLE, INIT_HIP_ANGLE, INIT_KNEE_ANGLE) * NUM_LEGS))
+    zip(JOINT_NAMES, (INIT_ABDUCTION_ANGLE, INIT_HIP_ANGLE, INIT_KNEE_ANGLE) * NUM_LEGS)
+)
 
 # Used to convert the robot SDK joint angles to URDF joint angles.
 JOINT_DIRECTIONS = collections.OrderedDict(
-    zip(JOINT_NAMES, (-1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1)))
+    zip(JOINT_NAMES, (-1, 1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1))
+)
 
 HIP_JOINT_OFFSET = 0.0
 UPPER_LEG_JOINT_OFFSET = -0.6
@@ -76,9 +77,11 @@ KNEE_JOINT_OFFSET = 0.66
 
 # Used to convert the robot SDK joint angles to URDF joint angles.
 JOINT_OFFSETS = collections.OrderedDict(
-    zip(JOINT_NAMES,
-        [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] *
-        NUM_LEGS))
+    zip(
+        JOINT_NAMES,
+        [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * NUM_LEGS,
+    )
+)
 
 LEG_NAMES = (
     "front_right",
@@ -102,20 +105,24 @@ END_EFFECTOR_NAMES = (
 )
 
 MOTOR_NAMES = JOINT_NAMES
-MOTOR_GROUP = collections.OrderedDict((
-    (LEG_NAMES[0], JOINT_NAMES[0:3]),
-    (LEG_NAMES[1], JOINT_NAMES[3:6]),
-    (LEG_NAMES[2], JOINT_NAMES[6:9]),
-    (LEG_NAMES[3], JOINT_NAMES[9:12]),
-))
+MOTOR_GROUP = collections.OrderedDict(
+    (
+        (LEG_NAMES[0], JOINT_NAMES[0:3]),
+        (LEG_NAMES[1], JOINT_NAMES[3:6]),
+        (LEG_NAMES[2], JOINT_NAMES[6:9]),
+        (LEG_NAMES[3], JOINT_NAMES[9:12]),
+    )
+)
 
 # Regulates the joint angle change when in position control mode.
 MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.12
 
 # The hip joint location in the CoM frame.
-HIP_POSITIONS = collections.OrderedDict((
-    (LEG_NAMES[0], (0.21, -0.1157, 0)),
-    (LEG_NAMES[1], (0.21, 0.1157, 0)),
-    (LEG_NAMES[2], (-0.21, -0.1157, 0)),
-    (LEG_NAMES[3], (-0.21, 0.1157, 0)),
-))
+HIP_POSITIONS = collections.OrderedDict(
+    (
+        (LEG_NAMES[0], (0.21, -0.1157, 0)),
+        (LEG_NAMES[1], (0.21, 0.1157, 0)),
+        (LEG_NAMES[2], (-0.21, -0.1157, 0)),
+        (LEG_NAMES[3], (-0.21, 0.1157, 0)),
+    )
+)

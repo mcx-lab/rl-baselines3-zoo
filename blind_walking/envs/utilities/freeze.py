@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 class freeze_a1_gym_env:
     """Provides a context to freeze an A1GymEnv-v0 environment.
     This context allows the user to manipulate the state of the A1GymEnv-v0 environment and return it
