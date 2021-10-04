@@ -3,48 +3,27 @@ import unittest
 
 import gym
 import numpy as np
-from blind_walking.envs.env_wrappers.observation_dictionary_split_by_encoder_wrapper import (
-    ObservationDictionarySplitByEncoderWrapper,
-)
+from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
+from blind_walking.envs.gym_envs.a1_gym_env import A1GymEnv
+from blind_walking.envs.sensors import environment_sensors, robot_sensors
 
 
-class DummyA1GymEnv(gym.Env):
-    """A stub for A1GymEnv in order to test ObservationDictionarySplitByEncoderWrapper"""
-
-    metadata = {"render_modes": ["human"]}
-
-    def __init__(self):
-        super(DummyA1GymEnv, self).__init__()
-        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(12,))
-        self.observation_space = gym.spaces.Dict(
-            {
-                "01_flatten": gym.spaces.Box(low=0, high=1, shape=(2,)),
-                "12_flatten": gym.spaces.Box(low=1, high=2, shape=(2,)),
-                "23_mlp": gym.spaces.Box(low=2, high=3, shape=(2,)),
-                "34_mlp": gym.spaces.Box(low=3, high=4, shape=(2,)),
-            }
-        )
-
-    def step(self, action):
-        return self.observation_space.sample()
-
-    def reset(self, initial_motor_angles=None, reset_duration=0.0):
-        return self.observation_space.sample()
-
-
-class TestA1GymEnv(unittest.TestCase):
+class TestObservationDictionarySplitByEncoderWrapper(unittest.TestCase):
     def test_order(self):
         """Test that the observation dictionary space has consistent ordering"""
-        env = DummyA1GymEnv()
-        wrapped_env = ObservationDictionarySplitByEncoderWrapper(env)
-        flatten_low = np.array([0, 0, 1, 1])
-        flatten_high = np.array([1, 1, 2, 2])
-        mlp_low = np.array([2, 2, 3, 3])
-        mlp_high = np.array([3, 3, 4, 4])
+        velocity_sensor = robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True)
+        target_pos_sensor = environment_sensors.TargetPositionSensor(enc_name="mlp")
+        wrapped_env = A1GymEnv(
+            robot_sensor_list=[velocity_sensor],
+            env_sensor_list=[target_pos_sensor],
+            obs_wrapper=obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper,
+        )
 
+        print(velocity_sensor._lower_bound, velocity_sensor._upper_bound)
         for i in range(1000):
             obs = wrapped_env.reset()
-            assert np.all(flatten_high >= obs["flatten"])
-            assert np.all(obs["flatten"] >= flatten_low)
-            assert np.all(mlp_high >= obs["mlp"])
-            assert np.all(obs["mlp"] >= mlp_low)
+            print(obs)
+            assert np.all(velocity_sensor._upper_bound >= obs["flatten"])
+            assert np.all(obs["flatten"] >= velocity_sensor._lower_bound)
+            assert np.all(target_pos_sensor._upper_bound >= obs["mlp"])
+            assert np.all(obs["mlp"] >= target_pos_sensor._lower_bound)
