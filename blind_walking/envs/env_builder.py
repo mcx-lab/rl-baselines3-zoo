@@ -35,7 +35,7 @@ def build_regular_env(
     env_randomizer_list=None,
     env_modifier_list=None,
     task=None,
-    obs_wrapper=obs_array_wrapper.ObservationDictionaryToArrayWrapper,
+    obs_wrapper=None,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -71,6 +71,9 @@ def build_regular_env(
 
     if task is None:
         task = forward_task_pos.ForwardTask()
+
+    if obs_wrapper is None:
+        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
