@@ -234,7 +234,7 @@ class BaseVelocitySensor(sensor.BoxSpaceSensor):
         convert_to_local_frame: bool = False,
         exclude_z: bool = False,
         name: typing.Text = "BaseVelocity",
-        dtype: typing.Type[typing.Any] = bool,
+        dtype: typing.Type[typing.Any] = float,
     ) -> None:
         """Constructs BaseVelocitySensor.
 
