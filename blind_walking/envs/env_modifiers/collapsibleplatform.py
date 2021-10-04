@@ -11,6 +11,7 @@ random.seed(10)
 
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
+# flake8: noqa
 
 """ Collapsible Platform Env
 Using _generate_field():
