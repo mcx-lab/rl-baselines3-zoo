@@ -4,6 +4,7 @@ repos:
     hooks:
       - id: black
         language_version: python3.7
+        args: [--line-length=127]
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.9
@@ -24,6 +25,9 @@ repos:
     rev: 5.5.2
     hooks:
       - id: isort
+        args: ["--profile", "black", --line-length=127]
         files: 'blind_walking/.*'
       - id: isort
+        args: ["--profile", "black", --line-length=127]
         files: 'tests/.*'
+        
