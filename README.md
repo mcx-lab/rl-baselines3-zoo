@@ -1,7 +1,6 @@
 [![pipeline status](https://gitlab.com/araffin/rl-baselines3-zoo/badges/master/pipeline.svg)](https://gitlab.com/araffin/rl-baselines3-zoo/-/commits/master) [![coverage report](https://gitlab.com/araffin/rl-baselines3-zoo/badges/master/coverage.svg)](https://gitlab.com/araffin/rl-baselines3-zoo/-/commits/master) [![codestyle](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-
 # RL Baselines3 Zoo: A Training Framework for Stable Baselines3 Reinforcement Learning Agents
 
 <img src="images/panda_pick.gif" align="right" width="35%"/>
@@ -23,6 +22,17 @@ Goals of this repository:
 4. Have fun with the trained agents!
 
 This is the SB3 version of the original SB2 [rl-zoo](https://github.com/araffin/rl-baselines-zoo).
+
+## Install
+
+To install only the core dependencies:
+```
+python -m pip install -e .
+```
+To install developer dependencies:
+```
+python -m pip install -e .[dev]
+```
 
 ## Train an Agent
 
