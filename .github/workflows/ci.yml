@@ -39,6 +39,8 @@ jobs:
         pip install opencv-python-headless
         # install parking-env to test HER
         pip install git+https://github.com/eleurent/highway-env
+        # Generate target positions
+        python blind_walking/envs/tasks/generate_target_positions.py
     - name: Check format with black
       run: |
         black --check blind_walking --line-length=127
