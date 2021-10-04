@@ -13,14 +13,36 @@ class TestLocomotionFeatureEncoder(unittest.TestCase):
     def setUp(self) -> None:
         self.env = A1GymEnv(
             robot_sensor_list=[robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True)],
-            env_sensor_list=[environment_sensors.TargetPositionSensor(enc_name="mlp")],
-            obs_wrapper=obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper,
+            env_sensor_list=[
+                environment_sensors.TargetPositionSensor(enc_name="mlp"),
+                environment_sensors.LocalTerrainViewSensor(enc_name="cnn"),
+            ],
+            obs_wrapper=lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(x, encoder_excluded="cnn"),
         )
         self.extractor = LocomotionFeatureEncoder(self.env.observation_space)
 
     def test_forward(self):
         obs = self.env.reset()
-        # Observation is a 1-level dictionary of np arrays
-        # Cast to tensor, dtype float32, and add batch dimension
-        obs_tensor = {k: torch.from_numpy(v).to(torch.float32).view(1, -1) for k, v in obs.items()}
-        features = self.extractor(obs_tensor)
+
+        def nested_dict_map(d, f):
+            """
+            d: (possibly nested) dictionary
+            f: function
+
+            Returns a dictionary of identical structure with f(v) in place of v for all leaf values in d
+            """
+            d_mapped = {}
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    d_mapped[k] = nested_dict_map(v, f)
+                else:
+                    d_mapped[k] = f(v)
+            return d_mapped
+
+        obs_tensor_dict = nested_dict_map(
+            obs,
+            # Observation is a np array
+            # Cast to tensor, dtype float32, and add batch dimension
+            lambda x: torch.from_numpy(x).to(torch.float32).unsqueeze(0),
+        )
+        features = self.extractor(obs_tensor_dict)

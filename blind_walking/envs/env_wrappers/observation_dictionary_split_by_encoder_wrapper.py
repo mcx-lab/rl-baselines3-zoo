@@ -59,11 +59,15 @@ def filter_observation_by_encoder(observation: dict, encoder_name: str):
 
 
 class ObservationDictionarySplitByEncoderWrapper(gym.Env):
-    """An env wrapper that splits and flattens the observation dictionary to an array based on its encoder."""
+    """An env wrapper that splits and flattens the observation dictionary to an array based on its encoder.
 
-    def __init__(self, gym_env, observation_excluded=()):
+    Args:
+        encoder_excluded: A list of encoder names to not flatten.
+    """
+
+    def __init__(self, gym_env, encoder_excluded=()):
         """Initializes the wrapper."""
-        self.observation_excluded = observation_excluded
+        self.encoder_excluded = encoder_excluded
         self._gym_env = gym_env
         self.observation_space = self._split_observation_spaces(self._gym_env.observation_space)
         self.action_space = self._gym_env.action_space
@@ -76,8 +80,11 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         split_space = {}
         for enc_name in encoder_names:
             subspace = filter_observation_space_by_encoder(observation_spaces, enc_name)
-            flattened_subspace = env_utils.flatten_observation_spaces(subspace)
-            split_space[enc_name] = flattened_subspace
+            if enc_name not in self.encoder_excluded:
+                flattened_subspace = env_utils.flatten_observation_spaces(subspace)
+                split_space[enc_name] = flattened_subspace
+            else:
+                split_space[enc_name] = subspace
 
         return spaces.dict.Dict(split_space)
 
@@ -86,8 +93,11 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         split_obs = collections.OrderedDict()
         for enc_name in encoder_names:
             subobs = filter_observation_by_encoder(input_observation, enc_name)
-            flattened_subspace = env_utils.flatten_observations(subobs)
-            split_obs[enc_name] = flattened_subspace
+            if enc_name not in self.encoder_excluded:
+                flattened_subspace = env_utils.flatten_observations(subobs)
+                split_obs[enc_name] = flattened_subspace
+            else:
+                split_obs[enc_name] = subobs
 
         return split_obs
 
