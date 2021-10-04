@@ -405,7 +405,7 @@ class A1(minitaur.Minitaur):
     base_position_base = world_frame_to_base_frame(base_position_world, self)
     grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
     grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
-    grid_coordinates_world_3d = [np.concatenate(gcw, [0]) for gcw in grid_coordinates_world]
+    grid_coordinates_world_3d = [np.concatenate([gcw, [0]]) for gcw in grid_coordinates_world]
 
     robot_positions = [self.GetBasePosition()] * len(grid_coordinates_world_3d)
 
@@ -414,6 +414,7 @@ class A1(minitaur.Minitaur):
     for info in ray_intersection_infos:
       hit_position = info[3]
       z_coordinates.append(hit_position[2]) 
+    z_coordinates = np.array(z_coordinates).reshape(grid_size, grid_size)
     return z_coordinates
 
   def GetLocalDistancesToGround(self, grid_unit = 0.05, grid_size = 16):
