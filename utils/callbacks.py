@@ -199,3 +199,15 @@ class ParallelTrainCallback(BaseCallback):
             if self.verbose > 0:
                 print("Waiting for training thread to terminate")
             self.process.join()
+
+
+class PrintElapsedTimeCallback(BaseCallback):
+    """ Print the elapsed wall time of the program """
+
+    def _init_callback(self) -> None:
+        self.start_time = time.time()
+        self.progress = 0
+
+    def _on_step(self) -> bool:
+        print(f"Training steps elapsed: {self.num_timesteps}")
+        print(f"Time elapsed: {time.time() - self.start_time:.2f} seconds")
