@@ -61,9 +61,6 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.TargetPositionSensor(),
-            environment_sensors.ControllerKpSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
-            environment_sensors.ControllerKdSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
-            environment_sensors.MotorStrengthSensor(num_motors=a1.NUM_MOTORS, enc_name="mlp"),
             environment_sensors.LocalTerrainViewSensor(enc_name="cnn"),
         ]
 
