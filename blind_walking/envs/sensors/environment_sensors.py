@@ -416,7 +416,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
         super(LocalTerrainViewSensor, self).__init__(
             name=name,
-            shape=(grid_size ** 2,),
+            shape=(1, grid_size, grid_size),
             enc_name=enc_name,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -432,4 +432,6 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        return self._env.robot.GetLocalTerrainView(grid_unit=self.grid_unit, grid_size=self.grid_size).reshape(-1)
+        return self._env.robot.GetLocalTerrainView(grid_unit=self.grid_unit, grid_size=self.grid_size).reshape(
+            1, self.grid_size, self.grid_size
+        )
