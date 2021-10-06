@@ -80,7 +80,8 @@ class LocomotionGymEnv(gym.Env):
         self._task = task
 
         self._env_randomizers = env_randomizers if env_randomizers else []
-        self._env_modifiers = env_modifiers if env_modifiers else []
+        # Set env modifiers after initial hard reset
+        self._env_modifiers = []
 
         # This is a workaround due to the issue in b/130128505#comment5
         if isinstance(self._task, sensor.Sensor):
@@ -133,10 +134,11 @@ class LocomotionGymEnv(gym.Env):
         self.observation_space = space_utils.convert_sensors_to_gym_space_dictionary(self.all_sensors())
 
         # Generate modifications
+        self._env_modifiers = env_modifiers if env_modifiers else []
         for modifier in self._env_modifiers:
             modifier._generate(self)
-            # If any of modifier is deformable, set hard reset to true
-            if modifier.deformable:
+            # If any of modifier needs hard reset, set hard reset to true
+            if modifier.hardreset:
                 self._hard_reset = True
 
     def _build_action_space(self):
@@ -229,6 +231,9 @@ class LocomotionGymEnv(gym.Env):
             # Rebuild the world.
             self._world_dict = {"ground": self._pybullet_client.loadURDF("plane_implicit.urdf")}
 
+            # Generate modifications from scratch
+            for modifier in self._env_modifiers:
+                modifier._generate(self)
             # Assume that all env modifiers have the same adjust_position
             adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else [0, 0, 0]
 
@@ -246,6 +251,10 @@ class LocomotionGymEnv(gym.Env):
                 allow_knee_contact=self._gym_config.simulation_parameters.allow_knee_contact,
                 adjust_position=adjust_position,
             )
+        else:
+            # Reset modifications
+            for modifier in self._env_modifiers:
+                modifier._reset(self)
 
         # Reset the pose of the robot.
         self._robot.Reset(

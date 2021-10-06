@@ -91,13 +91,13 @@ class HeightField(EnvModifier):
 
         self.hf_id = terrainShape
         self.terrainShape = terrainShape
-        print("TERRAIN SHAPE: {}".format(terrainShape))
+        # print("TERRAIN SHAPE: {}".format(terrainShape))
 
         env.pybullet_client.changeVisualShape(terrain, -1, rgbaColor=[1, 1, 1, 1])
 
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 1)
 
-    def _reset(self, heightPerturbationRange=0.08):
+    def _reset(self, env, heightPerturbationRange=0.08):
         if heightfieldSource == useProgrammatic:
             for j in range(int(numHeightfieldColumns / 2)):
                 for i in range(int(numHeightfieldRows / 2)):
@@ -113,7 +113,7 @@ class HeightField(EnvModifier):
             self.terrainShape = p.createCollisionShape(
                 shapeType=p.GEOM_HEIGHTFIELD,
                 flags=flags,
-                meshScale=[0.05, 0.05, 1],
+                meshScale=[0.07, 0.07, 1.6],
                 heightfieldTextureScaling=(numHeightfieldRows - 1) / 2,
                 heightfieldData=self.heightfieldData,
                 numHeightfieldRows=numHeightfieldRows,

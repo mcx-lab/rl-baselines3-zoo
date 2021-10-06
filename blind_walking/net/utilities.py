@@ -12,18 +12,18 @@ def _create_depthwise_separable_conv2d_block(in_channels, out_channels):
             kernel_size=3,
             groups=in_channels,
         ),
-        nn.BatchNorm2d(),
+        nn.BatchNorm2d(in_channels),
         nn.ReLU(),
         nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
-        nn.BatchNorm2d(),
+        nn.BatchNorm2d(out_channels),
         nn.ReLU(),
         nn.MaxPool2d(kernel_size=2, stride=2),
     )
 
 
-def create_cnn(in_channels: int, out_channels: int, net_arch):
+def create_cnn(net_arch):
     layers = []
-    layer_sizes = [in_channels] + net_arch + [out_channels]
+    layer_sizes = net_arch
     for inp, oup in zip(layer_sizes[:-1], layer_sizes[1:]):
         layers.append(_create_depthwise_separable_conv2d_block(inp, oup))
     return layers
