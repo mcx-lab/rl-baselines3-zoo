@@ -18,45 +18,99 @@ from utils.utils import StoreDict
 from blind_walking.net.adapter import Adapter
 
 
-
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
-    parser.add_argument("--algo", help="RL Algorithm", default="ppo", type=str, required=False, choices=list(ALGOS.keys()))
+    parser.add_argument(
+        "--algo",
+        help="RL Algorithm",
+        default="ppo",
+        type=str,
+        required=False,
+        choices=list(ALGOS.keys()),
+    )
     parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
-    parser.add_argument("--num-threads", help="Number of threads for PyTorch (-1 to use default)", default=-1, type=int)
+    parser.add_argument(
+        "--num-threads",
+        help="Number of threads for PyTorch (-1 to use default)",
+        default=-1,
+        type=int,
+    )
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
-    parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
+    parser.add_argument(
+        "--exp-id",
+        help="Experiment ID (default: 0: latest, -1: no exp folder)",
+        default=0,
+        type=int,
+    )
     parser.add_argument("--verbose", help="Verbose mode (0: no output, 1: INFO)", default=1, type=int)
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
     parser.add_argument("-o", "--output-folder", help="Video output folder", type=str)
-    parser.add_argument("--no-render", action="store_true", default=False, help="Do not render the environment (useful for tests)")
-    parser.add_argument("--adapter", action="store_true", default=False, help="Use adapter module instead of trained model")
-    parser.add_argument("--load-best",
-                        action="store_true",
-                        default=False, help="Load best model instead of last model if available")
-    parser.add_argument("--load-checkpoint",
-                        type=int,
-                        help="Load checkpoint instead of last model if available, "
-                        "you must pass the number of timesteps corresponding to it")
-    parser.add_argument("--load-last-checkpoint",
-                        action="store_true",
-                        default=False,
-                        help="Load last checkpoint instead of last model if available")
-    parser.add_argument("--deterministic", action="store_true", default=False, help="Use deterministic actions")
-    parser.add_argument("--stochastic", action="store_true", default=False, help="Use stochastic actions")
-    parser.add_argument("--norm-reward", action="store_true", default=False,
-                        help="Normalize reward if applicable (trained with VecNormalize)")
+    parser.add_argument(
+        "--no-render",
+        action="store_true",
+        default=False,
+        help="Do not render the environment (useful for tests)",
+    )
+    parser.add_argument(
+        "--adapter",
+        action="store_true",
+        default=False,
+        help="Use adapter module instead of trained model",
+    )
+    parser.add_argument(
+        "--load-best",
+        action="store_true",
+        default=False,
+        help="Load best model instead of last model if available",
+    )
+    parser.add_argument(
+        "--load-checkpoint",
+        type=int,
+        help="Load checkpoint instead of last model if available, "
+        "you must pass the number of timesteps corresponding to it",
+    )
+    parser.add_argument(
+        "--load-last-checkpoint",
+        action="store_true",
+        default=False,
+        help="Load last checkpoint instead of last model if available",
+    )
+    parser.add_argument(
+        "--deterministic",
+        action="store_true",
+        default=False,
+        help="Use deterministic actions",
+    )
+    parser.add_argument(
+        "--stochastic",
+        action="store_true",
+        default=False,
+        help="Use stochastic actions",
+    )
+    parser.add_argument(
+        "--norm-reward",
+        action="store_true",
+        default=False,
+        help="Normalize reward if applicable (trained with VecNormalize)",
+    )
     parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
     parser.add_argument("--reward-log", help="Where to log reward", default="", type=str)
-    parser.add_argument("--gym-packages",
-                        type=str,
-                        nargs="+",
-                        default=[],
-                        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)")
-    parser.add_argument("--env-kwargs", type=str, nargs="+", action=StoreDict,
-                        help="Optional keyword argument to pass to the env constructor")
+    parser.add_argument(
+        "--gym-packages",
+        type=str,
+        nargs="+",
+        default=[],
+        help="Additional external Gym environment package modules to import (e.g. gym_minigrid)",
+    )
+    parser.add_argument(
+        "--env-kwargs",
+        type=str,
+        nargs="+",
+        action=StoreDict,
+        help="Optional keyword argument to pass to the env constructor",
+    )
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
@@ -169,14 +223,16 @@ def main():  # noqa: C901
         video_folder = args.output_folder
         if video_folder is None:
             if args.adapter:
-                video_folder = os.path.join(log_path, 'videos_adapter')
+                video_folder = os.path.join(log_path, "videos_adapter")
             else:
                 video_folder = os.path.join(log_path, "videos")
-        env = VecVideoRecorder(env,
-                               video_folder,
-                               record_video_trigger=lambda x: x == 0,
-                               video_length=args.n_timesteps,
-                               name_prefix=name_prefix)
+        env = VecVideoRecorder(
+            env,
+            video_folder,
+            record_video_trigger=lambda x: x == 0,
+            video_length=args.n_timesteps,
+            name_prefix=name_prefix,
+        )
         env.reset()
 
     # ######################### Load model ######################### #
@@ -209,7 +265,7 @@ def main():  # noqa: C901
         base_policy_action = policy.action_net
         base_policy_value = policy.value_net
         # Load adapter module
-        adapter_path = os.path.join(log_path, f'{env_id}_adapter', 'adapter.pth')
+        adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
         adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
         adapter.load_state_dict(th.load(adapter_path))
         adapter.eval()
@@ -237,9 +293,7 @@ def main():  # noqa: C901
                 # Clip and perform action
                 clipped_action = action.detach().cpu().numpy()
                 if isinstance(model.action_space, gym.spaces.Box):
-                    clipped_action = np.clip(clipped_action,
-                                             model.action_space.low,
-                                             model.action_space.high)
+                    clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
                 obs, reward, done, infos = env.step(clipped_action)
             else:
                 action, state = model.predict(obs, state=state, deterministic=deterministic)

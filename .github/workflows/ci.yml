@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -33,20 +33,20 @@ jobs:
         pip install torch==1.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
         # temp fix: use pybullet 3.0.8 (issue with numpy for 3.0.9)
         pip install pybullet==3.0.8
-        pip install -r requirements.txt
+        pip install -r requirements/main.txt
+        pip install -r requirements/dev.txt
         # Use headless version
         pip install opencv-python-headless
         # install parking-env to test HER
         pip install git+https://github.com/eleurent/highway-env
-    - name: Type check
+        # Generate target positions
+        python blind_walking/envs/tasks/generate_target_positions.py
+    - name: Check format with black
       run: |
-        make type
-    - name: Check codestyle
-      run: |
-        make check-codestyle
+        black --check blind_walking --line-length=127
     - name: Lint with flake8
       run: |
-        make lint
+        flake8 blind_walking --ignore=W503,W504,E203,E231,F841,F401,E402
     - name: Test with pytest
       run: |
-        make pytest
+        python -m pytest tests
