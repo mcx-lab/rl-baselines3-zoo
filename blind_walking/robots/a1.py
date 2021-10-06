@@ -189,11 +189,14 @@ def base_frame_to_world_frame(v_base: np.ndarray, robot):
 def get_grid_coordinates(grid_unit, grid_size):
     """
     Returns:
-      (grid_size ** 2) x 2 array of grid coordinates
+      grid_size array of grid coordinates
     """
-    k = grid_size / 2 - 0.5
-    displacements = np.linspace(-k * grid_unit, k * grid_unit, num=grid_size)
-    coordinates = np.array([[a, b] for a in displacements for b in displacements])
+    kx = grid_size[0] / 2 - 0.5
+    xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
+    ky = grid_size[1] / 2 - 0.5
+    yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
+    xx, yy = np.meshgrid(xvalues, yvalues)
+    coordinates = np.array(list(zip(xx.flatten(), yy.flatten())))
     return coordinates
 
 
@@ -411,7 +414,7 @@ class A1(minitaur.Minitaur):
             distance_to_ground = data[2] * 2 * max_height
         return max_height - distance_to_ground
 
-    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=32):
+    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=[10, 10]):
         """Returns a view of the local terrain as seen from a single point.
 
         Args:
@@ -434,7 +437,7 @@ class A1(minitaur.Minitaur):
         for info in ray_intersection_infos:
             hit_position = info[3]
             z_coordinates.append(hit_position[2])
-        z_coordinates = np.array(z_coordinates).reshape(grid_size, grid_size)
+        z_coordinates = np.array(z_coordinates).reshape(grid_size)
         return z_coordinates
 
     def GetLocalDistancesToGround(self, grid_unit=0.05, grid_size=16):

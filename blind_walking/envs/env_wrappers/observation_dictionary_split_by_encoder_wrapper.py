@@ -76,9 +76,12 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         split_space = {}
         for enc_name in encoder_names:
             subspace = filter_observation_space_by_encoder(observation_spaces, enc_name)
-            flattened_subspace = env_utils.flatten_observation_spaces(subspace)
+            if enc_name in self.observation_excluded:
+                # There can only be one sensor used with the encoder for it be to excluded
+                flattened_subspace = list(subspace.spaces.values())[0]
+            else:
+                flattened_subspace = env_utils.flatten_observation_spaces(subspace)
             split_space[enc_name] = flattened_subspace
-
         return spaces.dict.Dict(split_space)
 
     def _split_observation(self, input_observation):
@@ -86,9 +89,12 @@ class ObservationDictionarySplitByEncoderWrapper(gym.Env):
         split_obs = collections.OrderedDict()
         for enc_name in encoder_names:
             subobs = filter_observation_by_encoder(input_observation, enc_name)
-            flattened_subspace = env_utils.flatten_observations(subobs)
+            if enc_name in self.observation_excluded:
+                # There can only be one sensor used with the encoder for it be to excluded
+                flattened_subspace = list(subobs.values())[0]
+            else:
+                flattened_subspace = env_utils.flatten_observations(subobs)
             split_obs[enc_name] = flattened_subspace
-
         return split_obs
 
     def reset(self, initial_motor_angles=None, reset_duration=0.0):
