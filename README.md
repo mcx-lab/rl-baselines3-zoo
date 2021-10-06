@@ -35,6 +35,18 @@ python -m pip install -e .[dev]
 pre-commit install
 ```
 
+## Terrain Details
+
+`A1GymEnv` may be modified to include a staircase as follows: 
+```
+from blind_walking.envs.env_modifiers import stairs
+from blind_walking.envs.gym_envs.a1_gym_env import A1GymEnv
+env = A1GymEnv(env_modifiers = [stairs.Stairs()])
+```
+The basic `Stairs` class can be used as a building block in more complicated 
+terrain courses by implementing the `_generate` method. 
+See `blind_walking.envs.env_modifiers.train_course.TrainCourse` for an example. 
+
 ## Train an Agent
 
 The hyperparameters for each environment are defined in `hyperparameters/algo_name.yml`.
