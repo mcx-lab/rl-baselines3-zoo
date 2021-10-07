@@ -54,7 +54,7 @@ class HeightmapLogger:
         np.save(save_path, all_data)
 
 
-def main():  # noqa: C901
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
@@ -148,8 +148,11 @@ def main():  # noqa: C901
         action=StoreDict,
         help="Optional keyword argument to pass to the env constructor",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main():  # noqa: C901
+    args = parse_args()
     # Going through custom gym packages to let them register in the global registory
     for env_module in args.gym_packages:
         importlib.import_module(env_module)
@@ -294,24 +297,26 @@ def main():  # noqa: C901
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
     # Get actor-critic policy which contains the feature extractor and ppo
-    policy = model.policy
-    policy.eval()
-    feature_encoder = policy.features_extractor
-    base_policy = policy.mlp_extractor
-    base_policy_action = policy.action_net
-    base_policy_value = policy.value_net
-    if args.plot_encoder_output:
-        true_extrinsics_plotter = Plotter(name="true_extrinsics")
-        heightmap_logger = HeightmapLogger(name="heightmap_sensor_observations")
-
-    if args.adapter:
-        # Load adapter module
-        adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
-        adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
-        adapter.load_state_dict(th.load(adapter_path))
-        adapter.eval()
+    is_a1_gym_env = args.plot_encoder_output or args.adapter
+    if is_a1_gym_env:
+        policy = model.policy
+        policy.eval()
+        feature_encoder = policy.features_extractor
+        base_policy = policy.mlp_extractor
+        base_policy_action = policy.action_net
+        base_policy_value = policy.value_net
         if args.plot_encoder_output:
-            predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
+            true_extrinsics_plotter = Plotter(name="true_extrinsics")
+            heightmap_logger = HeightmapLogger(name="heightmap_sensor_observations")
+
+        if args.adapter:
+            # Load adapter module
+            adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
+            adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
+            adapter.load_state_dict(th.load(adapter_path))
+            adapter.eval()
+            if args.plot_encoder_output:
+                predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
 
     # ######################### Enjoy Loop ######################### #
 
@@ -328,30 +333,33 @@ def main():  # noqa: C901
 
     try:
         for _ in range(args.n_timesteps):
-
-            obs_np = obs
-            obs = obs_as_tensor(obs_np, model.device)
-            true_extrinsics = feature_encoder(obs)
-            if args.plot_encoder_output:
-                true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
-                true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
-                heightmap_logger.update(obs_np["visual"])
-
-            if args.adapter:
-                predicted_extrinsics = adapter(obs)
+            if is_a1_gym_env:
+                obs_np = obs
+                obs = obs_as_tensor(obs_np, model.device)
+                true_extrinsics = feature_encoder(obs)
                 if args.plot_encoder_output:
-                    predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
-                    predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
+                    true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
+                    true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
+                    heightmap_logger.update(obs_np["visual"])
 
-            extrinsics = predicted_extrinsics if args.adapter else true_extrinsics
-            output = base_policy(extrinsics)
-            action = base_policy_action(output[0])
-            value = base_policy_value(output[1])
-            # Clip and perform action
-            clipped_action = action.detach().cpu().numpy()
-            if isinstance(model.action_space, gym.spaces.Box):
-                clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
-            obs, reward, done, infos = env.step(clipped_action)
+                if args.adapter:
+                    predicted_extrinsics = adapter(obs)
+                    if args.plot_encoder_output:
+                        predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
+                        predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
+
+                extrinsics = predicted_extrinsics if args.adapter else true_extrinsics
+                output = base_policy(extrinsics)
+                action = base_policy_action(output[0])
+                value = base_policy_value(output[1])
+                # Clip and perform action
+                clipped_action = action.detach().cpu().numpy()
+                if isinstance(model.action_space, gym.spaces.Box):
+                    clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
+                obs, reward, done, infos = env.step(clipped_action)
+            else:
+                action, state = model.predict(obs, state=state, deterministic=deterministic)
+                obs, reward, done, infos = env.step(action)
 
             if not args.no_render:
                 env.render("human")
