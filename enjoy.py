@@ -18,7 +18,43 @@ from utils.utils import StoreDict
 from blind_walking.net.adapter import Adapter
 
 
-def main():  # noqa: C901
+class Plotter:
+    def __init__(self, name: str = "plot"):
+        self.data = []
+        self.name = name
+
+    def update(self, data: np.ndarray):
+        self.data.append(data)
+
+    def plot(self, save_path: str = None):
+        if save_path is None:
+            save_path = f"{self.name}.png"
+        import matplotlib.pyplot as plt
+
+        all_data = np.concatenate(self.data)
+        plt.figure()
+        t = np.arange(all_data.shape[0])
+        for i in range(all_data.shape[1]):
+            plt.plot(t, all_data[:, i])
+        plt.savefig(save_path)
+
+
+class HeightmapLogger:
+    def __init__(self, name: str = "log"):
+        self.data = []
+        self.name = name
+
+    def update(self, data: np.ndarray):
+        self.data.append(data)
+
+    def save(self, save_path: str = None):
+        if save_path is None:
+            save_path = self.name
+        all_data = np.concatenate(self.data)
+        np.save(save_path, all_data)
+
+
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
@@ -53,6 +89,7 @@ def main():  # noqa: C901
         default=False,
         help="Do not render the environment (useful for tests)",
     )
+    parser.add_argument("--plot-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
     parser.add_argument(
         "--adapter",
         action="store_true",
@@ -111,8 +148,11 @@ def main():  # noqa: C901
         action=StoreDict,
         help="Optional keyword argument to pass to the env constructor",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main():  # noqa: C901
+    args = parse_args()
     # Going through custom gym packages to let them register in the global registory
     for env_module in args.gym_packages:
         importlib.import_module(env_module)
@@ -256,19 +296,27 @@ def main():  # noqa: C901
 
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
-    if args.adapter:
-        # Get actor-critic policy which contains the feature extractor and ppo
+    # Get actor-critic policy which contains the feature extractor and ppo
+    is_a1_gym_env = args.plot_encoder_output or args.adapter
+    if is_a1_gym_env:
         policy = model.policy
         policy.eval()
         feature_encoder = policy.features_extractor
         base_policy = policy.mlp_extractor
         base_policy_action = policy.action_net
         base_policy_value = policy.value_net
-        # Load adapter module
-        adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
-        adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
-        adapter.load_state_dict(th.load(adapter_path))
-        adapter.eval()
+        if args.plot_encoder_output:
+            true_extrinsics_plotter = Plotter(name="true_extrinsics")
+            heightmap_logger = HeightmapLogger(name="heightmap_sensor_observations")
+
+        if args.adapter:
+            # Load adapter module
+            adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
+            adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
+            adapter.load_state_dict(th.load(adapter_path))
+            adapter.eval()
+            if args.plot_encoder_output:
+                predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
 
     # ######################### Enjoy Loop ######################### #
 
@@ -282,11 +330,25 @@ def main():  # noqa: C901
     ep_len = 0
     # For HER, monitor success rate
     successes = []
+
     try:
         for _ in range(args.n_timesteps):
-            if args.adapter:
-                obs = obs_as_tensor(obs, model.device)
-                extrinsics = adapter(obs)
+            if is_a1_gym_env:
+                obs_np = obs
+                obs = obs_as_tensor(obs_np, model.device)
+                true_extrinsics = feature_encoder(obs)
+                if args.plot_encoder_output:
+                    true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
+                    true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
+                    heightmap_logger.update(obs_np["visual"])
+
+                if args.adapter:
+                    predicted_extrinsics = adapter(obs)
+                    if args.plot_encoder_output:
+                        predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
+                        predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
+
+                extrinsics = predicted_extrinsics if args.adapter else true_extrinsics
                 output = base_policy(extrinsics)
                 action = base_policy_action(output[0])
                 value = base_policy_value(output[1])
@@ -337,6 +399,12 @@ def main():  # noqa: C901
         pass
 
     # ######################### Print stats ######################### #
+
+    if args.plot_encoder_output:
+        true_extrinsics_plotter.plot()
+        heightmap_logger.save()
+        if args.adapter:
+            predicted_extrinsics_plotter.plot()
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
