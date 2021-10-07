@@ -7,16 +7,18 @@ from blind_walking.envs.gym_envs import A1GymEnv
 
 def test_local_terrain_view_sensor():
     env = A1GymEnv()
-    grid_size = 32
-    local_terrain_view = env.robot.GetLocalTerrainView(grid_unit=0.1, grid_size=grid_size)
-    assert local_terrain_view.shape == (grid_size, grid_size)
+    grid_size = (32, 32)
+    grid_unit = 0.1
+    local_terrain_view = env.robot.GetLocalTerrainView(grid_unit=grid_unit, grid_size=grid_size)
+    assert local_terrain_view.shape == grid_size
 
     import matplotlib.pyplot as plt
 
-    cs = [i for i in range(grid_size)]
-    coords = [(x, y) for x in cs for y in cs]
-    xs = [c[0] for c in coords]
-    ys = [c[1] for c in coords]
+    kx = grid_size[0] / 2 - 0.5
+    xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
+    ky = grid_size[1] / 2 - 0.5
+    yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
+    xx, yy = np.meshgrid(xvalues, yvalues)
     plt.figure()
-    plt.scatter(xs, ys, c=local_terrain_view)
+    plt.scatter(xx, yy, c=local_terrain_view)
     plt.savefig("plot.png")
