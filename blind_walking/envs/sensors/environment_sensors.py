@@ -393,7 +393,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         grid_unit: float = 0.1,
-        grid_size: typing.Iterable[int] = [10, 10],
+        grid_size: typing.Tuple[int] = (10, 10),
         lower_bound: _FLOAT_OR_ARRAY = -100,
         upper_bound: _FLOAT_OR_ARRAY = 100,
         name: typing.Text = "LocalTerrainView",
