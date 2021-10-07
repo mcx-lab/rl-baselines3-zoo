@@ -39,6 +39,21 @@ class Plotter:
         plt.savefig(save_path)
 
 
+class HeightmapLogger:
+    def __init__(self, name: str = "log"):
+        self.data = []
+        self.name = name
+
+    def update(self, data: np.ndarray):
+        self.data.append(data)
+
+    def save(self, save_path: str = None):
+        if save_path is None:
+            save_path = self.name
+        all_data = np.concatenate(self.data)
+        np.save(save_path, all_data)
+
+
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
@@ -287,6 +302,7 @@ def main():  # noqa: C901
     base_policy_value = policy.value_net
     if args.plot_encoder_output:
         true_extrinsics_plotter = Plotter(name="true_extrinsics")
+        heightmap_logger = HeightmapLogger(name="heightmap_sensor_observations")
 
     if args.adapter:
         # Load adapter module
@@ -313,11 +329,13 @@ def main():  # noqa: C901
     try:
         for _ in range(args.n_timesteps):
 
-            obs = obs_as_tensor(obs, model.device)
+            obs_np = obs
+            obs = obs_as_tensor(obs_np, model.device)
             true_extrinsics = feature_encoder(obs)
             if args.plot_encoder_output:
                 true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
                 true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
+                heightmap_logger.update(obs_np["visual"])
 
             if args.adapter:
                 predicted_extrinsics = adapter(obs)
@@ -376,6 +394,7 @@ def main():  # noqa: C901
 
     if args.plot_encoder_output:
         true_extrinsics_plotter.plot()
+        heightmap_logger.save()
         if args.adapter:
             predicted_extrinsics_plotter.plot()
 
