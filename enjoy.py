@@ -18,6 +18,27 @@ from utils.utils import StoreDict
 from blind_walking.net.adapter import Adapter
 
 
+class Plotter:
+    def __init__(self, name: str = "plot"):
+        self.data = []
+        self.name = name
+
+    def update(self, data: np.ndarray):
+        self.data.append(data)
+
+    def plot(self, save_path: str = None):
+        if save_path is None:
+            save_path = f"{self.name}.png"
+        import matplotlib.pyplot as plt
+
+        all_data = np.concatenate(self.data)
+        plt.figure()
+        t = np.arange(all_data.shape[0])
+        for i in range(all_data.shape[1]):
+            plt.plot(t, all_data[:, i])
+        plt.savefig(save_path)
+
+
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
@@ -53,6 +74,7 @@ def main():  # noqa: C901
         default=False,
         help="Do not render the environment (useful for tests)",
     )
+    parser.add_argument("--log-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
     parser.add_argument(
         "--adapter",
         action="store_true",
@@ -256,19 +278,22 @@ def main():  # noqa: C901
 
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
+    # Get actor-critic policy which contains the feature extractor and ppo
+    policy = model.policy
+    policy.eval()
+    feature_encoder = policy.features_extractor
+    base_policy = policy.mlp_extractor
+    base_policy_action = policy.action_net
+    base_policy_value = policy.value_net
+    true_extrinsics_plotter = Plotter(name="true_extrinsics")
+
     if args.adapter:
-        # Get actor-critic policy which contains the feature extractor and ppo
-        policy = model.policy
-        policy.eval()
-        feature_encoder = policy.features_extractor
-        base_policy = policy.mlp_extractor
-        base_policy_action = policy.action_net
-        base_policy_value = policy.value_net
         # Load adapter module
         adapter_path = os.path.join(log_path, f"{env_id}_adapter", "adapter.pth")
         adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
         adapter.load_state_dict(th.load(adapter_path))
         adapter.eval()
+        predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
 
     # ######################### Enjoy Loop ######################### #
 
@@ -282,22 +307,29 @@ def main():  # noqa: C901
     ep_len = 0
     # For HER, monitor success rate
     successes = []
+
     try:
         for _ in range(args.n_timesteps):
+
+            obs = obs_as_tensor(obs, model.device)
+            true_extrinsics = feature_encoder(obs)
+            true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
+            true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
+
             if args.adapter:
-                obs = obs_as_tensor(obs, model.device)
-                extrinsics = adapter(obs)
-                output = base_policy(extrinsics)
-                action = base_policy_action(output[0])
-                value = base_policy_value(output[1])
-                # Clip and perform action
-                clipped_action = action.detach().cpu().numpy()
-                if isinstance(model.action_space, gym.spaces.Box):
-                    clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
-                obs, reward, done, infos = env.step(clipped_action)
-            else:
-                action, state = model.predict(obs, state=state, deterministic=deterministic)
-                obs, reward, done, infos = env.step(action)
+                predicted_extrinsics = adapter(obs)
+                predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
+                predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
+
+            extrinsics = predicted_extrinsics if args.adapter else true_extrinsics
+            output = base_policy(extrinsics)
+            action = base_policy_action(output[0])
+            value = base_policy_value(output[1])
+            # Clip and perform action
+            clipped_action = action.detach().cpu().numpy()
+            if isinstance(model.action_space, gym.spaces.Box):
+                clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
+            obs, reward, done, infos = env.step(clipped_action)
 
             if not args.no_render:
                 env.render("human")
@@ -337,6 +369,10 @@ def main():  # noqa: C901
         pass
 
     # ######################### Print stats ######################### #
+
+    true_extrinsics_plotter.plot()
+    if args.adapter:
+        predicted_extrinsics_plotter.plot()
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
