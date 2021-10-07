@@ -412,17 +412,19 @@ class A1(minitaur.Minitaur):
             distance_to_ground = data[2] * 2 * max_height
         return max_height - distance_to_ground
 
-    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=[10, 10]):
+    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=[10, 10], transform=(0, 0)):
         """Returns a view of the local terrain as seen from a single point.
 
         Args:
           grid_unit: Side length of one square in the grid
           grid_size: Number of squares along one side of grid
+          transform: The direction to transform the terrain view
 
         Returns:
           N x N numpy array of floats
         """
         base_position_world = self.GetBasePosition()[:2]
+        base_position_world = base_position_world + np.array(transform)
         base_position_base = world_frame_to_base_frame(base_position_world, self)
         grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
         grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])

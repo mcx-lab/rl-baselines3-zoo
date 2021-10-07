@@ -26,8 +26,8 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
         self.flatten_encoder = nn.Flatten()
 
         cnn_layers = [
-            nn.Conv2d(1, 32, 5, stride=1),
-            nn.Conv2d(32, 32, 5, stride=4),
+            nn.Conv2d(1, 32, kernel_size=5, stride=1),
+            nn.Conv2d(32, 32, kernel_size=5, stride=4),
         ]
         input_shape = observation_space.spaces["visual"].shape[1:]
         for layer in cnn_layers:

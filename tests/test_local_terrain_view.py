@@ -9,7 +9,7 @@ def test_local_terrain_view_sensor():
     env = A1GymEnv()
     grid_size = (32, 32)
     grid_unit = 0.1
-    local_terrain_view = env.robot.GetLocalTerrainView(grid_unit=grid_unit, grid_size=grid_size)
+    local_terrain_view = env.robot.GetLocalTerrainView(grid_unit=grid_unit, grid_size=grid_size, transform=(0, 0))
     assert local_terrain_view.shape == grid_size
 
     import matplotlib.pyplot as plt

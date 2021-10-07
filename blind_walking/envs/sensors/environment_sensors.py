@@ -394,6 +394,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         self,
         grid_unit: float = 0.1,
         grid_size: typing.Tuple[int] = (10, 10),
+        transform: typing.Tuple[float] = (0, 0),
         lower_bound: _FLOAT_OR_ARRAY = -100,
         upper_bound: _FLOAT_OR_ARRAY = 100,
         name: typing.Text = "LocalTerrainView",
@@ -413,6 +414,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         self._env = None
         self.grid_unit = grid_unit
         self.grid_size = grid_size
+        self.transform = transform
 
         super(LocalTerrainViewSensor, self).__init__(
             name=name,
@@ -432,6 +434,6 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        return self._env.robot.GetLocalTerrainView(grid_unit=self.grid_unit, grid_size=self.grid_size).reshape(
-            1, self.grid_size[0], self.grid_size[1]
-        )
+        return self._env.robot.GetLocalTerrainView(
+            grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
