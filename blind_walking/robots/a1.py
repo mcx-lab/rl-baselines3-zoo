@@ -256,12 +256,10 @@ class A1(minitaur.Minitaur):
         motor_control_mode=None,
         reset_time=1,
         allow_knee_contact=False,
-        adjust_position=[0, 0, 0],
     ):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
         self._enable_clip_motor_commands = enable_clip_motor_commands
-        self._adjust_position = adjust_position
 
         motor_kp = [
             ABDUCTION_P_GAIN,
@@ -536,7 +534,7 @@ class A1(minitaur.Minitaur):
 
     def _GetDefaultInitPosition(self):
         if self._on_rack:
-            return INIT_RACK_POSITION
+            return [sum(x) for x in zip(INIT_RACK_POSITION, self._adjust_position)]
         else:
             return [sum(x) for x in zip(INIT_POSITION, self._adjust_position)]
 

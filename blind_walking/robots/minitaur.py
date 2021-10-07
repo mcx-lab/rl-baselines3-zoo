@@ -184,6 +184,8 @@ class Minitaur(object):
         self._enable_action_filter = enable_action_filter
         self._last_action = None
 
+        self._adjust_position = (0, 0, 0)
+
         if not motor_model_class:
             raise ValueError("Must provide a motor model class!")
 
@@ -383,7 +385,7 @@ class Minitaur(object):
         """
         return True
 
-    def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
+    def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0, adjust_position=(0, 0, 0)):
         """Reset the minitaur to its initial states.
 
         Args:
@@ -396,6 +398,7 @@ class Minitaur(object):
             reset_time <= 0 or in torque control mode, the phase of holding the
             default pose is skipped.
         """
+        self._adjust_position = adjust_position
         if reload_urdf:
             self._LoadRobotURDF()
             if self._on_rack:
@@ -1300,12 +1303,12 @@ class Minitaur(object):
         if self._reset_at_current_position and self._observation_history:
             x, y, _ = self.GetBasePosition()
             _, _, z = INIT_POSITION
-            return [x, y, z]
+            return [sum(a) for a in zip([x, y, z], self._adjust_position)]
 
         if self._on_rack:
-            return INIT_RACK_POSITION
+            return [sum(a) for a in zip(INIT_RACK_POSITION, self._adjust_position)]
         else:
-            return INIT_POSITION
+            return [sum(a) for a in zip(INIT_POSITION, self._adjust_position)]
 
     def _GetDefaultInitOrientation(self):
         """Returns the init position of the robot.

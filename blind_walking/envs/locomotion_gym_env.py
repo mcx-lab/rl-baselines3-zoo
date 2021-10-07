@@ -234,8 +234,6 @@ class LocomotionGymEnv(gym.Env):
             # Generate modifications from scratch
             for modifier in self._env_modifiers:
                 modifier._generate(self)
-            # Assume that all env modifiers have the same adjust_position
-            adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else [0, 0, 0]
 
             # Rebuild the robot
             self._robot = self._robot_class(
@@ -249,18 +247,20 @@ class LocomotionGymEnv(gym.Env):
                 enable_action_filter=self._gym_config.simulation_parameters.enable_action_filter,
                 enable_action_interpolation=self._gym_config.simulation_parameters.enable_action_interpolation,
                 allow_knee_contact=self._gym_config.simulation_parameters.allow_knee_contact,
-                adjust_position=adjust_position,
             )
         else:
             # Reset modifications
             for modifier in self._env_modifiers:
                 modifier._reset(self)
 
+        # Assume that all env modifiers have the same adjust_position
+        adjust_position = self._env_modifiers[0].adjust_position if self._env_modifiers else (0, 0, 0)
         # Reset the pose of the robot.
         self._robot.Reset(
             reload_urdf=False,
             default_motor_angles=initial_motor_angles,
             reset_time=reset_duration,
+            adjust_position=adjust_position,
         )
 
         self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)

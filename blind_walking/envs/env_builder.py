@@ -14,7 +14,7 @@
 # limitations under the License.
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs
+from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
@@ -68,7 +68,7 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = []
+        env_modifier_list = [train_course.TrainStairs()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()

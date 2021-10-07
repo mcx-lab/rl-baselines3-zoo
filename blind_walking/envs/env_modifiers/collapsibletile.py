@@ -49,7 +49,7 @@ class CollapsibleTile(EnvModifier):
             "sDampingStiff": [],
             "collapsibility": [],
         }
-        super().__init__(adjust_position=[0, 0, 0.5], deformable=True)
+        super().__init__(adjust_position=(0, 0, 0.5), deformable=True)
 
     def _reset(self, env):
         for index, blockId in enumerate(self.damping_platform):

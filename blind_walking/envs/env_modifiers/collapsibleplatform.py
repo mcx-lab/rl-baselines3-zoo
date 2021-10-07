@@ -52,7 +52,7 @@ class CollapsiblePlatform(EnvModifier):
             "sDampingStiff": [],
             "collapsibility": [],
         }
-        super().__init__(adjust_position=[0, 0, 0.15], deformable=True)
+        super().__init__(adjust_position=(0, 0, 0.15), deformable=True)
 
     def _generate(
         self,

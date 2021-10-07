@@ -1,7 +1,6 @@
+import numpy as np
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs
-
 
 """ Train robot to walk up stairs curriculum.
 
@@ -19,3 +18,9 @@ class TrainStairs(EnvModifier):
     def _generate(self, env):
         self.easy_stairs._generate(env, start_x=1, step_rise=0.02)
         self.hard_stairs._generate(env, start_x=6, step_rise=0.05)
+
+    def _reset(self, env):
+        if np.random.uniform() < 0.5:
+            self.adjust_position = (2.5, 0, 0.1)
+        else:
+            self.adjust_position = (0, 0, 0)
