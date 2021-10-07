@@ -74,7 +74,7 @@ def main():  # noqa: C901
         default=False,
         help="Do not render the environment (useful for tests)",
     )
-    parser.add_argument("--log-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
+    parser.add_argument("--plot-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
     parser.add_argument(
         "--adapter",
         action="store_true",
@@ -285,7 +285,8 @@ def main():  # noqa: C901
     base_policy = policy.mlp_extractor
     base_policy_action = policy.action_net
     base_policy_value = policy.value_net
-    true_extrinsics_plotter = Plotter(name="true_extrinsics")
+    if args.plot_encoder_output:
+        true_extrinsics_plotter = Plotter(name="true_extrinsics")
 
     if args.adapter:
         # Load adapter module
@@ -293,7 +294,8 @@ def main():  # noqa: C901
         adapter = Adapter(policy.observation_space, output_size=feature_encoder.mlp_output_size)
         adapter.load_state_dict(th.load(adapter_path))
         adapter.eval()
-        predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
+        if args.plot_encoder_output:
+            predicted_extrinsics_plotter = Plotter(name="predicted_extrinsics")
 
     # ######################### Enjoy Loop ######################### #
 
@@ -313,13 +315,15 @@ def main():  # noqa: C901
 
             obs = obs_as_tensor(obs, model.device)
             true_extrinsics = feature_encoder(obs)
-            true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
-            true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
+            if args.plot_encoder_output:
+                true_visual_extrinsics = true_extrinsics[:, -feature_encoder.visual_output_size :]
+                true_extrinsics_plotter.update(true_visual_extrinsics.detach().cpu().numpy())
 
             if args.adapter:
                 predicted_extrinsics = adapter(obs)
-                predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
-                predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
+                if args.plot_encoder_output:
+                    predicted_visual_extrinsics = predicted_extrinsics[:, -feature_encoder.visual_output_size :]
+                    predicted_extrinsics_plotter.update(predicted_visual_extrinsics.detach().cpu().numpy())
 
             extrinsics = predicted_extrinsics if args.adapter else true_extrinsics
             output = base_policy(extrinsics)
@@ -370,9 +374,10 @@ def main():  # noqa: C901
 
     # ######################### Print stats ######################### #
 
-    true_extrinsics_plotter.plot()
-    if args.adapter:
-        predicted_extrinsics_plotter.plot()
+    if args.plot_encoder_output:
+        true_extrinsics_plotter.plot()
+        if args.adapter:
+            predicted_extrinsics_plotter.plot()
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
