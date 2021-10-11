@@ -26,9 +26,8 @@ class Plotter:
     def update(self, data: np.ndarray):
         self.data.append(data)
 
-    def plot(self, save_path: str = None):
-        if save_path is None:
-            save_path = f"{self.name}.png"
+    def plot(self, savedir: str = None):
+        filename = f"{self.name}.png"
         import matplotlib.pyplot as plt
 
         all_data = np.concatenate(self.data)
@@ -36,7 +35,7 @@ class Plotter:
         t = np.arange(all_data.shape[0])
         for i in range(all_data.shape[1]):
             plt.plot(t, all_data[:, i])
-        plt.savefig(save_path)
+        plt.savefig(os.path.join(savedir, filename))
 
 
 class HeightmapLogger:
@@ -47,11 +46,10 @@ class HeightmapLogger:
     def update(self, data: np.ndarray):
         self.data.append(data)
 
-    def save(self, save_path: str = None):
-        if save_path is None:
-            save_path = self.name
+    def save(self, savedir: str = None):
+        filename = self.name
         all_data = np.concatenate(self.data)
-        np.save(save_path, all_data)
+        np.save(os.path.join(savedir, filename), all_data)
 
 
 def parse_args():
@@ -401,10 +399,10 @@ def main():  # noqa: C901
     # ######################### Print stats ######################### #
 
     if args.plot_encoder_output:
-        true_extrinsics_plotter.plot()
-        heightmap_logger.save()
+        true_extrinsics_plotter.plot(log_path)
+        heightmap_logger.save(log_path)
         if args.adapter:
-            predicted_extrinsics_plotter.plot()
+            predicted_extrinsics_plotter.plot(log_path)
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
