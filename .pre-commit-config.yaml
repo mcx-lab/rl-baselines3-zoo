@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3.7
+        args: ["blind_walking", --line-length=127]
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+      - id: flake8
+        additional_dependencies: [-e, "git+git://github.com/pycqa/pyflakes.git@1911c20#egg=pyflakes"]
+        args: ["blind_walking", "--ignore=W503,W504,E203,E231,F841,F401,E402"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.5.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", --line-length=127]
+        files: 'blind_walking/.*'
+      - id: isort
+        args: ["--profile", "black", --line-length=127]
+        files: 'tests/.*'
+        

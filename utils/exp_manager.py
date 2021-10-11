@@ -19,13 +19,32 @@ from optuna.visualization import plot_optimization_history, plot_param_importanc
 # For using HER with GoalEnv
 from stable_baselines3 import HerReplayBuffer  # noqa: F401
 from stable_baselines3.common.base_class import BaseAlgorithm
-from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, EvalCallback
+from stable_baselines3.common.callbacks import (
+    BaseCallback,
+    CheckpointCallback,
+    EvalCallback,
+)
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
-from stable_baselines3.common.preprocessing import is_image_space, is_image_space_channels_first
-from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike  # noqa: F401
+from stable_baselines3.common.noise import (
+    NormalActionNoise,
+    OrnsteinUhlenbeckActionNoise,
+)
+from stable_baselines3.common.preprocessing import (
+    is_image_space,
+    is_image_space_channels_first,
+)
+from stable_baselines3.common.sb2_compat.rmsprop_tf_like import (
+    RMSpropTFLike,
+)  # noqa: F401
 from stable_baselines3.common.utils import constant_fn
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv, VecFrameStack, VecNormalize, VecTransposeImage
+from stable_baselines3.common.vec_env import (
+    DummyVecEnv,
+    SubprocVecEnv,
+    VecEnv,
+    VecFrameStack,
+    VecNormalize,
+    VecTransposeImage,
+)
 
 # For custom activation fn
 from torch import nn as nn  # noqa: F401
@@ -34,10 +53,17 @@ from torch import nn as nn  # noqa: F401
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 from utils.callbacks import SaveVecNormalizeCallback, TrialEvalCallback
 from utils.hyperparams_opt import HYPERPARAMS_SAMPLER
-from utils.utils import ALGOS, get_callback_list, get_latest_run_id, get_wrapper_class, linear_schedule
+from utils.utils import (
+    ALGOS,
+    get_callback_list,
+    get_latest_run_id,
+    get_wrapper_class,
+    linear_schedule,
+)
 
 # For A1GymEnv custom feature extractor and wrapper
-from blind_walking.net.feature_encoder import LocomotionFeatureEncoder
+from blind_walking.net.visual_encoder import LocomotionVisualEncoder
+
 
 class ExperimentManager(object):
     """
@@ -141,7 +167,8 @@ class ExperimentManager(object):
 
         self.log_path = f"{log_folder}/{self.algo}/"
         self.save_path = os.path.join(
-            self.log_path, f"{self.env_id}_{get_latest_run_id(self.log_path, self.env_id) + 1}{uuid_str}"
+            self.log_path,
+            f"{self.env_id}_{get_latest_run_id(self.log_path, self.env_id) + 1}{uuid_str}",
         )
         self.params_path = f"{self.save_path}/{self.env_id}"
 
@@ -328,7 +355,11 @@ class ExperimentManager(object):
 
         # Pre-process policy/buffer keyword arguments
         # Convert to python object if needed
-        for kwargs_key in {"policy_kwargs", "replay_buffer_class", "replay_buffer_kwargs"}:
+        for kwargs_key in {
+            "policy_kwargs",
+            "replay_buffer_class",
+            "replay_buffer_kwargs",
+        }:
             if kwargs_key in hyperparams.keys() and isinstance(hyperparams[kwargs_key], str):
                 hyperparams[kwargs_key] = eval(hyperparams[kwargs_key])
 
@@ -354,7 +385,10 @@ class ExperimentManager(object):
         return hyperparams, env_wrapper, callbacks
 
     def _preprocess_action_noise(
-        self, hyperparams: Dict[str, Any], saved_hyperparams: Dict[str, Any], env: VecEnv
+        self,
+        hyperparams: Dict[str, Any],
+        saved_hyperparams: Dict[str, Any],
+        env: VecEnv,
     ) -> Dict[str, Any]:
         # Parse noise string
         # Note: only off-policy algorithms are supported
@@ -429,8 +463,10 @@ class ExperimentManager(object):
 
     @staticmethod
     def is_bullet(env_id: str) -> bool:
-        return "pybullet_envs" in gym.envs.registry.env_specs[env_id].entry_point \
-            or 'A1GymEnv' in gym.envs.registry.env_specs[env_id].entry_point
+        return (
+            "pybullet_envs" in gym.envs.registry.env_specs[env_id].entry_point
+            or "A1GymEnv" in gym.envs.registry.env_specs[env_id].entry_point
+        )
 
     @staticmethod
     def is_robotics_env(env_id: str) -> bool:
@@ -574,7 +610,10 @@ class ExperimentManager(object):
         if pruner_method == "halving":
             pruner = SuccessiveHalvingPruner(min_resource=1, reduction_factor=4, min_early_stopping_rate=0)
         elif pruner_method == "median":
-            pruner = MedianPruner(n_startup_trials=self.n_startup_trials, n_warmup_steps=self.n_evaluations // 3)
+            pruner = MedianPruner(
+                n_startup_trials=self.n_startup_trials,
+                n_warmup_steps=self.n_evaluations // 3,
+            )
         elif pruner_method == "none":
             # Do not prune
             pruner = MedianPruner(n_startup_trials=self.n_trials, n_warmup_steps=self.n_evaluations)
