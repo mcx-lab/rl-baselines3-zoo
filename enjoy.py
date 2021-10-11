@@ -27,17 +27,8 @@ class Logger:
         self.data.append(data)
 
     def save(self, savedir: str = None):
-        filename = self.name
         all_data = np.concatenate(self.data)
-        np.save(os.path.join(savedir, filename), all_data)
-
-        # import matplotlib.pyplot as plt
-
-        # plt.figure()
-        # t = np.arange(all_data.shape[0])
-        # for i in range(all_data.shape[1]):
-        #     plt.plot(t, all_data[:, i])
-        # plt.savefig(os.path.join(savedir, filename))
+        np.save(os.path.join(savedir, self.name), all_data)
 
 
 def parse_args():
@@ -387,7 +378,7 @@ def main():  # noqa: C901
     # ######################### Print stats ######################### #
 
     if args.save_encoder_output:
-        output_dir = os.path.join(log_path, 'encoder')
+        output_dir = os.path.join(log_path, "encoder")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         true_extrinsics_logger.save(output_dir)
