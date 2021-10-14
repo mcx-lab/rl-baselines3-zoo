@@ -437,3 +437,66 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         return self._env.robot.GetLocalTerrainView(
             grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
         ).reshape(1, self.grid_size[0], self.grid_size[1])
+
+
+class PhaseSensor(sensor.BoxSpaceSensor):
+    """
+    A sensor that returns a phase (angle) corresponding to a point in a gait cycle
+    """
+
+    def __init__(
+        self,
+        num_motors: int,
+        init_phase: _FLOAT_OR_ARRAY = 0,
+        frequency: float = 1.0,  # Hertz
+        lower_bound: _FLOAT_OR_ARRAY = -np.pi,
+        upper_bound: _FLOAT_OR_ARRAY = np.pi,
+        name: typing.Text = "Phase",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+    ) -> None:
+        """Constructs PhaseSensor.
+        Args:
+          init_phase: Initial phase value at env_time_step = 0
+          frequency: Number of cycles per second
+        """
+        self._env = None
+        if isinstance(init_phase, np.ndarray):
+            assert len(self.init_phase.shape) == 1 and self.init_phase.shape[0] == num_motors
+            self.init_phase = init_phase.astype(dtype)
+        else:
+            self.init_phase = init_phase * np.ones(shape=num_motors, dtype=dtype)
+
+        self.frequency = frequency
+
+        super(PhaseSensor, self).__init__(
+            name=name,
+            shape=(num_motors,),
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    @property
+    def cycle_delta(self):
+        """Return the fraction of a cycle traversed after 1 time step"""
+        return self.frequency * self._env.env_time_step
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns the current phase value"""
+        cycle = self._env.env_step_counter * self.cycle_delta
+        # Get the fractional part of the cycle
+        cycle_f, _ = np.modf(cycle)
+        # Get the angle corresponding to the cycle
+        phase = cycle_f * 2 * np.pi + self.init_phase
+        # Map into (-pi, pi)
+        phase = phase % (2 * np.pi) - np.pi
+        return phase
