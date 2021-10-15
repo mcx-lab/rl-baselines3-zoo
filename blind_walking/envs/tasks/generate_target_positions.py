@@ -15,7 +15,7 @@ filename_png = "target_positions.png"
 filepath_csv = os.path.join(os.path.dirname(__file__), filename_csv)
 filepath_png = os.path.join(os.path.dirname(__file__), filename_png)
 
-speed_default = 0.02
+speed_default = 0.03
 speed_timestep_signals = []  # have to be in descending order
 target_speeds = []
 
