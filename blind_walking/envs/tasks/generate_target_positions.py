@@ -16,12 +16,12 @@ filepath_csv = os.path.join(os.path.dirname(__file__), filename_csv)
 filepath_png = os.path.join(os.path.dirname(__file__), filename_png)
 
 speed_default = 0.02
-speed_timestep_signals = [1900, 1600, 1300, 1000]  # have to be in descending order
-target_speeds = [0.0, 0.014, 0.016, 0.018]
+speed_timestep_signals = []  # have to be in descending order
+target_speeds = []
 
 dir_default = 0
-dir_timestep_signals = [800, 600, 400, 200]  # have to be in descending order
-target_dirs = [0, -0.2, 0, 0.2, 0]
+dir_timestep_signals = []  # have to be in descending order
+target_dirs = []
 
 plot_graph = True
 

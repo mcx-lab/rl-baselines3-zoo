@@ -163,7 +163,6 @@ A1GymEnv-v0:
                        ortho_init=False,
                        activation_fn=nn.ReLU,
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
-		       features_extractor_class=LocomotionVisualEncoder,
                        )"
 
 # Tuned
