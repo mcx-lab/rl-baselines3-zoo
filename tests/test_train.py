@@ -29,6 +29,9 @@ experiments["td3-Pendulum-v0"] = ("td3", "Pendulum-v0")
 # for DDPG
 experiments["ddpg-Pendulum-v0"] = ("ddpg", "Pendulum-v0")
 
+# for A1GymEnv
+experiments["ppo-A1GymEnv-v0"] = ("ppo", "A1GymEnv-v0")
+
 
 @pytest.mark.parametrize("experiment", experiments.keys())
 def test_train(tmp_path, experiment):
