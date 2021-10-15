@@ -19,6 +19,7 @@ import typing
 
 import numpy as np
 from blind_walking.envs.sensors import sensor
+from numpy.lib.function_base import _angle_dispatcher
 
 _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
@@ -441,37 +442,31 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
 class PhaseSensor(sensor.BoxSpaceSensor):
     """
-    A sensor that returns a phase (angle) corresponding to a point in a gait cycle
+    A sensor that returns a 2D unit vector corresponding to a point in a gait cycle
     """
 
     def __init__(
         self,
-        num_motors: int,
-        init_phase: _FLOAT_OR_ARRAY = 0,
+        init_angle: float = 0,
         frequency: float = 1.0,  # Hertz
-        lower_bound: _FLOAT_OR_ARRAY = -np.pi,
-        upper_bound: _FLOAT_OR_ARRAY = np.pi,
+        lower_bound: _FLOAT_OR_ARRAY = -1.0,
+        upper_bound: _FLOAT_OR_ARRAY = 1.0,
         name: typing.Text = "Phase",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
     ) -> None:
         """Constructs PhaseSensor.
         Args:
-          init_phase: Initial phase value at env_time_step = 0
+          init_phase: Initial phase angle at env_time_step = 0
           frequency: Number of cycles per second
         """
         self._env = None
-        if isinstance(init_phase, np.ndarray):
-            assert len(self.init_phase.shape) == 1 and self.init_phase.shape[0] == num_motors
-            self.init_phase = init_phase.astype(dtype)
-        else:
-            self.init_phase = init_phase * np.ones(shape=num_motors, dtype=dtype)
-
+        self.init_angle = init_angle
         self.frequency = frequency
 
         super(PhaseSensor, self).__init__(
             name=name,
-            shape=(num_motors,),
+            shape=(2,),
             enc_name=enc_name,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -490,13 +485,14 @@ class PhaseSensor(sensor.BoxSpaceSensor):
         """Return the fraction of a cycle traversed after 1 time step"""
         return self.frequency * self._env.env_time_step
 
+    @staticmethod
+    def angle_to_vector(angle):
+        """Convert a 1D angle into the corresponding 2D unit vector"""
+        return np.array([np.cos(angle), np.sin(angle)])
+
     def _get_observation(self) -> _ARRAY:
         """Returns the current phase value"""
         cycle = self._env.env_step_counter * self.cycle_delta
-        # Get the fractional part of the cycle
-        cycle_f, _ = np.modf(cycle)
         # Get the angle corresponding to the cycle
-        phase = cycle_f * 2 * np.pi + self.init_phase
-        # Map into (-pi, pi)
-        phase = phase % (2 * np.pi) - np.pi
-        return phase
+        angle = cycle * 2 * np.pi + self.init_angle
+        return self.angle_to_vector(angle)
