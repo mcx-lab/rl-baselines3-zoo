@@ -62,19 +62,22 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.TargetPositionSensor(max_distance=0.0225),
             #environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
+            environment_sensors.LocalTerrainViewSensor(
+                enc_name="visual", grid_size=(20, 10), grid_unit=0.05, transform=(0.5, 0)
+            ),
         ]
 
     if env_randomizer_list is None:
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = []
+        env_modifier_list = [train_course.TrainStairs()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
+        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
@@ -86,7 +89,7 @@ def build_regular_env(
         env_modifiers=env_modifier_list,
     )
 
-    env = obs_wrapper(env)
+    env = obs_wrapper(env, ["visual"])
     if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(

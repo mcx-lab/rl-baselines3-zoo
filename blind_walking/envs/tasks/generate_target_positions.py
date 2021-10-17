@@ -8,7 +8,7 @@ import pandas as pd
 
 # ######################### Parameters ######################### #
 
-start_pos = [0, 0]
+start_pos = [3, 0]
 n_timesteps = 2000
 filename_csv = "target_positions.csv"
 filename_png = "target_positions.png"

@@ -17,10 +17,10 @@ class TrainStairs(EnvModifier):
 
     def _generate(self, env):
         self.easy_stairs._generate(env, start_x=1, step_rise=0.02)
-        self.hard_stairs._generate(env, start_x=6, step_rise=0.05)
+        self.hard_stairs._generate(env, start_x=7, step_rise=0.05)
 
     def _reset(self, env):
         if np.random.uniform() < 0.5:
-            self.adjust_position = (2.5, 0, 0.1)
+            self.adjust_position = (3, 0, 0.1)
         else:
             self.adjust_position = (0, 0, 0)
