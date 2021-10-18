@@ -99,7 +99,8 @@ class ForwardTask(object):
             distance_reward = -np.linalg.norm(dxy_local)
         # Reward closeness to target position.
         dxy_err = np.linalg.norm(self._target_pos - dxy_local, 2)
-        dxy_reward = math.exp(math.log(alpha) * (dxy_err / 0.01) ** 2)
+        dxy_var = 1.0 * self._env._env_time_step
+        dxy_reward = math.exp(math.log(alpha) * (dxy_err / dxy_var) ** 2)
         # Penalty for upward translation.
         dz_reward = -abs(dz)
 
@@ -109,9 +110,9 @@ class ForwardTask(object):
         local_up_vec = rot_matrix[6:]
         shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
         # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._sim_time_step
+        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
         energy_rot_reward = (
-            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._sim_time_step * 0.5
+            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._env_time_step * 0.5
         )
 
         # Penalty for lost of more than two foot contacts
@@ -123,10 +124,10 @@ class ForwardTask(object):
         weighted_objectives = {
             "distance": distance_reward * 0.01,
             "dxy": dxy_reward * 0.01,
-            "dz": dz_reward * 0.001,
+            "dz": dz_reward * 0.0,
             "shake": shake_reward * 0.001,
-            "energy": energy_reward * 0.005,
-            "energy_rot": energy_rot_reward * 0.005,
+            "energy": energy_reward * 0.0005,
+            "energy_rot": energy_rot_reward * 0.0005,
             "contact": contact_reward * 0.0,
         }
         reward = sum([o for o in weighted_objectives.values()])

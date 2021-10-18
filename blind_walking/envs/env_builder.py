@@ -42,7 +42,7 @@ def build_regular_env(
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = motor_control_mode
     sim_params.reset_time = 2
-    sim_params.num_action_repeat = 10
+    sim_params.num_action_repeat = 30
     sim_params.enable_action_interpolation = False
     sim_params.enable_action_filter = True
     sim_params.enable_clip_motor_commands = True
@@ -60,10 +60,10 @@ def build_regular_env(
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.TargetPositionSensor(max_distance=0.005),
-            environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
+            environment_sensors.TargetPositionSensor(max_distance=0.0225),
+            # environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
             environment_sensors.LocalTerrainViewSensor(
-                enc_name="visual", grid_size=(20, 7), grid_unit=0.1, transform=(0.5, 0)
+                enc_name="visual", grid_size=(20, 10), grid_unit=0.05, transform=(0.15, 0)
             ),
         ]
 

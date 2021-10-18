@@ -297,13 +297,13 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
         self._last_yaw = self._current_yaw
         self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
 
-        # Hardcoded, for better training of speed change
-        speed_timestep_signals = [1900, 1600, 1300, 1000]
-        target_speeds = [0.0, 0.014, 0.016, 0.018]
-        for i, t in enumerate(speed_timestep_signals):
-            if env._env_step_counter > t:
-                self._distance = target_speeds[i]
-                break
+        # # Hardcoded, for better training of speed change
+        # speed_timestep_signals = [1900, 1600, 1300, 1000]
+        # target_speeds = [0.0, 0.014, 0.016, 0.018]
+        # for i, t in enumerate(speed_timestep_signals):
+        #     if env._env_step_counter > t:
+        #         self._distance = target_speeds[i]
+        #         break
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
