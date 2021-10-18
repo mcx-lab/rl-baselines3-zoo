@@ -97,7 +97,8 @@ class ForwardTask(object):
             distance_reward = -np.linalg.norm(dxy_local)
         # Reward closeness to target position.
         dxy_err = np.linalg.norm(self._target_pos - dxy_local, 2)
-        dxy_reward = math.exp(math.log(alpha) * (dxy_err / 0.03) ** 2)
+        dxy_var = 1.0 * self._env._env_time_step
+        dxy_reward = math.exp(math.log(alpha) * (dxy_err / dxy_var) ** 2)
         # Penalty for upward translation.
         dz_reward = -abs(dz)
 
