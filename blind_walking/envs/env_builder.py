@@ -61,7 +61,7 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.TargetPositionSensor(max_distance=0.0225),
-            #environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
+            # environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
             environment_sensors.LocalTerrainViewSensor(
                 enc_name="visual", grid_size=(20, 10), grid_unit=0.05, transform=(0.5, 0)
             ),
