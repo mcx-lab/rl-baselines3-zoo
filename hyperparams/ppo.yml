@@ -165,6 +165,7 @@ A1GymEnv-v0:
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
 		       features_extractor_class=LocomotionVisualEncoder,
                        )"
+  callback: utils.callbacks.A1GymEnvLoggingCallback
 
 # Tuned
 AntBulletEnv-v0:
