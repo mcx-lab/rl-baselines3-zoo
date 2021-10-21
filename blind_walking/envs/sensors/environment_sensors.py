@@ -32,8 +32,8 @@ class LastActionSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         num_actions: int,
-        lower_bound: _FLOAT_OR_ARRAY = -1.0,
-        upper_bound: _FLOAT_OR_ARRAY = 1.0,
+        lower_bound: _FLOAT_OR_ARRAY = -np.pi,
+        upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "LastAction",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
