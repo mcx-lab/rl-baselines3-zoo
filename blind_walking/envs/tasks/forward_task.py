@@ -89,7 +89,7 @@ class ForwardTask(object):
         # for all reward components
         weighted_objectives = {
             "dx": dx_reward * 1.0,
-            "dy": dy_reward * 0.001,
+            "dy": dy_reward * 0.002,
             "dz": dz_reward * 0.0,
             "shake": shake_reward * 0.001,
             "energy": energy_reward * 0.0005,

@@ -1,6 +1,6 @@
 import numpy as np
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength
+from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 
 """ Train robot to walk up stairs curriculum.
 
@@ -32,7 +32,7 @@ class TrainStairs(EnvModifier):
     def _reset(self, env):
         # Check if robot has succeeded current level
         if self._level < self.num_levels and self.succeed_level(env):
-            print(f'LEVEL {self._level} PASSED!')
+            print(f"LEVEL {self._level} PASSED!")
             self._level += 1
         level = self._level
         if level >= self.num_levels:
@@ -52,5 +52,11 @@ class TrainStairs(EnvModifier):
 
     def succeed_level(self, env):
         """To succeed the current level, robot needs to climb over the current stair level and reach the start of next stair level"""
-        target_x = self.stair_gap + (self._level + 1) * (self.stair_length + self.stair_gap)
-        return env._robot.GetBasePosition()[0] > target_x and self.adjust_position[2] == 0
+        base_pos = env._robot.GetBasePosition()
+        target_x = (self._level + 1) * (self.stair_length + self.stair_gap) + 0.5
+        return (
+            self.adjust_position[2] == 0
+            and base_pos[0] > target_x
+            and base_pos[1] > -boxHalfWidth
+            and base_pos[1] < boxHalfWidth
+        )
