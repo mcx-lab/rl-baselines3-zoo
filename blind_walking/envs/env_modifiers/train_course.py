@@ -30,11 +30,27 @@ class TrainStairs(EnvModifier):
             start_x += self.stair_length + self.stair_gap
 
     def _reset(self, env):
+        # Check if robot has succeeded current level
+        if self._level < self.num_levels and self.succeed_level(env):
+            print(f'LEVEL {self._level} PASSED!')
+            self._level += 1
         level = self._level
+        if level >= self.num_levels:
+            # Loop back to randomly selected level
+            level = np.random.choice(self.num_levels)
+        elif level > 0 and np.random.uniform() < 0.2:
+            # Redo previous level
+            level -= 1
 
         x_pos = level * (self.stair_length + self.stair_gap) + 0.5
         z_pos = 0
+        # Equal chances to encouter going up and down the stair level
         if np.random.uniform() < 0.5:
             x_pos += self.stair_gap + self.stair_length / 2 - 1
             z_pos = self.step_rise_levels[level] * self.num_steps
         self.adjust_position = (x_pos, 0, z_pos)
+
+    def succeed_level(self, env):
+        """To succeed the current level, robot needs to climb over the current stair level and reach the start of next stair level"""
+        target_x = self.stair_gap + (self._level + 1) * (self.stair_length + self.stair_gap)
+        return env._robot.GetBasePosition()[0] > target_x and self.adjust_position[2] == 0
