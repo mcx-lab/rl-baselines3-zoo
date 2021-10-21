@@ -1,10 +1,9 @@
 import numpy as np
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.stairs import Stairs
+from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength
 
 """ Train robot to walk up stairs curriculum.
 
-One easy set of stairs at the front, then one more difficult set of stairs.
 Equal chances for the robot to encounter going up and going down the stairs.
 """
 
@@ -12,15 +11,30 @@ Equal chances for the robot to encounter going up and going down the stairs.
 class TrainStairs(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.easy_stairs = Stairs()
-        self.hard_stairs = Stairs()
+        self.step_rise_levels = [0.02, 0.05, 0.075]
+        self.num_levels = len(self.step_rise_levels)
+        self.num_steps = 5
+        self.stair_gap = 1.5
+        self.stair_length = (self.num_steps - 1) * 0.3 * 2 + boxHalfLength * 2 * 2
+
+        self._level = 0
+
+        self.stairs = []
+        for _ in range(self.num_levels):
+            self.stairs.append(Stairs())
 
     def _generate(self, env):
-        self.easy_stairs._generate(env, start_x=1, step_rise=0.02)
-        self.hard_stairs._generate(env, start_x=7, step_rise=0.05)
+        start_x = self.stair_gap
+        for i in range(self.num_levels):
+            self.stairs[i]._generate(env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i])
+            start_x += self.stair_length + self.stair_gap
 
     def _reset(self, env):
+        level = self._level
+
+        x_pos = level * (self.stair_length + self.stair_gap) + 0.5
+        z_pos = 0
         if np.random.uniform() < 0.5:
-            self.adjust_position = (3, 0, 0.1)
-        else:
-            self.adjust_position = (0, 0, 0)
+            x_pos += self.stair_gap + self.stair_length / 2 - 1
+            z_pos = self.step_rise_levels[level] * self.num_steps
+        self.adjust_position = (x_pos, 0, z_pos)
