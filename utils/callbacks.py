@@ -11,6 +11,8 @@ from sb3_contrib import TQC
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.vec_env import VecEnv
+from collections import defaultdict
+import numpy as np
 
 
 class TrialEvalCallback(EvalCallback):
@@ -199,3 +201,23 @@ class ParallelTrainCallback(BaseCallback):
             if self.verbose > 0:
                 print("Waiting for training thread to terminate")
             self.process.join()
+
+
+class A1GymEnvLoggingCallback(BaseCallback):
+    """
+    Callback for A1GymEnv to log relevant quantities, such as reward components values
+    """
+
+    def _on_step(self) -> bool:
+        # For VecEnv envs, infos will be a list of info dicts
+        infos = self.locals["infos"]
+        # Flatten rewards into single buffer
+        reward_buffer = defaultdict(list)
+        for info in infos:
+            for rew_comp_name, rew_comp_value in info["reward_components"].items():
+                reward_buffer[rew_comp_name].append(rew_comp_value)
+        # Calculate mean across vectorized envs
+        reward_statistics = {k: np.mean(v) for k, v in reward_buffer.items()}
+        for rew_comp_name, rew_comp_mean in reward_statistics.items():
+            self.logger.record(f"train/reward/{rew_comp_name}", rew_comp_mean)
+        return True

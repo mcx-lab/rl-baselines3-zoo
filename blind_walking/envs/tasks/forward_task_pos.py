@@ -80,7 +80,9 @@ class ForwardTask(object):
         return rot_mat[-1] < 0.85
 
     def reward(self, env):
-        """Get the reward without side effects."""
+        """Get the reward without side effects.
+
+        Also return a dict of reward components"""
         del env
 
         alpha = 1e-2
@@ -97,7 +99,8 @@ class ForwardTask(object):
             distance_reward = -np.linalg.norm(dxy_local)
         # Reward closeness to target position.
         dxy_err = np.linalg.norm(self._target_pos - dxy_local, 2)
-        dxy_reward = math.exp(math.log(alpha) * (dxy_err / 0.01) ** 2)
+        dxy_var = 1.0 * self._env._env_time_step
+        dxy_reward = math.exp(math.log(alpha) * (dxy_err / dxy_var) ** 2)
         # Penalty for upward translation.
         dz_reward = -abs(dz)
 
@@ -107,27 +110,28 @@ class ForwardTask(object):
         local_up_vec = rot_matrix[6:]
         shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
         # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._sim_time_step
+        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
         energy_rot_reward = (
-            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._sim_time_step * 0.5
+            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._env_time_step * 0.5
         )
 
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
 
-        objectives = [
-            distance_reward,
-            dxy_reward,
-            dz_reward,
-            shake_reward,
-            energy_reward,
-            energy_rot_reward,
-            contact_reward,
-        ]
-        objective_weights = [0.01, 0.01, 0.001, 0.001, 0.005, 0.005, 0.0]
-        weighted_objectives = [o * w for o, w in zip(objectives, objective_weights)]
-        reward = sum(weighted_objectives)
-        return reward
+        # Dictionary of:
+        # - {name: reward * weight}
+        # for all reward components
+        weighted_objectives = {
+            "distance": distance_reward * 0.01,
+            "dxy": dxy_reward * 0.01,
+            "dz": dz_reward * 0.0,
+            "shake": shake_reward * 0.001,
+            "energy": energy_reward * 0.0005,
+            "energy_rot": energy_rot_reward * 0.0005,
+            "contact": contact_reward * 0.0,
+        }
+        reward = sum([o for o in weighted_objectives.values()])
+        return reward, weighted_objectives
 
     @staticmethod
     def to_local_frame(dx, dy, yaw):

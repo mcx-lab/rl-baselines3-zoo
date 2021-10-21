@@ -13,13 +13,13 @@ class Stairs(EnvModifier):
         self.base_pos = [0, 0, 0]
         super().__init__()
 
-    def _generate(self, env, start_x=3, num_steps=5, step_rise=0.1, step_run=0.2, friction=0.5):
+    def _generate(self, env, start_x=3, num_steps=5, step_rise=0.1, step_run=0.3, friction=0.5):
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 0)
 
         stepShape = env.pybullet_client.createCollisionShape(
             p.GEOM_BOX, halfExtents=[boxHalfLength, boxHalfWidth, boxHalfHeight]
         )
-        colors = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]]
+        colors = [[0.5, 0.5, 0.5, 1], [0.7, 0.7, 0.7, 1], [0.9, 0.9, 0.9, 1]]
 
         # Create upwards stairs
         base_pos = [start_x, 0, step_rise - boxHalfHeight]
@@ -47,7 +47,7 @@ class Stairs(EnvModifier):
         self.stepShape = stepShape
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 1)
 
-    def _reset(self, env, step_rise=0.1, step_run=0.2):
+    def _reset(self, env, step_rise=0.1, step_run=0.3):
         # Do not change the box shape but change the position of the steps
         base_pos = self.base_pos
         for i, step in enumerate(self.steps):

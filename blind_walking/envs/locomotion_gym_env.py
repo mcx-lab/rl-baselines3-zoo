@@ -15,6 +15,7 @@
 """This file implements the locomotion gym env."""
 import collections
 import time
+from typing import Any, Dict, Tuple
 
 import gym
 import numpy as np
@@ -335,7 +336,7 @@ class LocomotionGymEnv(gym.Env):
         if self._task and hasattr(self._task, "update"):
             self._task.update(self)
 
-        reward = self._reward()
+        reward, reward_components = self._reward()
 
         done = self._termination()
         self._env_step_counter += 1
@@ -344,15 +345,15 @@ class LocomotionGymEnv(gym.Env):
 
         for env_randomizer in self._env_randomizers:
             env_randomizer.randomize_step(self)
-        return self._get_observation(), reward, done, {}
+        return self._get_observation(), reward, done, {"reward_components": reward_components}
 
     def render(self, mode="rgb_array"):
         if mode != "rgb_array":
             raise ValueError("Unsupported render mode:{}".format(mode))
         base_pos = self._robot.GetBasePosition()
         view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
-            cameraTargetPosition=base_pos,
-            distance=self._camera_dist,
+            cameraTargetPosition=(base_pos[0], 0, 0),
+            distance=3 * self._camera_dist,
             yaw=self._camera_yaw,
             pitch=self._camera_pitch,
             roll=0,
@@ -421,10 +422,10 @@ class LocomotionGymEnv(gym.Env):
 
         return False
 
-    def _reward(self):
+    def _reward(self) -> Tuple[float, Dict[str, float]]:
         if self._task:
             return self._task(self)
-        return 0
+        return 0, {}
 
     def _get_observation(self):
         """Get observation of this environment from a list of sensors.
