@@ -10,7 +10,6 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
-        additional_dependencies: [-e, "git+git://github.com/pycqa/pyflakes.git#egg=pyflakes"]
         args: ["--ignore=W503,W504,E203,E231,F841,F401,E402", "blind_walking"]
 
   - repo: https://github.com/pycqa/isort
