@@ -68,7 +68,8 @@ class ForwardTask(object):
         # Cap the forward reward if a cap is set.
         dx_reward = min(dx_reward, 0.03)
         # Penalty for sideways translation.
-        dy_reward = -abs(self.current_base_pos[1] - self.last_base_pos[1])
+        #dy_reward = -abs(self.current_base_pos[1] - self.last_base_pos[1])
+        dy_reward = -abs(self.current_base_pos[1])
         # Penalty for upways translation.
         dz_reward = -abs(self.current_base_pos[2] - self.last_base_pos[2])
         # Penalty for sideways rotation of the body.
@@ -89,7 +90,7 @@ class ForwardTask(object):
         # for all reward components
         weighted_objectives = {
             "dx": dx_reward * 1.0,
-            "dy": dy_reward * 0.002,
+            "dy": dy_reward * 0.001,
             "dz": dz_reward * 0.0,
             "shake": shake_reward * 0.001,
             "energy": energy_reward * 0.0005,
