@@ -15,7 +15,8 @@ class TrainStairs(EnvModifier):
         self.num_levels = len(self.step_rise_levels)
         self.num_steps = 5
         self.stair_gap = 1.5
-        self.stair_length = (self.num_steps - 1) * 0.3 * 2 + boxHalfLength * 2 * 2
+        self.step_run = 0.3
+        self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
 
         self._level = 0
 
@@ -26,7 +27,9 @@ class TrainStairs(EnvModifier):
     def _generate(self, env):
         start_x = self.stair_gap
         for i in range(self.num_levels):
-            self.stairs[i]._generate(env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i])
+            self.stairs[i]._generate(
+                env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
+            )
             start_x += self.stair_length + self.stair_gap
 
     def _reset(self, env):
