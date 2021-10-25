@@ -2,6 +2,7 @@ import argparse
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
 
 
 class Plotter:
@@ -14,6 +15,7 @@ class Plotter:
         t = np.arange(self.data.shape[0])
         for i in range(self.data.shape[1]):
             plt.plot(t, self.data[:, i])
+            plt.ylim(-10, 10)
             plt.savefig(os.path.join(savedir, self.name))
 
 
@@ -22,5 +24,7 @@ parser.add_argument("-i", "--input-folder", help="input path to folder which hol
 args = parser.parse_args()
 
 data_name = "true_extrinsics"
-true_extrinsics_plotter = Plotter(os.path.join(args.input_folder, f"{data_name}.npy"), data_name)
-true_extrinsics_plotter.plot(args.input_folder)
+files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
+for f in files:
+    true_extrinsics_plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0])
+    true_extrinsics_plotter.plot(args.input_folder)

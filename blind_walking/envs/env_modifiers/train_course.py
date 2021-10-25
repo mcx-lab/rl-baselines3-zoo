@@ -45,7 +45,7 @@ class TrainStairs(EnvModifier):
         x_pos = level * (self.stair_length + self.stair_gap)
         z_pos = 0
         # Equal chances to encouter going up and down the stair level
-        if np.random.uniform() < 0.3:
+        if np.random.uniform() < 0.4:
             x_pos += self.stair_gap + self.stair_length / 2 - 1
             z_pos = self.step_rise_levels[level] * self.num_steps
         self.adjust_position = (x_pos, 0, z_pos)
