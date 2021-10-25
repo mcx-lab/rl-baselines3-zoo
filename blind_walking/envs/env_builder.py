@@ -76,7 +76,7 @@ def build_regular_env(
         task = forward_task.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
+        obs_wrapper = lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(x, ["visual"])  # noqa
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
@@ -88,7 +88,7 @@ def build_regular_env(
         env_modifiers=env_modifier_list,
     )
 
-    env = obs_wrapper(env, ["visual"])
+    env = obs_wrapper(env)
     if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
         if robot_class == laikago.Laikago:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
