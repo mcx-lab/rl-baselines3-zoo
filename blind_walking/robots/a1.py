@@ -412,8 +412,35 @@ class A1(minitaur.Minitaur):
             distance_to_ground = data[2] * 2 * max_height
         return max_height - distance_to_ground
 
-    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=[10, 10], transform=(0, 0)):
+    def GetHoveringTerrainView(self, origin_world, grid_unit=0.1, grid_size=[10, 10]):
         """Returns a view of the local terrain as seen from a single point.
+
+        Args:
+          origin_world: 3D vector of origin point for the view
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          transform: The direction to transform the terrain view
+
+        Returns:
+          N x N numpy array of floats
+        """
+        origin_base = world_frame_to_base_frame(origin_world[:2], self)
+        grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + origin_base
+        grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
+        grid_coordinates_world_3d = [np.concatenate([gcw, [0]]) for gcw in grid_coordinates_world]
+
+        origins = [origin_world] * len(grid_coordinates_world_3d)
+
+        z_coordinates = []
+        ray_intersection_infos = self._pybullet_client.rayTestBatch(origins, grid_coordinates_world_3d)
+        for info in ray_intersection_infos:
+            hit_position = info[3]
+            z_coordinates.append(hit_position[2])
+        z_coordinates = np.array(z_coordinates).reshape(grid_size)
+        return z_coordinates
+
+    def GetLocalTerrainView(self, grid_unit=0.1, grid_size=[10, 10], transform=(0, 0, 0)):
+        """Returns a view of the local terrain as seen from the robot base position.
 
         Args:
           grid_unit: Side length of one square in the grid
@@ -423,22 +450,13 @@ class A1(minitaur.Minitaur):
         Returns:
           N x N numpy array of floats
         """
-        base_position_world = self.GetBasePosition()[:2]
+        base_position_world = self.GetBasePosition()
+        if len(transform) == 2:
+            # Convert 2D transform into 3D transform
+            # for backwards compatibility
+            transform = transform + (0,)
         base_position_world = base_position_world + np.array(transform)
-        base_position_base = world_frame_to_base_frame(base_position_world, self)
-        grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
-        grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
-        grid_coordinates_world_3d = [np.concatenate([gcw, [0]]) for gcw in grid_coordinates_world]
-
-        robot_positions = [self.GetBasePosition()] * len(grid_coordinates_world_3d)
-
-        z_coordinates = []
-        ray_intersection_infos = self._pybullet_client.rayTestBatch(robot_positions, grid_coordinates_world_3d)
-        for info in ray_intersection_infos:
-            hit_position = info[3]
-            z_coordinates.append(hit_position[2])
-        z_coordinates = np.array(z_coordinates).reshape(grid_size)
-        return z_coordinates
+        return self.GetHoveringTerrainView(base_position_world)
 
     def GetLocalDistancesToGround(self, grid_unit=0.05, grid_size=16):
         """Get the vertical distance from base height to ground in a NxN grid around the robot.

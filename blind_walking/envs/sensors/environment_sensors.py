@@ -20,6 +20,7 @@ import typing
 import numpy as np
 from blind_walking.envs.sensors import sensor
 from numpy.lib.function_base import _angle_dispatcher
+from numpy.random import sample
 
 _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
@@ -437,6 +438,66 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         """Returns the local distances to ground"""
         return self._env.robot.GetLocalTerrainView(
             grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
+
+
+class HoveringTerrainViewSensor(sensor.BoxSpaceSensor):
+    """A sensor that returns terrain views from random locations"""
+
+    def __init__(
+        self,
+        grid_unit: float = 0.1,
+        grid_size: typing.Tuple[int] = (10, 10),
+        start_location: typing.Tuple[float] = (0.0, 0.0, 0.0),
+        end_location: typing.Tuple[float] = (0.0, 0.0, 0.0),
+        lower_bound: _FLOAT_OR_ARRAY = -100,
+        upper_bound: _FLOAT_OR_ARRAY = 100,
+        name: typing.Text = "HoveringTerrainView",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+    ) -> None:
+        """Constructs LocalTerrainViewSensor.
+
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          lower_bound: the lower bound of the terrain view.
+          upper_bound: the upper bound of the terrain view.
+          name: the name of the sensor.
+          dtype: data type of sensor value.
+        """
+        self._env = None
+        self.grid_unit = grid_unit
+        self.grid_size = grid_size
+
+        self.start_location = np.array(start_location)
+        self.end_location = np.array(end_location)
+
+        super(LocalTerrainViewSensor, self).__init__(
+            name=name,
+            shape=(1, grid_size[0], grid_size[1]),
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns a hovering terrain view from a randomly selected
+        location"""
+        delta = self.end_location - self.start_location
+        sample_location = np.random.uniform() * delta + self.start_location
+        sample_location = tuple(sample_location.tolist())
+
+        return self._env.robot.GetHoveringTerrainView(
+            sample_location, grid_unit=self.grid_unit, grid_size=self.grid_size
         ).reshape(1, self.grid_size[0], self.grid_size[1])
 
 
