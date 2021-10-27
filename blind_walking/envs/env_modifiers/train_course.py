@@ -71,6 +71,8 @@ class TrainUneven(EnvModifier):
     def __init__(self):
         super().__init__()
         self.hf = HeightField()
+        self.stairs = Stairs()
 
     def _generate(self, env):
         self.hf._generate(env, start_x=10, heightPerturbationRange=0.04)
+        self.stairs._generate(env, start_x=20, num_steps=8, step_rise=0.05)
