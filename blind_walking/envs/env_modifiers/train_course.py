@@ -1,6 +1,7 @@
 import numpy as np
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
+from blind_walking.envs.env_modifiers.heightfield import HeightField
 
 """ Train robot to walk up stairs curriculum.
 
@@ -64,3 +65,12 @@ class TrainStairs(EnvModifier):
             and base_pos[1] > -boxHalfWidth
             and base_pos[1] < boxHalfWidth
         )
+
+
+class TrainUneven(EnvModifier):
+    def __init__(self):
+        super().__init__()
+        self.hf = HeightField()
+
+    def _generate(self, env):
+        self.hf._generate(env, start_x=10, heightPerturbationRange=0.04)

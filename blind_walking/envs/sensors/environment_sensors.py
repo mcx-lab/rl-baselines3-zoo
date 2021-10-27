@@ -396,6 +396,7 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         grid_unit: float = 0.1,
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
+        eachfoot: bool = False,
         lower_bound: _FLOAT_OR_ARRAY = -100,
         upper_bound: _FLOAT_OR_ARRAY = 100,
         name: typing.Text = "LocalTerrainView",
@@ -416,10 +417,12 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         self.grid_unit = grid_unit
         self.grid_size = grid_size
         self.transform = transform
+        self.eachfoot = eachfoot
 
+        shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
         super(LocalTerrainViewSensor, self).__init__(
             name=name,
-            shape=(1, grid_size[0], grid_size[1]),
+            shape=shape,
             enc_name=enc_name,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -435,9 +438,20 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        return self._env.robot.GetLocalTerrainView(
-            grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
-        ).reshape(1, self.grid_size[0], self.grid_size[1])
+        if self.eachfoot:
+            foot_positions = self._env.robot.GetFootPositionsInBaseFrame()
+            heightmap = []
+            for foot_pos in foot_positions:
+                transform = np.array(self.transform) + np.array(foot_pos[:2])
+                local_heightmap = self._env.robot.GetLocalTerrainView(
+                    grid_unit=self.grid_unit, grid_size=self.grid_size, transform=transform
+                )
+                heightmap = np.concatenate((heightmap, local_heightmap), axis=None)
+            return heightmap
+        else:
+            return self._env.robot.GetLocalTerrainView(
+                grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
+            ).reshape(1, self.grid_size[0], self.grid_size[1])
 
 
 class PhaseSensor(sensor.BoxSpaceSensor):
