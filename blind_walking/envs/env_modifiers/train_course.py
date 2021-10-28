@@ -58,7 +58,8 @@ class TrainStairs(EnvModifier):
         self.adjust_position = (x_pos, 0, z_pos)
 
     def succeed_level(self, env):
-        """To succeed the current level, robot needs to climb over the current stair level and reach the start of next stair level"""
+        """To succeed the current level, robot needs to climb over the current stair level
+        and reach the start of next stair level"""
         base_pos = env._robot.GetBasePosition()
         target_x = (self._level + 1) * (self.stair_length + self.stair_gap) + 0.5
         return (
