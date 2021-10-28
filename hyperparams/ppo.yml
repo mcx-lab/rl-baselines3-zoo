@@ -165,6 +165,16 @@ A1GymEnv-v0:
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
                        )"
 
+A1BlindWalkingBulletEnv-v0:
+  <<: *pybullet-defaults
+  env_wrapper: utils.wrappers.DummyWrapper
+  policy_kwargs: "dict(log_std_init=-2,
+                       ortho_init=False,
+                       activation_fn=nn.ReLU,
+                       net_arch=[dict(pi=[256, 256], vf=[256, 256])],
+                       )"
+
+
 # Tuned
 AntBulletEnv-v0:
   <<: *pybullet-defaults
