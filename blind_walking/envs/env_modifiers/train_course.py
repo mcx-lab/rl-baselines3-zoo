@@ -42,7 +42,7 @@ class TrainStairs(EnvModifier):
         if level >= self.num_levels:
             # Loop back to randomly selected level
             level_list = np.arange(self.num_levels)
-            level_probs = level_list/sum(level_list)
+            level_probs = level_list / sum(level_list)
             level = np.random.choice(self.num_levels, p=level_probs)
             print(f"LOOP TO LEVEL {level}")
         elif level > 0 and np.random.uniform() < 0.2:

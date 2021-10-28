@@ -67,6 +67,7 @@ def parse_args():
         help="Do not render the environment (useful for tests)",
     )
     parser.add_argument("--save-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
+    parser.add_argument("--save-observation", action="store_true", default=False, help="Save the observations into a file")
     parser.add_argument(
         "--adapter",
         action="store_true",
@@ -273,6 +274,9 @@ def main():  # noqa: C901
 
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
+    if args.save_observation:
+        observation_logger = Logger(name="observations")
+
     # Get actor-critic policy which contains the feature extractor and ppo
     is_a1_gym_env = args.save_encoder_output or args.adapter
     if is_a1_gym_env:
@@ -333,9 +337,13 @@ def main():  # noqa: C901
                 clipped_action = action.detach().cpu().numpy()
                 if isinstance(model.action_space, gym.spaces.Box):
                     clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
+                if args.save_observation:
+                    observation_logger.update(obs)
                 obs, reward, done, infos = env.step(clipped_action)
             else:
                 action, state = model.predict(obs, state=state, deterministic=deterministic)
+                if args.save_observation:
+                    observation_logger.update(obs)
                 obs, reward, done, infos = env.step(action)
 
             if not args.no_render:
@@ -377,14 +385,17 @@ def main():  # noqa: C901
 
     # ######################### Print stats ######################### #
 
-    if args.save_encoder_output:
-        output_dir = os.path.join(log_path, "encoder")
+    if args.save_encoder_output or args.save_observation:
+        output_dir = os.path.join(log_path, "stats")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        true_extrinsics_logger.save(output_dir)
-        heightmap_logger.save(output_dir)
-        if args.adapter:
-            predicted_extrinsics_logger.save(output_dir)
+        if args.save_encoder_output:
+            true_extrinsics_logger.save(output_dir)
+            heightmap_logger.save(output_dir)
+            if args.adapter:
+                predicted_extrinsics_logger.save(output_dir)
+        if args.save_observation:
+            observation_logger.save(output_dir)
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
