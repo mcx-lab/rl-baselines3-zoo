@@ -17,6 +17,9 @@ venv/
 *~
 target_positions.csv
 *.png
+*.mp4
+*.json
+*.npy
 
 # Distribution / packaging
 .Python
