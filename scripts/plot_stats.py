@@ -20,6 +20,7 @@ class Plotter:
             if ylim:
                 plt.ylim(ylim)
             plt.savefig(os.path.join(savedir, self.name))
+            plt.close()
 
 
 parser = argparse.ArgumentParser()
