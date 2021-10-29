@@ -7,3 +7,5 @@ pytest>=6.0.1
 types-pyyaml>=0.1.6
 types-termcolor>=0.1.0
 pre-commit==2.15
+imageio==2.10.1
+imageio-ffmpeg==0.4.5 
