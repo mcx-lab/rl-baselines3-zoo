@@ -23,20 +23,21 @@ class Plotter:
             plt.close()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input-folder", help="input path to folder which holds the stats data", type=str, default="./")
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input-folder", help="input path to folder which holds the stats data", type=str, default="./")
+    args = parser.parse_args()
 
-data_name = "true_extrinsics"
-files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
-for f in files:
-    plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0])
-    plotter.plot(ylim=(-10, 10), savedir=args.input_folder)
+    data_name = "true_extrinsics"
+    files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
+    for f in files:
+        plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0])
+        plotter.plot(ylim=(-10, 10), savedir=args.input_folder)
 
-data_name = "observations"
-files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
-for f in files:
-    # Plot heightmap sensor data for each foot
-    for i in range(4):
-        plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0] + f"_foothm{i}")
-        plotter.plot(columns=[47 - i], ylim=(-1, 3), savedir=args.input_folder)
+    data_name = "observations"
+    files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
+    for f in files:
+        # Plot heightmap sensor data for each foot
+        for i in range(4):
+            plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0] + f"_foothm{i}")
+            plotter.plot(columns=[47 - i], ylim=(-1, 3), savedir=args.input_folder)
