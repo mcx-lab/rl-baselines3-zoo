@@ -60,10 +60,8 @@ def build_regular_env(
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            # environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
-            environment_sensors.LocalTerrainViewSensor(
-                enc_name="visual", grid_size=(20, 10), grid_unit=0.05, transform=(0.15, 0)
-            ),
+            environment_sensors.LocalTerrainViewSensor(grid_size=(20, 1), grid_unit=0.05, transform=(0.15, 0)),
+            environment_sensors.LocalTerrainViewSensor(grid_size=(1, 1), grid_unit=0.05, eachfoot=True, transform=(0.05, 0)),
         ]
 
     if env_randomizer_list is None:
@@ -76,7 +74,7 @@ def build_regular_env(
         task = forward_task.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = lambda x: obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper(x, ["visual"])  # noqa
+        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,

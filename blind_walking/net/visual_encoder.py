@@ -17,7 +17,7 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
     To be used with ObservationDictionarySplitByEncoderWrapper
     """
 
-    def __init__(self, observation_space: gym.spaces.Dict, visual_output_size: int = 4):
+    def __init__(self, observation_space: gym.spaces.Dict, visual_output_size: int = 8):
         self.visual_output_size = visual_output_size
         flatten_output_size = math.prod(observation_space.spaces["flatten"].shape)
         features_dim = flatten_output_size + visual_output_size
