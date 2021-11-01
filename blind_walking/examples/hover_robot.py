@@ -5,6 +5,7 @@ import glob
 import io
 import os
 
+import cv2
 import gym
 import imageio
 import matplotlib.pyplot as plt
@@ -68,7 +69,7 @@ class MultipleTerrain(EnvModifier):
         return z_pos
 
 
-def get_img_from_fig(fig, dpi=180):
+def get_img_from_fig(fig, dpi=24):
     io_buf = io.BytesIO()
     fig.savefig(io_buf, format="raw", dpi=dpi)
     io_buf.seek(0)
@@ -79,7 +80,24 @@ def get_img_from_fig(fig, dpi=180):
     return img_arr
 
 
-if __name__ == "__main__":
+def get_video_save_path(env: Monitor):
+    return os.path.join(
+        env.directory,
+        "{}.video.{}.video{:06}.mp4".format(env.file_prefix, env.file_infix, env.episode_id),
+    )
+
+
+def get_frames_from_video_path(video_path: str):
+    vidcap = cv2.VideoCapture(video_path)
+    images = []
+    success = True
+    while success:
+        success, image = vidcap.read()
+        images.append(image)
+    return images
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-hover", action="store_true", default=False, help="Generate heightmap data with hover robot")
     parser.add_argument("--no-plot", action="store_true", default=False, help="Generate heightmap plots")
@@ -116,6 +134,7 @@ if __name__ == "__main__":
         if args.record:
             video_folder = os.path.dirname(__file__)
             env = Monitor(env, video_folder, force=True)
+            replay_video_path = get_video_save_path(env)
         env.reset()
 
         # Create logger
@@ -159,11 +178,12 @@ if __name__ == "__main__":
         xx, yy = np.meshgrid(xvalues, yvalues)
         # generate images
         images = []
-        fig = plt.figure(dpi=180)
+        dpi = 60
+        fig = plt.figure(dpi=dpi)
         ax = fig.add_subplot()
         for i in range(num_timesteps):
             ax.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
-            image = get_img_from_fig(fig)
+            image = get_img_from_fig(fig, dpi=dpi)
             images.append(image)
         plt.close(fig)
 
@@ -171,7 +191,33 @@ if __name__ == "__main__":
         # build gif
         files = glob.glob(os.path.join(dirpath, "hm*.png"))
         files = [f for f in files if "_" not in os.path.basename(f)]
-        with imageio.get_writer(os.path.join(dirpath, "hm.mp4"), mode="I", fps=5) as writer:
+        heightmap_video_path = os.path.join(dirpath, "hm.mp4")
+        with imageio.get_writer(heightmap_video_path, mode="I", fps=5) as writer:
             for image in images:
                 writer.append_data(image)
         print("Created heightmap video")
+
+        # stitch both videos together
+        if args.record:
+            print(f"Stitching video from {replay_video_path}")
+
+            replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
+            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:1000]
+
+            assert len(replay_frames) == len(heightmap_frames)
+            replay_and_heightmap_frames = []
+            for rp, hm in zip(replay_frames, heightmap_frames):
+                dsize = rp.shape[1], rp.shape[0]
+                hm = cv2.resize(hm, dsize=dsize)
+                rp_and_hm = cv2.hconcat([rp, hm])
+                replay_and_heightmap_frames.append(rp_and_hm)
+
+            stitch_video_path = os.path.join(dirpath, "replay_and_hm.mp4")
+            with imageio.get_writer(stitch_video_path, mode="I", fps=30) as writer:
+                for rp_and_hm in replay_and_heightmap_frames:
+                    writer.append_data(rp_and_hm)
+            print("Finished stitching videos")
+
+
+if __name__ == "__main__":
+    main()
