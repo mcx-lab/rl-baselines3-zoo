@@ -1,21 +1,24 @@
 """Script for building a hovering robot and collecting heightmap data."""
 
 import argparse
-import os
-import gym
-import numpy as np
-import matplotlib.pyplot as plt
-import imageio
 import glob
-import utils.import_envs  # noqa: F401 pytype: disable=import-error
-from gym.wrappers import Monitor
+import io
+import os
+
+import gym
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
+from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
+from blind_walking.envs.env_modifiers.heightfield import HeightField
+from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.sensors import environment_sensors
-from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
-from blind_walking.envs.env_modifiers.heightfield import HeightField
 from enjoy import Logger
+from gym.wrappers import Monitor
 from scripts.plot_stats import Plotter
+
+import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
 class MultipleTerrain(EnvModifier):
@@ -63,6 +66,17 @@ class MultipleTerrain(EnvModifier):
         else:
             z_pos = 0
         return z_pos
+
+
+def get_img_from_fig(fig, dpi=180):
+    io_buf = io.BytesIO()
+    fig.savefig(io_buf, format="raw", dpi=dpi)
+    io_buf.seek(0)
+    img_arr = np.reshape(
+        np.frombuffer(io_buf.getvalue(), dtype=np.uint8), newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1)
+    )
+    io_buf.close()
+    return img_arr
 
 
 if __name__ == "__main__":
@@ -144,22 +158,20 @@ if __name__ == "__main__":
         yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
         xx, yy = np.meshgrid(xvalues, yvalues)
         # generate images
+        images = []
+        fig = plt.figure(dpi=180)
+        ax = fig.add_subplot()
         for i in range(num_timesteps):
-            plt.figure()
-            plt.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
-            plt.colorbar()
-            plt.savefig(os.path.join(dirpath, f"hm{i}"))
-            plt.close()
+            ax.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
+            image = get_img_from_fig(fig)
+            images.append(image)
+        plt.close(fig)
+
         print("Generated images for video")
         # build gif
         files = glob.glob(os.path.join(dirpath, "hm*.png"))
         files = [f for f in files if "_" not in os.path.basename(f)]
-        with imageio.get_writer(os.path.join(dirpath, "hm.mp4"), mode="I", fps=30) as writer:
-            for f in files:
-                image = imageio.imread(f)
+        with imageio.get_writer(os.path.join(dirpath, "hm.mp4"), mode="I", fps=5) as writer:
+            for image in images:
                 writer.append_data(image)
         print("Created heightmap video")
-        # remove images
-        for f in files:
-            os.remove(f)
-        print("Removed unnessary image files")
