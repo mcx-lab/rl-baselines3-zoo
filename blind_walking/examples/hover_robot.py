@@ -17,6 +17,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from enjoy import Logger
 from gym.wrappers import Monitor
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scripts.plot_stats import Plotter
 
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
@@ -183,8 +184,11 @@ def main():
         dpi = 60
         fig = plt.figure(dpi=dpi)
         ax = fig.add_subplot()
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
         for i in range(num_timesteps):
-            ax.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
+            img = ax.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
+            fig.colorbar(img, cax=cax, orientation="vertical")
             image = get_img_from_fig(fig, dpi=dpi)
             images.append(image)
         plt.close(fig)
@@ -194,7 +198,7 @@ def main():
         files = glob.glob(os.path.join(dirpath, "hm*.png"))
         files = [f for f in files if "_" not in os.path.basename(f)]
         heightmap_video_path = os.path.join(dirpath, "hm.mp4")
-        with imageio.get_writer(heightmap_video_path, mode="I", fps=5) as writer:
+        with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
             for image in images:
                 writer.append_data(image)
         print("Created heightmap video")
