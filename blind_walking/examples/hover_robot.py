@@ -99,8 +99,10 @@ def get_frames_from_video_path(video_path: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--no-hover", action="store_true", default=False, help="Generate heightmap data with hover robot")
-    parser.add_argument("--no-plot", action="store_true", default=False, help="Generate heightmap plots")
+    parser.add_argument(
+        "--no-hover", action="store_true", default=False, help="Do not generate heightmap data with hover robot"
+    )
+    parser.add_argument("--no-plot", action="store_true", default=False, help="Do not generate heightmap plots")
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
     args = parser.parse_args()
 

@@ -17,10 +17,10 @@ class Plotter:
         columns = columns if len(columns) else np.arange(self.data.shape[1])
         for i in columns:
             plt.plot(t, self.data[:, i])
-            if ylim:
-                plt.ylim(ylim)
-            plt.savefig(os.path.join(savedir, self.name))
-            plt.close()
+        if ylim:
+            plt.ylim(ylim)
+        plt.savefig(os.path.join(savedir, self.name))
+        plt.close()
 
 
 if __name__ == "__main__":
@@ -37,7 +37,10 @@ if __name__ == "__main__":
     data_name = "observations"
     files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
     for f in files:
-        # Plot heightmap sensor data for each foot
+        # Plot heightmap sensor data for each foot on the same plot
+        plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0] + f"_foothm")
+        plotter.plot(columns=47 - np.arange(4), ylim=(-1, 3), savedir=args.input_folder)
+        # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, os.path.splitext(os.path.basename(f))[0] + f"_foothm{i}")
             plotter.plot(columns=[47 - i], ylim=(-1, 3), savedir=args.input_folder)
