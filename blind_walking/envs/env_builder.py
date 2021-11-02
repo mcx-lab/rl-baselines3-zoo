@@ -60,8 +60,8 @@ def build_regular_env(
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.LocalTerrainViewSensor(grid_size=(20, 1), grid_unit=0.05, transform=(0.15, 0)),
-            environment_sensors.LocalTerrainViewSensor(grid_size=(1, 1), grid_unit=0.05, eachfoot=True, transform=(0.05, 0)),
+            environment_sensors.LocalTerrainDepthSensor(grid_size=(20, 1), grid_unit=0.05, transform=(0.15, 0)),
+            environment_sensors.LocalTerrainDepthSensor(grid_size=(1, 1), grid_unit=0.05, eachfoot=True, transform=(0.05, 0)),
         ]
 
     if env_randomizer_list is None:
