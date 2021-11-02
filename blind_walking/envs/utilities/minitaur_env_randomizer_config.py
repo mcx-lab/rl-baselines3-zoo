@@ -33,3 +33,14 @@ def all_params():
         "joint friction": [0, 0.05],  # Coulomb friction torque (Nm).
     }
     return param_range
+
+
+def train_params():
+    """Randomize some physical parameters."""
+    param_range = {
+        # The following ranges are in percentage. e.g. 0.8 means 80%.
+        "motor strength": [0.9, 1.1],
+        # The following ranges are the physical values, in SI unit.
+        "lateral friction": [0.5, 1.0],  # Friction coefficient (dimensionless).
+    }
+    return param_range
