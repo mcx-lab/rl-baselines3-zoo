@@ -55,10 +55,6 @@ class A1BlindWalkingBulletEnv(gym.Env):
             on_rack=on_rack,
             env_sensor_list=[
                 environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-                # environment_sensors.PhaseSensor(init_angle=0, frequency=1.0),  # set frequency = 1 / (gait_cycle_len)
-                environment_sensors.LocalTerrainViewSensor(
-                    enc_name="visual", grid_size=(20, 10), grid_unit=0.05, transform=(0.15, 0)
-                ),
             ],
             obs_wrapper=obs_array_wrapper.ObservationDictionaryToArrayWrapper,
             **kwargs,
