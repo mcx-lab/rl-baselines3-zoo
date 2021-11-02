@@ -28,13 +28,13 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt install ffmpeg
         python -m pip install --upgrade pip
         # cpu version of pytorch - faster to download
         pip install torch==1.9.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
         # temp fix: use pybullet 3.0.8 (issue with numpy for 3.0.9)
         pip install pybullet==3.0.8
-        pip install -r requirements/main.txt
-        pip install -r requirements/dev.txt
+        pip install -e .[dev]
         # Use headless version
         pip install opencv-python-headless
         # install parking-env to test HER
