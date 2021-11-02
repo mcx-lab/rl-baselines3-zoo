@@ -440,6 +440,37 @@ class A1(minitaur.Minitaur):
         z_coordinates = np.array(z_coordinates).reshape(grid_size)
         return z_coordinates
 
+    def GetLocalTerrainDepth(self, grid_unit=0.1, grid_size=[10, 10], transform=(0, 0)):
+        """Returns the depth of the terrain as seen from a single point.
+
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          transform: The direction to transform the terrain view
+
+        Returns:
+          N x N numpy array of floats
+        """
+        base_position_world = self.GetBasePosition()[:2]
+        base_position_world = base_position_world + np.array(transform)
+        base_position_base = world_frame_to_base_frame(base_position_world, self)
+        grid_coordinates_base = get_grid_coordinates(grid_unit, grid_size) + base_position_base
+        grid_coordinates_world = np.array([base_frame_to_world_frame(gcb, self) for gcb in grid_coordinates_base])
+        grid_coordinates_world_3d = [np.concatenate([gcw, [-0.001]]) for gcw in grid_coordinates_world]
+
+        base_pos = self.GetBasePosition()
+        robot_positions = [base_pos] * len(grid_coordinates_world_3d)
+
+        hit_coordinates = []
+        ray_intersection_infos = self._pybullet_client.rayTestBatch(robot_positions, grid_coordinates_world_3d)
+        for info in ray_intersection_infos:
+            hit_position = info[3]
+            hit_coordinates.append(hit_position)
+        depth_distances = np.subtract(robot_positions, hit_coordinates)
+        depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        depth_view = np.array(depth_view).reshape(grid_size)
+        return depth_view
+
     def GetLocalDistancesToGround(self, grid_unit=0.05, grid_size=16):
         """Get the vertical distance from base height to ground in a NxN grid around the robot.
 

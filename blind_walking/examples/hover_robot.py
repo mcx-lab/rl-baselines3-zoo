@@ -43,7 +43,7 @@ class MultipleTerrain(EnvModifier):
         start_x = self.start_x
         self.stairs._generate(env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise, step_run=self.step_run)
         start_x += self.stair_length + self.hf_length / 2
-        self.hf._generate(env, start_x=start_x, heightPerturbationRange=0.04)
+        self.hf._generate(env, start_x=start_x, heightPerturbationRange=0.08)
 
     def get_z_position(self, x, y):
         """Get z position for hovering robot at the xy-coord."""
