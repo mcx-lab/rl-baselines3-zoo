@@ -454,6 +454,72 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
             ).reshape(1, self.grid_size[0], self.grid_size[1])
 
 
+class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
+    """A sensor that gets the depth from the robot to the ground"""
+
+    def __init__(
+        self,
+        grid_unit: float = 0.1,
+        grid_size: typing.Tuple[int] = (10, 10),
+        transform: typing.Tuple[float] = (0, 0),
+        eachfoot: bool = False,
+        lower_bound: _FLOAT_OR_ARRAY = 0,
+        upper_bound: _FLOAT_OR_ARRAY = 1,
+        name: typing.Text = "LocalTerrainDepth",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+    ) -> None:
+        """Constructs LocalTerrainDepthSensor.
+
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          lower_bound: the lower bound of the terrain view.
+          upper_bound: the upper bound of the terrain view.
+          name: the name of the sensor.
+          dtype: data type of sensor value.
+        """
+        self._env = None
+        self.grid_unit = grid_unit
+        self.grid_size = grid_size
+        self.transform = transform
+        self.eachfoot = eachfoot
+
+        shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
+        super(LocalTerrainDepthSensor, self).__init__(
+            name=name,
+            shape=shape,
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns the local distances to ground"""
+        if self.eachfoot:
+            foot_positions = self._env.robot.GetFootPositionsInBaseFrame()
+            heightmap = []
+            for foot_pos in foot_positions:
+                transform = np.array(self.transform) + np.array(foot_pos[:2])
+                local_heightmap = self._env.robot.GetLocalTerrainDepth(
+                    grid_unit=self.grid_unit, grid_size=self.grid_size, transform=transform
+                )
+                heightmap = np.concatenate((heightmap, local_heightmap), axis=None)
+            return heightmap
+        else:
+            return self._env.robot.GetLocalTerrainDepth(
+                grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
+            ).reshape(1, self.grid_size[0], self.grid_size[1])
+
+
 class PhaseSensor(sensor.BoxSpaceSensor):
     """
     A sensor that returns a 2D unit vector corresponding to a point in a gait cycle
