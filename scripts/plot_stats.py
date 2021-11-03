@@ -29,7 +29,7 @@ class Plotter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input-folder", help="input path to folder which holds the stats data", type=str, default="./")
-    parser.add_argument("--stitch-path", help="input path to video which is to be stitched together", type=str, default=None)
+    parser.add_argument("-s", "--stitch-path", help="input path to video which is to be stitched together", type=str, default=None)
     args = parser.parse_args()
 
     data_name = "true_extrinsics"
