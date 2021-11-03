@@ -29,7 +29,9 @@ class Plotter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input-folder", help="input path to folder which holds the stats data", type=str, default="./")
-    parser.add_argument("-s", "--stitch-path", help="input path to video which is to be stitched together", type=str, default=None)
+    parser.add_argument(
+        "-s", "--stitch-path", help="input path to video which is to be stitched together", type=str, default=None
+    )
     args = parser.parse_args()
 
     data_name = "true_extrinsics"
@@ -71,7 +73,7 @@ if __name__ == "__main__":
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         for i in range(num_timesteps):
-            img = ax.scatter(xx, yy, c=plotter.data[i][48-24:48-4], vmin=-3, vmax=3)
+            img = ax.scatter(xx, yy, c=plotter.data[i][48 - 24 : 48 - 4], vmin=-3, vmax=3)
             fig.colorbar(img, cax=cax, orientation="vertical")
             image = get_img_from_fig(fig, dpi=dpi)
             images.append(image)
@@ -88,6 +90,7 @@ if __name__ == "__main__":
 
         if args.stitch_path:
             from blind_walking.examples.hover_robot import get_frames_from_video_path
+
             replay_video_path = args.stitch_path
             print(f"Stitching video from {replay_video_path}")
             replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
