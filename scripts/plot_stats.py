@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import imageio
+import cv2
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -28,6 +29,7 @@ class Plotter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input-folder", help="input path to folder which holds the stats data", type=str, default="./")
+    parser.add_argument("--stitch-path", help="input path to video which is to be stitched together", type=str, default=None)
     args = parser.parse_args()
 
     data_name = "true_extrinsics"
@@ -83,3 +85,24 @@ if __name__ == "__main__":
             for image in images:
                 writer.append_data(image)
         print("Created heightmap video")
+
+        if args.stitch_path:
+            from blind_walking.examples.hover_robot import get_frames_from_video_path
+            replay_video_path = args.stitch_path
+            print(f"Stitching video from {replay_video_path}")
+            replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
+            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:1000]
+
+            assert len(replay_frames) == len(heightmap_frames)
+            replay_and_heightmap_frames = []
+            for rp, hm in zip(replay_frames, heightmap_frames):
+                dsize = rp.shape[1], rp.shape[0]
+                hm = cv2.resize(hm, dsize=dsize)
+                rp_and_hm = cv2.hconcat([rp, hm])
+                replay_and_heightmap_frames.append(rp_and_hm)
+
+            stitch_video_path = os.path.join(dirpath, "replay_and_hm.mp4")
+            with imageio.get_writer(stitch_video_path, mode="I", fps=30) as writer:
+                for rp_and_hm in replay_and_heightmap_frames:
+                    writer.append_data(rp_and_hm)
+            print("Finished stitching videos")
