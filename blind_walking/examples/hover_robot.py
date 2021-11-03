@@ -4,22 +4,20 @@ import argparse
 import glob
 import io
 import os
-
 import cv2
 import gym
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
+from gym.wrappers import Monitor
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.sensors import environment_sensors
 from enjoy import Logger
-from gym.wrappers import Monitor
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scripts.plot_stats import Plotter
-
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -119,7 +117,7 @@ def main():
         # Environment parameters
         robot_sensor_list = []
         env_sensor_list = [
-            environment_sensors.LocalTerrainViewSensor(grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform),
+            environment_sensors.LocalTerrainDepthSensor(grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform),
         ]
         env_randomizer_list = []
         env_modifier_list = [MultipleTerrain()]
@@ -171,7 +169,7 @@ def main():
 
         # Plot one data point of the heightmap
         plotter = Plotter(datapath, "hm_single")
-        plotter.plot(columns=[0], savedir=dirpath)
+        plotter.plot(columns=[0], ylim=(0.2, 0.5), savedir=dirpath)
 
         # Generate GIF of heightmap over time
         kx = grid_size[0] / 2 - 0.5
@@ -187,7 +185,7 @@ def main():
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         for i in range(num_timesteps):
-            img = ax.scatter(xx, yy, c=plotter.data[i], vmin=0, vmax=0.3)
+            img = ax.scatter(xx, yy, c=plotter.data[i], vmin=0.2, vmax=0.5)
             fig.colorbar(img, cax=cax, orientation="vertical")
             image = get_img_from_fig(fig, dpi=dpi)
             images.append(image)
@@ -195,8 +193,6 @@ def main():
 
         print("Generated images for video")
         # build gif
-        files = glob.glob(os.path.join(dirpath, "hm*.png"))
-        files = [f for f in files if "_" not in os.path.basename(f)]
         heightmap_video_path = os.path.join(dirpath, "hm.mp4")
         with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
             for image in images:
@@ -206,7 +202,6 @@ def main():
         # stitch both videos together
         if args.record:
             print(f"Stitching video from {replay_video_path}")
-
             replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
             heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:1000]
 
