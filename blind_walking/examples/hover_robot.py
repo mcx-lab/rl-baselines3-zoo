@@ -17,7 +17,7 @@ from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHa
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.sensors import environment_sensors
 from enjoy import Logger
-from scripts.plot_stats import Plotter
+from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -68,32 +68,11 @@ class MultipleTerrain(EnvModifier):
         return z_pos
 
 
-def get_img_from_fig(fig, dpi=24):
-    io_buf = io.BytesIO()
-    fig.savefig(io_buf, format="raw", dpi=dpi)
-    io_buf.seek(0)
-    img_arr = np.reshape(
-        np.frombuffer(io_buf.getvalue(), dtype=np.uint8), newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1)
-    )
-    io_buf.close()
-    return img_arr
-
-
 def get_video_save_path(env: Monitor):
     return os.path.join(
         env.directory,
         "{}.video.{}.video{:06}.mp4".format(env.file_prefix, env.file_infix, env.episode_id),
     )
-
-
-def get_frames_from_video_path(video_path: str):
-    vidcap = cv2.VideoCapture(video_path)
-    images = []
-    success = True
-    while success:
-        success, image = vidcap.read()
-        images.append(image)
-    return images
 
 
 def main():

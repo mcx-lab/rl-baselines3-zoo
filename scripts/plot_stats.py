@@ -1,5 +1,6 @@
 import argparse
 import os
+import io
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
@@ -24,6 +25,27 @@ class Plotter:
             plt.ylim(ylim)
         plt.savefig(os.path.join(savedir, self.name))
         plt.close()
+
+
+def get_img_from_fig(fig, dpi=24):
+    io_buf = io.BytesIO()
+    fig.savefig(io_buf, format="raw", dpi=dpi)
+    io_buf.seek(0)
+    img_arr = np.reshape(
+        np.frombuffer(io_buf.getvalue(), dtype=np.uint8), newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1)
+    )
+    io_buf.close()
+    return img_arr
+
+
+def get_frames_from_video_path(video_path: str):
+    vidcap = cv2.VideoCapture(video_path)
+    images = []
+    success = True
+    while success:
+        success, image = vidcap.read()
+        images.append(image)
+    return images
 
 
 if __name__ == "__main__":
@@ -53,12 +75,9 @@ if __name__ == "__main__":
             plotter.plot(columns=[47 - i], ylim=(-3, 3), savedir=args.input_folder)
         print("Generated foot heightmap images")
 
-        # Avoid circuluar import
-        from blind_walking.examples.hover_robot import get_img_from_fig
-
         grid_size = (20, 1)
         grid_unit = 0.05
-        num_timesteps = 1000
+        num_timesteps = len(plotter.data)
         # Generate GIF of heightmap over time
         kx = grid_size[0] / 2 - 0.5
         xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
@@ -89,8 +108,6 @@ if __name__ == "__main__":
         print("Created heightmap video")
 
         if args.stitch_path:
-            from blind_walking.examples.hover_robot import get_frames_from_video_path
-
             replay_video_path = args.stitch_path
             print(f"Stitching video from {replay_video_path}")
             replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
