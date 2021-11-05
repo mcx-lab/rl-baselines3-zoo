@@ -39,6 +39,7 @@ def train_params():
     """Randomize some physical parameters."""
     param_range = {
         # The following ranges are in percentage. e.g. 0.8 means 80%.
+        "mass": [0.8, 1.2],
         "motor strength": [0.9, 1.1],
         # The following ranges are the physical values, in SI unit.
         "lateral friction": [0.5, 1.0],  # Friction coefficient (dimensionless).
