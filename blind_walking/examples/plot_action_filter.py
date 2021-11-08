@@ -15,17 +15,22 @@ from scipy import signal
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
+def _all_columns_equal(x: np.ndarray):
+    return np.all(x == x[0, :])
+
+
 def plot_frequency_response(filter: ActionFilterButter, savepath: str):
     """Visualize the frequency response of an ActionFilterButter"""
-    b, a = filter.butter_filter(lowcut=0, highcut=10, fs=1000, order=1)
-    w, h = signal.freqs(b, a)
+    assert _all_columns_equal(filter.b)
+    assert _all_columns_equal(filter.a)
+    w, h = signal.freqs(filter.b[0], filter.a[0])
     plt.semilogx(w, 20 * np.log10(abs(h)))
     plt.title("Butterworth filter frequency response")
     plt.xlabel("Frequency [radians / second]")
     plt.ylabel("Amplitude [dB]")
     plt.margins(0, 0.1)
     plt.grid(which="both", axis="both")
-    plt.axvline(100, color="green")  # cutoff frequency
+    plt.axvline(filter.highcut[0] / (2 * np.pi), color="green")  # cutoff frequency
     plt.savefig(savepath)
 
 
@@ -33,6 +38,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
     parser.add_argument("--savedir", type=str, help="Directory to save action filter plot", default="plots")
+    parser.add_argument(
+        "--filename", type=str, help="Filename to save plot, e.g. 'plot.png'", default="action_filter_frequency_response.png"
+    )
     args = parser.parse_args()
 
     grid_size = (20, 1)
@@ -64,7 +72,7 @@ def main():
     # Plot action filter frequency ressponse
     savedir = Path(args.savedir)
     savedir.mkdir(exist_ok=True, parents=True)
-    savepath = str(savedir / "action_filter_frequency_response.png")
+    savepath = str(savedir / args.filename)
     plot_frequency_response(env.robot._action_filter, savepath)
 
 
