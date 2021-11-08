@@ -67,7 +67,8 @@ def build_regular_env(
         ]
 
     if env_randomizer_list is None:
-        env_randomizer_list = [ControllableEnvRandomizerFromConfig("train_params", step_sample_prob=0.004)]
+        # env_randomizer_list = [ControllableEnvRandomizerFromConfig("train_params", step_sample_prob=0.004)]
+        env_randomizer_list = []
 
     if env_modifier_list is None:
         env_modifier_list = [train_course.TrainMultiple()]
