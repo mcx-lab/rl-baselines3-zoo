@@ -12,9 +12,9 @@ Equal chances for the robot to encounter going up and going down the stairs.
 class TrainStairs(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rise_levels = [0.02, 0.05]
+        self.step_rise_levels = [0.02, 0.05, 0.075]
         self.num_levels = len(self.step_rise_levels)
-        self.num_steps = 5
+        self.num_steps = 10
         self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
@@ -45,9 +45,10 @@ class TrainStairs(EnvModifier):
             level_probs = level_list / sum(level_list)
             level = np.random.choice(self.num_levels, p=level_probs)
             print(f"LOOP TO LEVEL {level}")
-        elif level > 0 and np.random.uniform() < 0.2:
-            # Redo previous level
-            level -= 1
+        elif level > 0 and self.downgrade_level(env):
+            # robot needs to downgrade level
+            self._level -= 1
+            print(f"DOWNGRADE TO LEVEL {self._level}")
 
         x_pos = level * (self.stair_length + self.stair_gap)
         z_pos = 0
@@ -68,6 +69,13 @@ class TrainStairs(EnvModifier):
             and base_pos[1] > -boxHalfWidth
             and base_pos[1] < boxHalfWidth
         )
+
+    def downgrade_level(self, env):
+        """Downgrade to the previous level if robot was unable to travel a quarter of the stair length"""
+        start_pos = self.adjust_position
+        base_pos = env._robot.GetBasePosition()
+        x_dist_travelled = base_pos[0] - start_pos[0]
+        return x_dist_travelled < self.stair_length / 4
 
 
 class TrainUneven(EnvModifier):
