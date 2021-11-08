@@ -1,12 +1,27 @@
 import argparse
 import os
 import io
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import imageio
 import cv2
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+
+def alphanum_key(s):
+    """Turn a string into a list of string and number chunks.
+    "z23a" -> ["z", 23, "a"]
+    """
+    return [tryint(c) for c in re.split("([0-9]+)", s)]
 
 
 class Plotter:
@@ -68,50 +83,76 @@ if __name__ == "__main__":
         basename = os.path.splitext(os.path.basename(f))[0]
         # Plot heightmap sensor data for each foot on the same plot
         plotter = Plotter(f, basename + f"_foothm")
-        plotter.plot(columns=47 - np.arange(4), ylim=(-3, 3), savedir=args.input_folder)
+        plotter.data = plotter.data + 3  # Shifting for better visualisation
+        plotter.plot(columns=47 - np.arange(4), ylim=(0, 6), savedir=args.input_folder)
         # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, basename + f"_foothm{i}")
-            plotter.plot(columns=[47 - i], ylim=(-3, 3), savedir=args.input_folder)
+            plotter.data = plotter.data + 3  # Shifting for better visualisation
+            plotter.plot(columns=[47 - i], ylim=(0, 6), savedir=args.input_folder)
         print("Generated foot heightmap images")
 
         grid_size = (20, 1)
         grid_unit = 0.05
         num_timesteps = len(plotter.data)
         # Generate GIF of heightmap over time
-        kx = grid_size[0] / 2 - 0.5
-        xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
-        ky = grid_size[1] / 2 - 0.5
-        yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
-        xx, yy = np.meshgrid(xvalues, yvalues)
-        # generate images
-        images = []
-        dpi = 60
-        fig = plt.figure(dpi=dpi)
-        ax = fig.add_subplot()
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        for i in range(num_timesteps):
-            img = ax.scatter(xx, yy, c=plotter.data[i][48 - 24 : 48 - 4], vmin=-3, vmax=3)
-            fig.colorbar(img, cax=cax, orientation="vertical")
-            image = get_img_from_fig(fig, dpi=dpi)
-            images.append(image)
-        plt.close(fig)
-
-        print("Generated images for video")
-        # build gif
         dirpath = args.input_folder
-        heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
-        with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
-            for image in images:
-                writer.append_data(image)
-        print("Created heightmap video")
+        if grid_size[0] == 1 or grid_size[1] == 1:
+            # bar graph plot
+            for i in range(num_timesteps):
+                plt.figure()
+                data = plotter.data[i][48 - 24 : 48 - 4]
+                plt.bar(x=np.arange(len(data)), height=data)
+                plt.ylim((0, 6))
+                plt.savefig(os.path.join(dirpath, f"tmp{i}"))
+                plt.close()
+            print("Generated images for video")
+            # build gif
+            files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
+            heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
+            with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
+                for f in files:
+                    image = imageio.imread(f)
+                    writer.append_data(image)
+            print("Created heightmap video")
+            # remove images
+            for f in files:
+                os.remove(f)
+            print("Removed unnessary image files")
+        else:
+            # scatter plot
+            kx = grid_size[0] / 2 - 0.5
+            xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
+            ky = grid_size[1] / 2 - 0.5
+            yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
+            xx, yy = np.meshgrid(xvalues, yvalues)
+            # generate images
+            images = []
+            dpi = 60
+            fig = plt.figure(dpi=dpi)
+            ax = fig.add_subplot()
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            for i in range(num_timesteps):
+                img = ax.scatter(xx, yy, c=plotter.data[i][48 - 24 : 48 - 4], vmin=-3, vmax=3)
+                fig.colorbar(img, cax=cax, orientation="vertical")
+                image = get_img_from_fig(fig, dpi=dpi)
+                images.append(image)
+            plt.close(fig)
+            print("Generated images for video")
+            # build gif
+            heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
+            with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
+                for image in images:
+                    writer.append_data(image)
+            print("Created heightmap video")
 
         if args.stitch_path:
             replay_video_path = args.stitch_path
             print(f"Stitching video from {replay_video_path}")
-            replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
-            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:1000]
+            replay_frames = get_frames_from_video_path(replay_video_path)[:num_timesteps]
+            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:num_timesteps]
 
             assert len(replay_frames) == len(heightmap_frames)
             replay_and_heightmap_frames = []
