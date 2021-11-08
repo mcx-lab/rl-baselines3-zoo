@@ -68,11 +68,13 @@ if __name__ == "__main__":
         basename = os.path.splitext(os.path.basename(f))[0]
         # Plot heightmap sensor data for each foot on the same plot
         plotter = Plotter(f, basename + f"_foothm")
-        plotter.plot(columns=47 - np.arange(4), ylim=(-3, 3), savedir=args.input_folder)
+        plotter.data = plotter.data + 3  # Shifting for better visualisation
+        plotter.plot(columns=47 - np.arange(4), ylim=(0, 6), savedir=args.input_folder)
         # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, basename + f"_foothm{i}")
-            plotter.plot(columns=[47 - i], ylim=(-3, 3), savedir=args.input_folder)
+            plotter.data = plotter.data + 3  # Shifting for better visualisation
+            plotter.plot(columns=[47 - i], ylim=(0, 6), savedir=args.input_folder)
         print("Generated foot heightmap images")
 
         grid_size = (20, 1)
@@ -86,13 +88,14 @@ if __name__ == "__main__":
                 plt.figure()
                 data = plotter.data[i][48 - 24 : 48 - 4]
                 plt.bar(x=np.arange(len(data)), height=data)
-                plt.ylim((-3, 3))
+                plt.ylim((0, 6))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
-            with imageio.get_writer(os.path.join(dirpath, basename + "_hm.mp4"), mode="I", fps=30) as writer:
+            heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
+            with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:
                     image = imageio.imread(f)
                     writer.append_data(image)
@@ -132,8 +135,8 @@ if __name__ == "__main__":
         if args.stitch_path:
             replay_video_path = args.stitch_path
             print(f"Stitching video from {replay_video_path}")
-            replay_frames = get_frames_from_video_path(replay_video_path)[:1000]
-            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:1000]
+            replay_frames = get_frames_from_video_path(replay_video_path)[:num_timesteps]
+            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:num_timesteps]
 
             assert len(replay_frames) == len(heightmap_frames)
             replay_and_heightmap_frames = []
