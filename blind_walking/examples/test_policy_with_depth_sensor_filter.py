@@ -1,3 +1,5 @@
+""" A script modified from enjoy.py, to test a walking agent with filtered observations """
+
 import argparse
 import glob
 import importlib
