@@ -31,7 +31,7 @@ class MultipleTerrain(EnvModifier):
         self.start_x = 5
         # Stairs parameters
         self.step_rise = 0.05
-        self.num_steps = 5
+        self.num_steps = 10
         self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
