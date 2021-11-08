@@ -96,7 +96,9 @@ def main():
         # Environment parameters
         robot_sensor_list = []
         env_sensor_list = [
-            environment_sensors.LocalTerrainDepthSensor(grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform),
+            environment_sensors.LocalTerrainDepthSensor(
+                grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform, noisy_reading=False
+            ),
         ]
         env_randomizer_list = []
         env_modifier_list = [MultipleTerrain()]
