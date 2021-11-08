@@ -18,7 +18,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
-from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path
+from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path, alphanum_key
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -150,23 +150,25 @@ def main():
         data = np.load(datapath)
 
         # Plot one data point of the heightmap
-        plotter = Plotter(datapath, "hm_single")
-        plotter.plot(columns=[0], ylim=(0.2, 0.8), savedir=dirpath)
+        for i in range(20):
+            plotter = Plotter(datapath, f"hm_single{i}")
+            plotter.plot(columns=[i], ylim=(0.2, 0.8), savedir=dirpath)
 
         # Generate GIF of heightmap over time
         if grid_size[0] == 1 or grid_size[1] == 1:
             # bar graph plot
             for i in range(num_timesteps):
                 plt.figure()
-                data = np.array(plotter.data[i])
-                plt.bar(x=np.arange(len(data)), height=data[:, 0])
+                data = np.array(plotter.data[i])[:, 0]
+                plt.bar(x=np.arange(len(data)), height=data)
                 plt.ylim((0.2, 0.8))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
-            heightmap_video_path = os.path.join(dirpath, "_hm.mp4")
+            files.sort(key=alphanum_key)
+            heightmap_video_path = os.path.join(dirpath, "hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:
                     image = imageio.imread(f)

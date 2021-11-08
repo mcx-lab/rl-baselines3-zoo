@@ -1,12 +1,27 @@
 import argparse
 import os
 import io
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import imageio
 import cv2
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+
+def alphanum_key(s):
+    """Turn a string into a list of string and number chunks.
+    "z23a" -> ["z", 23, "a"]
+    """
+    return [tryint(c) for c in re.split("([0-9]+)", s)]
 
 
 class Plotter:
@@ -94,6 +109,7 @@ if __name__ == "__main__":
             print("Generated images for video")
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
             heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:
