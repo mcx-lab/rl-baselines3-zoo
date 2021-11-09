@@ -471,8 +471,8 @@ class LocalTerrainViewSensor(sensor.BoxSpaceSensor):
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
         eachfoot: bool = False,
-        lower_bound: _FLOAT_OR_ARRAY = -100,
-        upper_bound: _FLOAT_OR_ARRAY = 100,
+        lower_bound: _FLOAT_OR_ARRAY = 0,
+        upper_bound: _FLOAT_OR_ARRAY = 1,
         name: typing.Text = "LocalTerrainView",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
@@ -533,6 +533,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
 
     def __init__(
         self,
+        noisy_reading: bool = True,
         grid_unit: float = 0.1,
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
@@ -554,6 +555,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
           dtype: data type of sensor value.
         """
         self._env = None
+        self._noisy_reading = noisy_reading
         self.grid_unit = grid_unit
         self.grid_size = grid_size
         self.transform = transform
@@ -590,11 +592,14 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
                     grid_unit=self.grid_unit, grid_size=self.grid_size, transform=transform
                 )
                 heightmap = np.concatenate((heightmap, local_heightmap), axis=None)
-            return heightmap
         else:
-            return self._env.robot.GetLocalTerrainDepth(
+            heightmap = self._env.robot.GetLocalTerrainDepth(
                 grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
             ).reshape(1, self.grid_size[0], self.grid_size[1])
+
+        if self._noisy_reading:
+            heightmap = heightmap + np.random.normal(scale=0.05, size=heightmap.shape)
+        return heightmap
 
 
 class PhaseSensor(sensor.BoxSpaceSensor):

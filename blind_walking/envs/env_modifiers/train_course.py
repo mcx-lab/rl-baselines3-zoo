@@ -89,7 +89,7 @@ class TrainMultiple(EnvModifier):
 
         self.step_rise_levels = [0.02, 0.05]
         self.num_levels = len(self.step_rise_levels)
-        self.num_steps = 5
+        self.num_steps = 10
         self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2

@@ -83,15 +83,13 @@ if __name__ == "__main__":
         basename = os.path.splitext(os.path.basename(f))[0]
         # Plot heightmap sensor data for each foot on the same plot
         plotter = Plotter(f, basename + f"_foothm")
-        plotter.data = plotter.data + 3  # Shifting for better visualisation
         num_obs = len(plotter.data[0])
         hmobs_endindex = num_obs - 2
-        plotter.plot(columns=hmobs_endindex - 1 - np.arange(4), ylim=(0, 6), savedir=args.input_folder)
+        plotter.plot(columns=hmobs_endindex - 1 - np.arange(4), ylim=(-1, 1), savedir=args.input_folder)
         # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, basename + f"_foothm{i}")
-            plotter.data = plotter.data + 3  # Shifting for better visualisation
-            plotter.plot(columns=[hmobs_endindex - 1 - i], ylim=(0, 6), savedir=args.input_folder)
+            plotter.plot(columns=[hmobs_endindex - 1 - i], ylim=(-1, 1), savedir=args.input_folder)
         print("Generated foot heightmap images")
 
         grid_size = (10, 1)
@@ -104,10 +102,11 @@ if __name__ == "__main__":
             for i in range(num_timesteps):
                 plt.figure()
                 data = plotter.data[i][hmobs_endindex - np.prod(grid_size) - 4 : hmobs_endindex]
+                data += 1 # Shifting for better visualisation
                 x_space = np.arange(len(data))
                 x_space[-4:] += 1  # Leave a gap for plotting of foot rays
                 plt.bar(x=x_space, height=data)
-                plt.ylim((0, 6))
+                plt.ylim((0, 2))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
