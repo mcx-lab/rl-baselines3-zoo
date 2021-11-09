@@ -167,7 +167,7 @@ def main():
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
             files.sort(key=alphanum_key)
-            heightmap_video_path = os.path.join(dirpath, "_hm.mp4")
+            heightmap_video_path = os.path.join(dirpath, "hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:
                     image = imageio.imread(f)
