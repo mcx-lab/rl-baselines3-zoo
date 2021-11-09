@@ -99,7 +99,7 @@ if __name__ == "__main__":
         num_timesteps = len(plotter.data)
         # Generate GIF of heightmap over time
         dirpath = args.input_folder
-        if grid_size[0] == 1 or grid_size[1] == 1:
+        if grid_size[0] <= 1 or grid_size[1] <= 1:
             # bar graph plot
             for i in range(num_timesteps):
                 plt.figure()
@@ -139,7 +139,9 @@ if __name__ == "__main__":
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="5%", pad=0.05)
             for i in range(num_timesteps):
-                img = ax.scatter(xx, yy, c=plotter.data[i][48 - 24 : 48 - 4], vmin=-3, vmax=3)
+                img = ax.scatter(
+                    xx, yy, c=plotter.data[i][hmobs_endindex - np.prod(grid_size) - 4 : hmobs_endindex - 4], vmin=-3, vmax=3
+                )
                 fig.colorbar(img, cax=cax, orientation="vertical")
                 image = get_img_from_fig(fig, dpi=dpi)
                 images.append(image)
