@@ -561,6 +561,9 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         self.transform = transform
         self.eachfoot = eachfoot
 
+        if eachfoot:
+            name = f"{name}-eachfoot"
+
         shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthSensor, self).__init__(
             name=name,
