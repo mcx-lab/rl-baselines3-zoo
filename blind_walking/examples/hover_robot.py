@@ -18,7 +18,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
-from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path
+from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path, alphanum_key
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -166,6 +166,7 @@ def main():
             print("Generated images for video")
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
             heightmap_video_path = os.path.join(dirpath, "_hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:

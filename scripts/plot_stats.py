@@ -1,12 +1,27 @@
 import argparse
 import os
 import io
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import imageio
 import cv2
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+def tryint(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+
+def alphanum_key(s):
+    """Turn a string into a list of string and number chunks.
+    "z23a" -> ["z", 23, "a"]
+    """
+    return [tryint(c) for c in re.split("([0-9]+)", s)]
 
 
 class Plotter:
@@ -69,12 +84,12 @@ if __name__ == "__main__":
         # Plot heightmap sensor data for each foot on the same plot
         plotter = Plotter(f, basename + f"_foothm")
         plotter.data = plotter.data + 3  # Shifting for better visualisation
-        plotter.plot(columns=47 - np.arange(4), ylim=(0, 6), savedir=args.input_folder)
+        plotter.plot(columns=57 - np.arange(4), ylim=(0, 6), savedir=args.input_folder)
         # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, basename + f"_foothm{i}")
             plotter.data = plotter.data + 3  # Shifting for better visualisation
-            plotter.plot(columns=[47 - i], ylim=(0, 6), savedir=args.input_folder)
+            plotter.plot(columns=[57 - i], ylim=(0, 6), savedir=args.input_folder)
         print("Generated foot heightmap images")
 
         grid_size = (20, 1)
@@ -86,7 +101,7 @@ if __name__ == "__main__":
             # bar graph plot
             for i in range(num_timesteps):
                 plt.figure()
-                data = plotter.data[i][48 - 24 : 48 - 4]
+                data = plotter.data[i][58 - 14 : 58 - 4]
                 plt.bar(x=np.arange(len(data)), height=data)
                 plt.ylim((0, 6))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
@@ -94,6 +109,7 @@ if __name__ == "__main__":
             print("Generated images for video")
             # build gif
             files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
             heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
                 for f in files:
