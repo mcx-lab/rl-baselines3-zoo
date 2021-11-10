@@ -37,7 +37,7 @@ def main():  # noqa: C901
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
     parser.add_argument("--algo", help="RL Algorithm", default="ppo", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=3000, type=int)
     parser.add_argument("--num-threads", help="Number of threads for PyTorch (-1 to use default)", default=-1, type=int)
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
@@ -213,10 +213,9 @@ def main():  # noqa: C901
             env,
             video_folder,
             record_video_trigger=lambda x: x == 0,
-            video_length=args.n_timesteps,
+            video_length=3 * args.n_timesteps,
             name_prefix=f"{name_prefix}-{modification_suffix}",
         )
-    obs = env.reset()
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
@@ -232,59 +231,68 @@ def main():  # noqa: C901
 
     raw_depth_logger = Logger(f"raw_depth_{modification_suffix}")
     filtered_depth_logger = Logger(f"filtered_depth_{modification_suffix}")
+    reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
 
     # For HER, monitor success rate
     successes = []
     try:
-        for _ in range(args.n_timesteps):
+        for _, reset_manual_override in enumerate(reset_manual_overrides):
 
-            raw_depth = obs[0, -26:-6]
-            filtered_depth = filter.filter(raw_depth)
-            raw_depth_logger.update(raw_depth)
-            filtered_depth_logger.update(filtered_depth)
+            # Outer wrapper is a VecEnv, so we need to reset each one individually
+            tasks = env.get_attr("task")
+            for task in tasks:
+                task._override_reset(reset_manual_override)
 
-            if args.modify_observation:
-                obs[0, -26:-6] = filtered_depth
+            obs = env.reset()
+            for _ in range(args.n_timesteps):
 
-            action, state = model.predict(obs, state=state, deterministic=deterministic)
-            obs, reward, done, infos = env.step(action)
-            if not args.no_render:
-                env.render("human")
+                raw_depth = obs[0, -26:-6]
+                filtered_depth = filter.filter(raw_depth)
+                raw_depth_logger.update(raw_depth)
+                filtered_depth_logger.update(filtered_depth)
 
-            episode_reward += reward[0]
-            ep_len += 1
+                if args.modify_observation:
+                    obs[0, -26:-6] = filtered_depth
 
-            if args.n_envs == 1:
-                # For atari the return reward is not the atari score
-                # so we have to get it from the infos dict
-                if is_atari and infos is not None and args.verbose >= 1:
-                    episode_infos = infos[0].get("episode")
-                    if episode_infos is not None:
-                        print(f"Atari Episode Score: {episode_infos['r']:.2f}")
-                        print("Atari Episode Length", episode_infos["l"])
+                action, state = model.predict(obs, state=state, deterministic=deterministic)
+                obs, reward, done, infos = env.step(action)
+                if not args.no_render:
+                    env.render("human")
 
-                if done and not is_atari and args.verbose > 0:
-                    # NOTE: for env using VecNormalize, the mean reward
-                    # is a normalized reward when `--norm_reward` flag is passed
-                    print(f"Episode Reward: {episode_reward:.2f}")
-                    print("Episode Length", ep_len)
-                    episode_rewards.append(episode_reward)
-                    episode_lengths.append(ep_len)
-                    episode_reward = 0.0
-                    ep_len = 0
-                    state = None
+                episode_reward += reward[0]
+                ep_len += 1
 
-                # Reset also when the goal is achieved when using HER
-                if done and infos[0].get("is_success") is not None:
-                    if args.verbose > 1:
-                        print("Success?", infos[0].get("is_success", False))
+                if args.n_envs == 1:
+                    # For atari the return reward is not the atari score
+                    # so we have to get it from the infos dict
+                    if is_atari and infos is not None and args.verbose >= 1:
+                        episode_infos = infos[0].get("episode")
+                        if episode_infos is not None:
+                            print(f"Atari Episode Score: {episode_infos['r']:.2f}")
+                            print("Atari Episode Length", episode_infos["l"])
 
-                    if infos[0].get("is_success") is not None:
-                        successes.append(infos[0].get("is_success", False))
-                        episode_reward, ep_len = 0.0, 0
+                    if done and not is_atari and args.verbose > 0:
+                        # NOTE: for env using VecNormalize, the mean reward
+                        # is a normalized reward when `--norm_reward` flag is passed
+                        print(f"Episode Reward: {episode_reward:.2f}")
+                        print("Episode Length", ep_len)
+                        episode_rewards.append(episode_reward)
+                        episode_lengths.append(ep_len)
+                        episode_reward = 0.0
+                        ep_len = 0
+                        state = None
 
-            if done:
-                break
+                    # Reset also when the goal is achieved when using HER
+                    if done and infos[0].get("is_success") is not None:
+                        if args.verbose > 1:
+                            print("Success?", infos[0].get("is_success", False))
+
+                        if infos[0].get("is_success") is not None:
+                            successes.append(infos[0].get("is_success", False))
+                            episode_reward, ep_len = 0.0, 0
+
+                if done:
+                    break
 
     except KeyboardInterrupt:
         pass
