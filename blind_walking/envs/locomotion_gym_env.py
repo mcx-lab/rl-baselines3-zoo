@@ -503,3 +503,7 @@ class LocomotionGymEnv(gym.Env):
     @property
     def robot_class(self):
         return self._robot_class
+
+    @property
+    def modifiers(self):
+        return self._env_modifiers
