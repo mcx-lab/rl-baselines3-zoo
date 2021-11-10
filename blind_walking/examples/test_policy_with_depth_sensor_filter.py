@@ -5,6 +5,7 @@ import glob
 import importlib
 import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch as th
@@ -227,9 +228,11 @@ def main():  # noqa: C901
     ep_len = 0
 
     # Implement filtering for heightmap observations
-    filter = ActionFilterButter(lowcut=[0], highcut=[10.0], order=1, sampling_rate=100, num_joints=20)
+    filter = ActionFilterButter(lowcut=[0], highcut=[10.0], order=1, sampling_rate=100, num_joints=10)
 
     reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
+    stats_path = Path(log_path) / "stats"
+    stats_path.mkdir(exist_ok=True, parents=True)
 
     # For HER, monitor success rate
     successes = []
@@ -248,13 +251,13 @@ def main():  # noqa: C901
             obs = env.reset()
             for _ in range(args.n_timesteps):
 
-                raw_depth = obs[0, -26:-6]
+                raw_depth = obs[0, -16:-6]
                 filtered_depth = filter.filter(raw_depth)
                 raw_depth_logger.update(raw_depth)
                 filtered_depth_logger.update(filtered_depth)
 
                 if args.modify_observation:
-                    obs[0, -26:-6] = filtered_depth
+                    obs[0, -16:-6] = filtered_depth
 
                 action, state = model.predict(obs, state=state, deterministic=deterministic)
                 obs, reward, done, infos = env.step(action)
@@ -296,8 +299,8 @@ def main():  # noqa: C901
                 if done:
                     break
 
-            raw_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
-            filtered_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
+            raw_depth_logger.save(stats_path)
+            filtered_depth_logger.save(stats_path)
 
     except KeyboardInterrupt:
         pass
