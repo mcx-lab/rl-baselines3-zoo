@@ -37,7 +37,7 @@ def main():  # noqa: C901
     parser.add_argument("--env", help="environment ID", type=str, default="CartPole-v1")
     parser.add_argument("-f", "--folder", help="Log folder", type=str, default="rl-trained-agents")
     parser.add_argument("--algo", help="RL Algorithm", default="ppo", type=str, required=False, choices=list(ALGOS.keys()))
-    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=3000, type=int)
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
     parser.add_argument("--num-threads", help="Number of threads for PyTorch (-1 to use default)", default=-1, type=int)
     parser.add_argument("--n-envs", help="number of environments", default=1, type=int)
     parser.add_argument("--exp-id", help="Experiment ID (default: 0: latest, -1: no exp folder)", default=0, type=int)
@@ -229,19 +229,21 @@ def main():  # noqa: C901
     # Implement filtering for heightmap observations
     filter = ActionFilterButter(lowcut=[0], highcut=[10.0], order=1, sampling_rate=100, num_joints=20)
 
-    raw_depth_logger = Logger(f"raw_depth_{modification_suffix}")
-    filtered_depth_logger = Logger(f"filtered_depth_{modification_suffix}")
     reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
 
     # For HER, monitor success rate
     successes = []
     try:
-        for _, reset_manual_override in enumerate(reset_manual_overrides):
-
-            # Outer wrapper is a VecEnv, so we need to reset each one individually
-            tasks = env.get_attr("task")
-            for task in tasks:
-                task._override_reset(reset_manual_override)
+        for episode, reset_manual_override in enumerate(reset_manual_overrides):
+            print(f"Beginning episode {episode} with modifier {reset_manual_override}")
+            raw_depth_logger = Logger(f"raw_depth_{reset_manual_override}_{modification_suffix}")
+            filtered_depth_logger = Logger(f"filtered_depth_{reset_manual_override}_{modification_suffix}")
+            modifierss = env.get_attr("modifiers")
+            # Loop over list of modifiers for each env in VecEnv
+            for modifiers in modifierss:
+                # Loop over modifiers in single env
+                for modifier in modifiers:
+                    modifier._override_reset(reset_manual_override)
 
             obs = env.reset()
             for _ in range(args.n_timesteps):
@@ -294,11 +296,11 @@ def main():  # noqa: C901
                 if done:
                     break
 
+            raw_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
+            filtered_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
+
     except KeyboardInterrupt:
         pass
-
-    raw_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
-    filtered_depth_logger.save("pretrained_agents/ppo/A1GymEnv-v0_35/stats")
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
