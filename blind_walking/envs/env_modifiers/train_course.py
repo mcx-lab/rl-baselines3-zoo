@@ -97,6 +97,7 @@ class TrainMultiple(EnvModifier):
         self.stairs = []
         for _ in range(self.num_levels):
             self.stairs.append(Stairs())
+        self._reset_manual_override = None
 
     def _generate(self, env):
         self.hf._generate(env, start_x=10, heightPerturbationRange=self.hf_perturb)
@@ -149,11 +150,11 @@ class TrainMultiple(EnvModifier):
 
     def _reset(self, env):
         if self._reset_manual_override is not None:
-            self._reset_manually(self._reset_manual_override)
+            self._reset_manually()
             # Remove override for subsequent resets
             self._reset_manual_override = None
         else:
-            self._reset_randomly()
+            self._reset_randomly(env)
 
     def _reset_manually(self):
         if self._reset_manual_override == "heightfield":
