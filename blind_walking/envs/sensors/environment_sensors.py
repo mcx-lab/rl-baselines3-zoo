@@ -598,7 +598,8 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             ).reshape(1, self.grid_size[0], self.grid_size[1])
 
         if self._noisy_reading:
-            heightmap = heightmap + np.random.normal(scale=0.05, size=heightmap.shape)
+            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+            heightmap = np.maximum(heightmap, 0)
         return heightmap
 
 

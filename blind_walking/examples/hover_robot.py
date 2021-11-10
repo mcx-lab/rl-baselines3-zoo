@@ -152,7 +152,7 @@ def main():
         data = np.load(datapath)
 
         # Plot one data point of the heightmap
-        for i in range(20):
+        for i in range(grid_size[0]):
             plotter = Plotter(datapath, f"hm_single{i}")
             plotter.plot(columns=[i], ylim=(0.2, 0.8), savedir=dirpath)
 
