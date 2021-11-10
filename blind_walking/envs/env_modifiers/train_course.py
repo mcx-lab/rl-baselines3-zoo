@@ -1,7 +1,7 @@
 import numpy as np
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 from blind_walking.envs.env_modifiers.heightfield import HeightField
+from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 
 """ Train robot to walk up stairs curriculum.
 
@@ -107,34 +107,68 @@ class TrainMultiple(EnvModifier):
             )
             start_x += self.stair_length + self.stair_gap
 
-    def _reset(self, env):
-        if np.random.uniform() < 0.5:
+    def _reset_to_heightfield(self):
+        """Reset position to before the heightfield"""
+        self.adjust_position = (0, 0, 0)
+
+    def _select_stairs_level(self, env):
+        if self._stair_level < self.num_levels and self.succeed_level(env):
+            print(f"LEVEL {self._stair_level} PASSED!")
+            self._stair_level += 1
+        level = self._stair_level
+        if level >= self.num_levels:
+            # Loop back to randomly selected level
+            level_list = np.arange(self.num_levels) + 1
+            level_probs = level_list / sum(level_list)
+            level = np.random.choice(self.num_levels, p=level_probs)
+            print(f"LOOP TO LEVEL {level}")
+        elif level > 0 and np.random.uniform() < 0.2:
+            # Redo previous level
+            level -= 1
+        return level
+
+    def _reset_to_stairs(self, level):
+        """Reset position to just before the stairs of a given level"""
+        x_pos = self.hf_length + level * (self.stair_length + self.stair_gap)
+        z_pos = 0
+        # Equal chances to encouter going up and down the stair level
+        if np.random.uniform() < 0.4:
+            x_pos += self.stair_gap + self.stair_length / 2 - 1
+            z_pos = self.step_rise_levels[level] * self.num_steps
+        self.adjust_position = (x_pos, 0, z_pos)
+
+    def _reset_randomly(self, env):
+        if np.random.uniform() < 1:
             # See heightfield
-            self.adjust_position = (0, 0, 0)
+            self._reset_to_heightfield()
         else:
             # See stairs
             # Check if robot has succeeded current level
-            if self._stair_level < self.num_levels and self.succeed_level(env):
-                print(f"LEVEL {self._stair_level} PASSED!")
-                self._stair_level += 1
-            level = self._stair_level
-            if level >= self.num_levels:
-                # Loop back to randomly selected level
-                level_list = np.arange(self.num_levels) + 1
-                level_probs = level_list / sum(level_list)
-                level = np.random.choice(self.num_levels, p=level_probs)
-                print(f"LOOP TO LEVEL {level}")
-            elif level > 0 and np.random.uniform() < 0.2:
-                # Redo previous level
-                level -= 1
+            level = self._select_stairs_level(env)
+            self._reset_to_stairs(level)
 
-            x_pos = self.hf_length + level * (self.stair_length + self.stair_gap)
-            z_pos = 0
-            # Equal chances to encouter going up and down the stair level
-            if np.random.uniform() < 0.4:
-                x_pos += self.stair_gap + self.stair_length / 2 - 1
-                z_pos = self.step_rise_levels[level] * self.num_steps
-            self.adjust_position = (x_pos, 0, z_pos)
+    def _reset(self, env):
+        if self._reset_manual_override is not None:
+            self._reset_manually(self._reset_manual_override)
+            # Remove override for subsequent resets
+            self._reset_manual_override = None
+        else:
+            self._reset_randomly()
+
+    def _reset_manually(self):
+        if self._reset_manual_override == "heightfield":
+            self._reset_to_heightfield()
+        elif self._reset_manual_override == "stairs_0":
+            self._reset_to_stairs(level=0)
+        elif self._reset_manual_override == "stairs_1":
+            self._reset_to_stairs(level=1)
+        else:
+            raise ValueError(f"Invalid override {self._reset_manual_override}")
+
+    def _override_reset(self, override: str):
+        """Manually set what the next reset should be"""
+        assert override in ("heightfield", "stairs_0", "stairs_1")
+        self._reset_manual_override = override
 
     def succeed_level(self, env):
         """To succeed the current level, robot needs to climb over the current stair level
