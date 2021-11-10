@@ -139,7 +139,7 @@ class TrainMultiple(EnvModifier):
         self.adjust_position = (x_pos, 0, z_pos)
 
     def _reset_randomly(self, env):
-        if np.random.uniform() < 1:
+        if np.random.uniform() < 0.5:
             # See heightfield
             self._reset_to_heightfield()
         else:
