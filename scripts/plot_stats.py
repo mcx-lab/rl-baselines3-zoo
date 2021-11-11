@@ -102,7 +102,7 @@ if __name__ == "__main__":
             for i in range(num_timesteps):
                 plt.figure()
                 data = plotter.data[i][hmobs_endindex - np.prod(grid_size) - 4 : hmobs_endindex]
-                data += 1 # Shifting for better visualisation
+                data += 1  # Shifting for better visualisation
                 x_space = np.arange(len(data))
                 x_space[-4:] += 1  # Leave a gap for plotting of foot rays
                 plt.bar(x=x_space, height=data)
