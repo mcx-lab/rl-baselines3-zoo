@@ -121,6 +121,7 @@ class TrainMultiple(EnvModifier):
         self.adjust_position = (0, 0, 0)
 
     def _select_stairs_level(self, env):
+        # Check if robot has succeeded current level
         if self._stair_level < self.num_levels and self.succeed_level(env):
             print(f"LEVEL {self._stair_level} PASSED!")
             self._stair_level += 1
@@ -152,7 +153,6 @@ class TrainMultiple(EnvModifier):
             self._reset_to_heightfield()
         else:
             # See stairs
-            # Check if robot has succeeded current level
             level = self._select_stairs_level(env)
             self._reset_to_stairs(level)
 
@@ -160,7 +160,7 @@ class TrainMultiple(EnvModifier):
         if self._reset_manual_override is not None:
             self._reset_manually()
             # Remove override for subsequent resets
-            self._reset_manual_override = None
+            # self._reset_manual_override = None
         else:
             self._reset_randomly(env)
 

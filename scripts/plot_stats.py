@@ -85,7 +85,7 @@ if __name__ == "__main__":
         plotter = Plotter(f, basename + f"_foothm")
         num_obs = len(plotter.data[0])
         hmobs_endindex = num_obs - 2
-        plotter.plot(columns=hmobs_endindex - 1 - np.arange(4), ylim=(-1, 1), savedir=args.input_folder)
+        plotter.plot(columns=hmobs_endindex - 1 - np.arange(4), savedir=args.input_folder)
         # Plot heightmap sensor data for each foot on separate plots
         for i in range(4):
             plotter = Plotter(f, basename + f"_foothm{i}")
