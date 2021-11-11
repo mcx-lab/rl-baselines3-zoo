@@ -50,3 +50,16 @@ class TestA1GymEnv(unittest.TestCase):
         constant = 69.420
         self.robot.SetFootFriction(constant)
         assert np.all(self.robot.GetFootFriction() == constant)
+
+    def test_unique_sensor_names(self):
+        """Ensure all sensor names are unique
+
+        If there are multiple sensors with the same name,
+        some of them will not be actually used by the robot.
+        And this will fail silently."""
+
+        sensor_names = set()
+        for sensor in self.env.all_sensors():
+            name = sensor.get_name()
+            assert name not in sensor_names
+            sensor_names.add(name)

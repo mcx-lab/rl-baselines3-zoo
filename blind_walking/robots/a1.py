@@ -176,13 +176,13 @@ def transform_to_rotated_frame(v: np.ndarray, theta: float):
 
 def world_frame_to_base_frame(v_world: np.ndarray, robot):
     """Transform a 2D displacement vector from world frame to robot base frame"""
-    yaw = robot.GetBaseRollPitchYaw()[2]
+    yaw = robot.GetTrueBaseRollPitchYaw()[2]
     return transform_to_rotated_frame(v_world, yaw)
 
 
 def base_frame_to_world_frame(v_base: np.ndarray, robot):
     """Transform a 2D displacement vector from robot base frame to world frame"""
-    neg_yaw = -robot.GetBaseRollPitchYaw()[2]
+    neg_yaw = -robot.GetTrueBaseRollPitchYaw()[2]
     return transform_to_rotated_frame(v_base, neg_yaw)
 
 

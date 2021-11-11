@@ -561,6 +561,9 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         self.transform = transform
         self.eachfoot = eachfoot
 
+        if eachfoot:
+            name = f"{name}-eachfoot"
+
         shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthSensor, self).__init__(
             name=name,
@@ -595,7 +598,8 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             ).reshape(1, self.grid_size[0], self.grid_size[1])
 
         if self._noisy_reading:
-            heightmap = heightmap + np.random.normal(scale=0.05, size=heightmap.shape)
+            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+            heightmap = np.maximum(heightmap, 0)
         return heightmap
 
 
