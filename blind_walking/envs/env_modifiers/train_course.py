@@ -12,7 +12,7 @@ Equal chances for the robot to encounter going up and going down the stairs.
 class TrainStairs(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rise_levels = [0.02, 0.05, 0.075]
+        self.step_rise_levels = [0.02, 0.05, 0.075, 0.10]
         self.num_levels = len(self.step_rise_levels)
         self.num_steps = 10
         self.stair_gap = 1.5
@@ -75,7 +75,7 @@ class TrainStairs(EnvModifier):
         start_pos = self.adjust_position
         base_pos = env._robot.GetBasePosition()
         x_dist_travelled = base_pos[0] - start_pos[0]
-        return x_dist_travelled < self.stair_length / 4
+        return x_dist_travelled < self.stair_length / 5
 
 
 class TrainUneven(EnvModifier):
