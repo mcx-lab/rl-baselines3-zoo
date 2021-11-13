@@ -172,6 +172,10 @@ class ExperimentManager(object):
         )
         self.params_path = f"{self.save_path}/{self.env_id}"
 
+    def __del__(self):
+        if self.args.use_wandb:
+            self.run.finish()
+
     def setup_experiment(self) -> Optional[BaseAlgorithm]:
         """
         Read hyperparameters, pre-process them (create schedules, wrappers, callbacks, action noise objects)
@@ -180,6 +184,22 @@ class ExperimentManager(object):
         :return: the initialized RL model
         """
         hyperparams, saved_hyperparams = self.read_hyperparameters()
+
+        if self.args.use_wandb:
+            import wandb
+
+            if self.args.run_name is not None:
+                print(f"Logging run to WandB as {self.args.run_name}")
+            self.run = wandb.init(
+                name=self.args.run_name,
+                project="terrain-aware-locomotion",
+                config=saved_hyperparams,
+                entity="mcx-lab",
+                sync_tensorboard=True,
+                monitor_gym=True,
+                save_code=True,
+            )
+
         hyperparams, self.env_wrapper, self.callbacks = self._preprocess_hyperparams(hyperparams)
 
         self.create_log_folder()
@@ -456,6 +476,12 @@ class ExperimentManager(object):
             )
 
             self.callbacks.append(eval_callback)
+
+        if self.args.use_wandb:
+            from wandb.integration.sb3 import WandbCallback
+
+            wandb_callback = WandbCallback()
+            self.callbacks.append(wandb_callback)
 
     @staticmethod
     def is_atari(env_id: str) -> bool:
