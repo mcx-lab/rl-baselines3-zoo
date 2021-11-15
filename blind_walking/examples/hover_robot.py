@@ -88,17 +88,17 @@ def main():
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_size = (20, 1)
-    grid_unit = 0.05
-    grid_transform = (0.15, 0)
+    grid_size = (10, 1)
+    grid_angle = 0.1
+    grid_transform = (-0.7, 0)
     num_timesteps = 1000
 
     if not args.no_hover:
         # Environment parameters
         robot_sensor_list = []
         env_sensor_list = [
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform, noisy_reading=False
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=grid_size, grid_angle=grid_angle, transform_angle=grid_transform, noisy_reading=False
             ),
         ]
         env_randomizer_list = []
@@ -126,7 +126,7 @@ def main():
         hm_logger = Logger("heightmap")
 
         # Move robot across terrain and collect heightmap data
-        default_orientation = env.robot._GetDefaultInitOrientation()
+        default_orientation = env.pybullet_client.getQuaternionFromEuler([0, 0, 0])
         default_position = env.robot._GetDefaultInitPosition()
         zero_action = np.zeros(12)
         position = default_position.copy()
