@@ -3,6 +3,7 @@
 import argparse
 import glob
 import importlib
+import json
 import os
 import sys
 from pathlib import Path
@@ -31,6 +32,11 @@ class Logger:
     def save(self, savedir: str = None):
         all_data = np.stack(self.data, axis=0)
         np.save(os.path.join(savedir, self.name), all_data)
+
+
+def get_video_path(env: VecVideoRecorder, extension="mp4"):
+    video_name = f"{env.name_prefix}-step-{env.step_id}-to-step-{env.step_id + env.video_length}.{extension}"
+    return os.path.join(env.video_folder, video_name)
 
 
 def main():  # noqa: C901
@@ -217,6 +223,7 @@ def main():  # noqa: C901
             video_length=3 * args.n_timesteps,
             name_prefix=f"{name_prefix}-{modification_suffix}",
         )
+        replay_path = get_video_path(env)
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
@@ -231,6 +238,7 @@ def main():  # noqa: C901
     filter = ActionFilterButter(lowcut=[0], highcut=[10.0], order=1, sampling_rate=100, num_joints=10)
 
     reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
+    env_modifier_to_replay_path_map = {}
     stats_path = Path(log_path) / "stats"
     stats_path.mkdir(exist_ok=True, parents=True)
 
@@ -247,6 +255,9 @@ def main():  # noqa: C901
                 # Loop over modifiers in single env
                 for modifier in modifiers:
                     modifier._override_reset(reset_manual_override)
+
+            if args.record:
+                env_modifier_to_replay_path_map[reset_manual_override] = replay_path
 
             obs = env.reset()
             for _ in range(args.n_timesteps):
@@ -304,6 +315,9 @@ def main():  # noqa: C901
 
     except KeyboardInterrupt:
         pass
+
+    with open(os.path.join(log_path, "env_modifier_to_replay_path_map.json"), "w") as jsonfile:
+        json.dump(env_modifier_to_replay_path_map, jsonfile)
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
