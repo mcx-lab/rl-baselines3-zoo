@@ -16,6 +16,7 @@
 """Simple sensors related to the environment."""
 import csv
 import typing
+from argparse import Action
 
 import numpy as np
 from blind_walking.envs.sensors import sensor
@@ -534,6 +535,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         noisy_reading: bool = True,
+        filter: bool = False,
         grid_unit: float = 0.1,
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
@@ -565,6 +567,12 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             name = f"{name}-eachfoot"
 
         shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
+
+        if filter:
+            from blind_walking.robots.action_filter import ActionFilterButter
+
+            self.filter = ActionFilterButter(lowcut=[0], highcut=[6.0], order=1, sampling_rate=100, num_joints=np.prod(shape))
+
         super(LocalTerrainDepthSensor, self).__init__(
             name=name,
             shape=shape,
@@ -600,6 +608,13 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         if self._noisy_reading:
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
             heightmap = np.maximum(heightmap, 0)
+
+        # Apply filter after simulated noise
+        if self.filter:
+            orig_shape = heightmap.shape
+            filtered_heightmap = self.filter.filter(heightmap.flatten())
+            heightmap = filtered_heightmap.reshape(*orig_shape)
+
         return heightmap
 
 
