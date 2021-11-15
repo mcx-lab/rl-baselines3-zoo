@@ -235,7 +235,7 @@ def main():  # noqa: C901
     ep_len = 0
 
     # Implement filtering for heightmap observations
-    filter = ActionFilterButter(lowcut=[0], highcut=[10.0], order=1, sampling_rate=100, num_joints=10)
+    filter = ActionFilterButter(lowcut=[0], highcut=[15.0], order=1, sampling_rate=100, num_joints=10)
 
     reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
     env_modifier_to_replay_path_map = {}
