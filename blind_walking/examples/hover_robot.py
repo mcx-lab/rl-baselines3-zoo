@@ -89,6 +89,7 @@ def main():
     dx = 0.05
     dy = 0
     grid_size = (10, 1)
+    grid_unit = 0.05  # Unused in LocalTerrainDepthByAngleSensor
     grid_angle = 0.1
     grid_transform = (-0.7, 0)
     num_timesteps = 1000
