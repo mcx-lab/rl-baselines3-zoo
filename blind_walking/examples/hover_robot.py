@@ -135,7 +135,7 @@ def main():
             # Update position
             position[0] += dx
             position[1] += dy
-            # Calculate z pos 1 timestep faster to avoid legs hitting the stairs
+            # Calculate z pos 5 timestep faster to avoid legs hitting the stairs
             z_pos = env_modifier_list[0].get_z_position(position[0] + 5 * dx, position[1] + 5 * dy)
             position[2] = default_position[2] + z_pos
             env.pybullet_client.resetBasePositionAndOrientation(env.robot.quadruped, position, default_orientation)
@@ -156,7 +156,7 @@ def main():
         # Plot one data point of the heightmap
         for i in range(grid_size[0]):
             plotter = Plotter(datapath, f"hm_single{i}")
-            plotter.plot(columns=[i], ylim=(0.2, 0.8), savedir=dirpath)
+            plotter.plot(columns=[i], ylim=(0.2, 1.4), savedir=dirpath)
 
         # Generate GIF of heightmap over time
         if grid_size[0] == 1 or grid_size[1] == 1:
@@ -164,8 +164,8 @@ def main():
             for i in range(num_timesteps):
                 plt.figure()
                 data = np.array(plotter.data[i])[:, 0]
-                plt.bar(x=np.arange(len(data)), height=data)
-                plt.ylim((0.2, 0.8))
+                plt.bar(x=np.arange(len(data)), height=np.flip(data))
+                plt.ylim((0.2, 1.4))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
