@@ -471,6 +471,54 @@ class A1(minitaur.Minitaur):
         depth_view = np.array(depth_view).reshape(grid_size)
         return depth_view
 
+    def GetLocalTerrainDepthByAngle(self, grid_angle=0.1, grid_size=[10, 10], transform_angle=(0, 0)):
+        """Returns the depth of the terrain as seen from a single point.
+
+        Args:
+          grid_angle: Angle between each ray
+          grid_size: Number of squares along one side of grid
+          transform_angle: The angle to transform the terrain view
+
+        Returns:
+          N x M numpy array of floats
+        """
+        base_pos = self.GetBasePosition()
+        rpy = self.GetTrueBaseRollPitchYaw()
+
+        # Transform origin_world to robot base yaw frame
+        origin_world = base_pos
+        origin_base = np.array(origin_world)
+        origin_base[:2] = transform_to_rotated_frame(origin_world[:2], rpy[2])
+
+        # Calculate grid coordinates, taking into account roll and pitch
+        grid_coord_base = []
+        for i in range(grid_size[0]):
+            for j in range(grid_size[1]):
+                x = origin_base[0] - origin_base[2] * np.tan(
+                    rpy[1] + grid_angle * (i - (grid_size[0] - 1) / 2) + transform_angle[0]
+                )
+                y = origin_base[1] + origin_base[2] * np.tan(
+                    rpy[0] + grid_angle * (j - (grid_size[1] - 1) / 2) + transform_angle[1]
+                )
+                grid_coord_base.append((x, y))
+
+        # Transform grid coordinates to world frame
+        grid_coord_world = np.array([transform_to_rotated_frame(gcb, -rpy[2]) for gcb in grid_coord_base])
+        # Append z coord, which is zero theoretically, but -0.001 for pseudo lidar ray beahviour
+        target_coords = [np.concatenate([gcw, [-0.001]]) for gcw in grid_coord_world]
+        origin_coords = [base_pos] * len(target_coords)
+
+        hit_coordinates = []
+        ray_intersection_infos = self._pybullet_client.rayTestBatch(origin_coords, target_coords)
+        for info in ray_intersection_infos:
+            hit_position = info[3]
+            hit_coordinates.append(hit_position)
+        depth_distances = np.subtract(origin_coords, hit_coordinates)
+        depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        depth_view = np.array(depth_view).reshape(grid_size)
+
+        return depth_view
+
     def GetLocalDistancesToGround(self, grid_unit=0.05, grid_size=16):
         """Get the vertical distance from base height to ground in a NxN grid around the robot.
 
