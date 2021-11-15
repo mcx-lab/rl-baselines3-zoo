@@ -89,6 +89,13 @@ def main():  # noqa: C901
     parser.add_argument(
         "--modify-observation", action="store_true", help="If True, will apply filtered observation to agent", default=False
     )
+    parser.add_argument(
+        "--terrain-modifiers",
+        type=str,
+        nargs="+",
+        help="Terrain modifiers to examine",
+        default=["heightfield", "stairs_0", "stairs_1"],
+    )
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
@@ -223,7 +230,6 @@ def main():  # noqa: C901
             video_length=3 * args.n_timesteps,
             name_prefix=f"{name_prefix}-{modification_suffix}",
         )
-        replay_path = get_video_path(env)
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
@@ -235,9 +241,8 @@ def main():  # noqa: C901
     ep_len = 0
 
     # Implement filtering for heightmap observations
-    filter = ActionFilterButter(lowcut=[0], highcut=[15.0], order=1, sampling_rate=100, num_joints=10)
+    filter = ActionFilterButter(lowcut=[0], highcut=[15.0], order=1, sampling_rate=100, num_joints=14)
 
-    reset_manual_overrides = ["heightfield", "stairs_0", "stairs_1"]
     env_modifier_to_replay_path_map = {}
     stats_path = Path(log_path) / "stats"
     stats_path.mkdir(exist_ok=True, parents=True)
@@ -245,7 +250,7 @@ def main():  # noqa: C901
     # For HER, monitor success rate
     successes = []
     try:
-        for episode, reset_manual_override in enumerate(reset_manual_overrides):
+        for episode, reset_manual_override in enumerate(args.terrain_modifiers):
             print(f"Beginning episode {episode} with modifier {reset_manual_override}")
             raw_depth_logger = Logger(f"raw_depth_{reset_manual_override}_{modification_suffix}")
             filtered_depth_logger = Logger(f"filtered_depth_{reset_manual_override}_{modification_suffix}")
@@ -257,18 +262,19 @@ def main():  # noqa: C901
                     modifier._override_reset(reset_manual_override)
 
             if args.record:
+                replay_path = get_video_path(env)
                 env_modifier_to_replay_path_map[reset_manual_override] = replay_path
 
             obs = env.reset()
             for _ in range(args.n_timesteps):
 
-                raw_depth = obs[0, -16:-6]
+                raw_depth = obs[0, -16:-2]
                 filtered_depth = filter.filter(raw_depth)
                 raw_depth_logger.update(raw_depth)
                 filtered_depth_logger.update(filtered_depth)
 
                 if args.modify_observation:
-                    obs[0, -16:-6] = filtered_depth
+                    obs[0, -16:-2] = filtered_depth
 
                 action, state = model.predict(obs, state=state, deterministic=deterministic)
                 obs, reward, done, infos = env.step(action)
@@ -316,7 +322,7 @@ def main():  # noqa: C901
     except KeyboardInterrupt:
         pass
 
-    with open(os.path.join(log_path, "env_modifier_to_replay_path_map.json"), "w") as jsonfile:
+    with open(os.path.join(log_path, f"{modification_suffix}_env_modifier_to_replay_path_map.json"), "w") as jsonfile:
         json.dump(env_modifier_to_replay_path_map, jsonfile)
 
     if args.verbose > 0 and len(successes) > 0:
