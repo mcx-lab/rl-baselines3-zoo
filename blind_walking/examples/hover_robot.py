@@ -134,7 +134,8 @@ def main():
             # Update position
             position[0] += dx
             position[1] += dy
-            z_pos = env_modifier_list[0].get_z_position(position[0], position[1])
+            # Calculate z pos 1 timestep faster to avoid legs hitting the stairs
+            z_pos = env_modifier_list[0].get_z_position(position[0] + 5 * dx, position[1] + 5 * dy)
             position[2] = default_position[2] + z_pos
             env.pybullet_client.resetBasePositionAndOrientation(env.robot.quadruped, position, default_orientation)
             obs, _, _, _ = env.step(zero_action)
