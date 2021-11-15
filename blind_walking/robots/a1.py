@@ -471,7 +471,7 @@ class A1(minitaur.Minitaur):
         depth_view = np.array(depth_view).reshape(grid_size)
         return depth_view
 
-    def GetLocalTerrainDepthByAngle(self, grid_angle=0.1, grid_size=[10, 10], transform_angle=(0, 0)):
+    def GetLocalTerrainDepthByAngle(self, grid_angle=(0.1, 0.1), grid_size=[10, 10], transform_angle=(0, 0)):
         """Returns the depth of the terrain as seen from a single point.
 
         Args:
@@ -495,10 +495,10 @@ class A1(minitaur.Minitaur):
         for i in range(grid_size[0]):
             for j in range(grid_size[1]):
                 x = origin_base[0] - origin_base[2] * np.tan(
-                    rpy[1] + grid_angle * (i - (grid_size[0] - 1) / 2) + transform_angle[0]
+                    rpy[1] + grid_angle[0] * (i - (grid_size[0] - 1) / 2) + transform_angle[0]
                 )
                 y = origin_base[1] + origin_base[2] * np.tan(
-                    rpy[0] + grid_angle * (j - (grid_size[1] - 1) / 2) + transform_angle[1]
+                    rpy[0] + grid_angle[1] * (j - (grid_size[1] - 1) / 2) + transform_angle[1]
                 )
                 grid_coord_base.append((x, y))
 
