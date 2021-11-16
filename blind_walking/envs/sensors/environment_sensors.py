@@ -609,7 +609,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         noisy_reading: bool = True,
-        grid_angle: float = 0.1,
+        grid_angle: typing.Tuple[float] = (0.1, 0.1),
         grid_size: typing.Tuple[int] = (10, 10),
         transform_angle: typing.Tuple[float] = (0, 0),
         lower_bound: _FLOAT_OR_ARRAY = 0.0,
