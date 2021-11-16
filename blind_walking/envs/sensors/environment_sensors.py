@@ -613,7 +613,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         grid_size: typing.Tuple[int] = (10, 10),
         transform_angle: typing.Tuple[float] = (0, 0),
         lower_bound: _FLOAT_OR_ARRAY = 0.0,
-        upper_bound: _FLOAT_OR_ARRAY = 3.0,
+        upper_bound: _FLOAT_OR_ARRAY = 8.0,
         name: typing.Text = "LocalTerrainDepthByAngle",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
@@ -656,10 +656,11 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         heightmap = self._env.robot.GetLocalTerrainDepthByAngle(
             grid_angle=self.grid_angle, grid_size=self.grid_size, transform_angle=self.transform_angle
         ).reshape(1, self.grid_size[0], self.grid_size[1])
-
+        # Add noise
         if self._noisy_reading:
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
-            heightmap = np.maximum(heightmap, 0)
+        # Clip readings
+        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
         return heightmap
 
 
