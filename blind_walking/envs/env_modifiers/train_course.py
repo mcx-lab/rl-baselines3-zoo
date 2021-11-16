@@ -152,7 +152,7 @@ class TrainMultiple(EnvModifier):
         if self._reset_manual_override is not None:
             self._reset_manually()
             # Remove override for subsequent resets
-            self._reset_manual_override = None
+            # self._reset_manual_override = None
         else:
             self._reset_randomly(env)
 
