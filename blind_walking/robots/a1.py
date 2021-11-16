@@ -260,6 +260,8 @@ class A1(minitaur.Minitaur):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
         self._enable_clip_motor_commands = enable_clip_motor_commands
+        # # For visualising rays
+        # self.ball_ids = []
 
         motor_kp = [
             ABDUCTION_P_GAIN,
@@ -482,6 +484,12 @@ class A1(minitaur.Minitaur):
         Returns:
           N x M numpy array of floats
         """
+        # # For visualising rays
+        # if len(self.ball_ids) > 36:
+        #     for i in self.ball_ids:
+        #         self._pybullet_client.removeBody(i)
+        #     self.ball_ids = []
+
         base_pos = self.GetBasePosition()
         rpy = self.GetTrueBaseRollPitchYaw()
 
@@ -516,6 +524,16 @@ class A1(minitaur.Minitaur):
         depth_distances = np.subtract(origin_coords, hit_coordinates)
         depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
         depth_view = np.array(depth_view).reshape(grid_size)
+
+        # # For visualising rays
+        # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
+        # for coord in hit_coordinates:
+        #     ballid = self._pybullet_client.createMultiBody(
+        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
+        #     )
+        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
+        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        #     self.ball_ids.append(ballid)
 
         return depth_view
 
