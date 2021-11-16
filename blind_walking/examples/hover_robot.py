@@ -88,17 +88,18 @@ def main():
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_size = (20, 1)
-    grid_unit = 0.05
-    grid_transform = (0.15, 0)
+    grid_size = (10, 1)
+    grid_unit = 0.05  # Unused in LocalTerrainDepthByAngleSensor
+    grid_angle = 0.1
+    grid_transform = (-0.7, 0)
     num_timesteps = 1000
 
     if not args.no_hover:
         # Environment parameters
         robot_sensor_list = []
         env_sensor_list = [
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=grid_size, grid_unit=grid_unit, transform=grid_transform, noisy_reading=False
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=grid_size, grid_angle=grid_angle, transform_angle=grid_transform, noisy_reading=False
             ),
         ]
         env_randomizer_list = []
@@ -126,7 +127,7 @@ def main():
         hm_logger = Logger("heightmap")
 
         # Move robot across terrain and collect heightmap data
-        default_orientation = env.robot._GetDefaultInitOrientation()
+        default_orientation = env.pybullet_client.getQuaternionFromEuler([0, 0, 0])
         default_position = env.robot._GetDefaultInitPosition()
         zero_action = np.zeros(12)
         position = default_position.copy()
@@ -134,7 +135,7 @@ def main():
             # Update position
             position[0] += dx
             position[1] += dy
-            # Calculate z pos 1 timestep faster to avoid legs hitting the stairs
+            # Calculate z pos 5 timestep faster to avoid legs hitting the stairs
             z_pos = env_modifier_list[0].get_z_position(position[0] + 5 * dx, position[1] + 5 * dy)
             position[2] = default_position[2] + z_pos
             env.pybullet_client.resetBasePositionAndOrientation(env.robot.quadruped, position, default_orientation)
@@ -155,7 +156,7 @@ def main():
         # Plot one data point of the heightmap
         for i in range(grid_size[0]):
             plotter = Plotter(datapath, f"hm_single{i}")
-            plotter.plot(columns=[i], ylim=(0.2, 0.8), savedir=dirpath)
+            plotter.plot(columns=[i], ylim=(0.2, 1.4), savedir=dirpath)
 
         # Generate GIF of heightmap over time
         if grid_size[0] == 1 or grid_size[1] == 1:
@@ -163,8 +164,8 @@ def main():
             for i in range(num_timesteps):
                 plt.figure()
                 data = np.array(plotter.data[i])[:, 0]
-                plt.bar(x=np.arange(len(data)), height=data)
-                plt.ylim((0.2, 0.8))
+                plt.bar(x=np.arange(len(data)), height=np.flip(data))
+                plt.ylim((0.2, 1.4))
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
