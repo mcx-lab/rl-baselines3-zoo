@@ -125,7 +125,7 @@ if __name__ == "__main__":
         else:
             # 3d bar plot
             grid_end_indices = [np.prod(s) for s in grid_sizes]
-            grid_end_indices = np.cumsum(grid_end_indices)
+            grid_end_indices = np.cumsum(grid_end_indices) + hmobs_startindex
             subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
             for t in range(num_timesteps):
                 fig = plt.figure()
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                     x, y = xx.ravel(), yy.ravel()
                     z = np.zeros(len(x))
                     dx = dy = 1
-                    start_index = 0 if i == 0 else grid_end_indices[i - 1]
+                    start_index = hmobs_startindex if i == 0 else grid_end_indices[i - 1]
                     dz = plotter.data[t][start_index : grid_end_indices[i]]
                     ax.set_zlim(datalim)
                     ax.set_xticklabels([])
