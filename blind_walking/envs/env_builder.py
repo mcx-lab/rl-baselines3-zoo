@@ -61,13 +61,42 @@ def build_regular_env(
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(10, 1), grid_unit=0.05, transform=(0.4, 0), noisy_reading=False
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=(3, 3),
+                grid_angle=(0.2, 0.2),
+                transform_angle=(-0.6, -0.4),
+                noisy_reading=False,
+                name="depthfr",
             ),
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(1, 1), grid_unit=0.05, eachfoot=True, transform=(0.05, 0), noisy_reading=False
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=(3, 3),
+                grid_angle=(0.2, 0.2),
+                transform_angle=(-0.6, 0.4),
+                noisy_reading=False,
+                name="depthfl",
             ),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.03),
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=(3, 3),
+                grid_angle=(0.2, 0.2),
+                transform_angle=(0.4, -0.4),
+                noisy_reading=False,
+                name="depthrr",
+            ),
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=(3, 3),
+                grid_angle=(0.2, 0.2),
+                transform_angle=(0.4, 0.4),
+                noisy_reading=False,
+                name="depthrl",
+            ),
+            environment_sensors.LocalTerrainDepthByAngleSensor(
+                grid_size=(10, 1),
+                grid_angle=(0.1, 0),
+                transform_angle=(-0.8, 0),
+                noisy_reading=False,
+                name="depthmiddle",
+            ),
         ]
 
     if env_randomizer_list is None:

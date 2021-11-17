@@ -260,6 +260,8 @@ class A1(minitaur.Minitaur):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
         self._enable_clip_motor_commands = enable_clip_motor_commands
+        # # For visualising rays
+        # self.ball_ids = []
 
         motor_kp = [
             ABDUCTION_P_GAIN,
@@ -482,8 +484,15 @@ class A1(minitaur.Minitaur):
         Returns:
           N x M numpy array of floats
         """
+        # # For visualising rays
+        # if len(self.ball_ids) > 36:
+        #     for i in self.ball_ids:
+        #         self._pybullet_client.removeBody(i)
+        #     self.ball_ids = []
+
         base_pos = self.GetBasePosition()
         rpy = self.GetTrueBaseRollPitchYaw()
+        imaginary_wall_dist = 8.0
 
         # Transform origin_world to robot base yaw frame
         origin_world = base_pos
@@ -491,31 +500,53 @@ class A1(minitaur.Minitaur):
         origin_base[:2] = transform_to_rotated_frame(origin_world[:2], rpy[2])
 
         # Calculate grid coordinates, taking into account roll and pitch
-        grid_coord_base = []
+        target_coords = []
         for i in range(grid_size[0]):
             for j in range(grid_size[1]):
-                x = origin_base[0] - origin_base[2] * np.tan(
-                    rpy[1] + grid_angle[0] * (i - (grid_size[0] - 1) / 2) + transform_angle[0]
-                )
-                y = origin_base[1] + origin_base[2] * np.tan(
-                    rpy[0] + grid_angle[1] * (j - (grid_size[1] - 1) / 2) + transform_angle[1]
-                )
-                grid_coord_base.append((x, y))
+                x_angle = rpy[1] + grid_angle[0] * (i - (grid_size[0] - 1) / 2) + transform_angle[0]
+                y_angle = rpy[0] + grid_angle[1] * (j - (grid_size[1] - 1) / 2) + transform_angle[1]
+                z = -0.001
+                if abs(x_angle) < np.pi / 2:
+                    # Projected to ground
+                    x = origin_base[0] - origin_base[2] * np.tan(x_angle)
+                else:
+                    # Projected to imaginary wall
+                    x = origin_base[0] - np.sign(x_angle) * imaginary_wall_dist
+                    z = origin_base[2] + imaginary_wall_dist * np.tan(abs(x_angle) - np.pi / 2)
+                if abs(y_angle) < np.pi / 2:
+                    # Projected to ground
+                    y = origin_base[1] + origin_base[2] * np.tan(y_angle)
+                else:
+                    # Projected to imaginary wall
+                    y = origin_base[1] + np.sign(y_angle) * imaginary_wall_dist
+                    z = origin_base[2] + imaginary_wall_dist * np.tan(abs(y_angle) - np.pi / 2)
+                # Tranform x, y coordinates to world frame
+                x, y = transform_to_rotated_frame((x, y), -rpy[2])
+                target_coords.append((x, y, z))
 
-        # Transform grid coordinates to world frame
-        grid_coord_world = np.array([transform_to_rotated_frame(gcb, -rpy[2]) for gcb in grid_coord_base])
-        # Append z coord, which is zero theoretically, but -0.001 for pseudo lidar ray beahviour
-        target_coords = [np.concatenate([gcw, [-0.001]]) for gcw in grid_coord_world]
+        # Calculate depth data
         origin_coords = [base_pos] * len(target_coords)
-
         hit_coordinates = []
         ray_intersection_infos = self._pybullet_client.rayTestBatch(origin_coords, target_coords)
-        for info in ray_intersection_infos:
-            hit_position = info[3]
+        for i, info in enumerate(ray_intersection_infos):
+            if info[0] == -1:
+                hit_position = target_coords[i]
+            else:
+                hit_position = info[3]
             hit_coordinates.append(hit_position)
         depth_distances = np.subtract(origin_coords, hit_coordinates)
         depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
         depth_view = np.array(depth_view).reshape(grid_size)
+
+        # # For visualising rays
+        # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
+        # for coord in hit_coordinates:
+        #     ballid = self._pybullet_client.createMultiBody(
+        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
+        #     )
+        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
+        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        #     self.ball_ids.append(ballid)
 
         return depth_view
 

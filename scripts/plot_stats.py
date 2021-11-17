@@ -81,32 +81,31 @@ if __name__ == "__main__":
     files = glob.glob(os.path.join(args.input_folder, f"{data_name}*.npy"))
     for f in files:
         basename = os.path.splitext(os.path.basename(f))[0]
-        # Plot heightmap sensor data for each foot on the same plot
-        plotter = Plotter(f, basename + f"_foothm")
-        num_obs = len(plotter.data[0])
-        hmobs_endindex = num_obs - 2
-        plotter.plot(columns=hmobs_endindex - 1 - np.arange(4), ylim=(-1, 1), savedir=args.input_folder)
-        # Plot heightmap sensor data for each foot on separate plots
-        for i in range(4):
-            plotter = Plotter(f, basename + f"_foothm{i}")
-            plotter.plot(columns=[hmobs_endindex - 1 - i], ylim=(-1, 1), savedir=args.input_folder)
-        print("Generated foot heightmap images")
-
-        grid_size = (10, 1)
-        grid_unit = 0.05
-        num_timesteps = len(plotter.data)
-        # Generate GIF of heightmap over time
         dirpath = args.input_folder
-        if grid_size[0] <= 1 or grid_size[1] <= 1:
+
+        # Plot one data point of the heightmap
+        plotter = Plotter(f, basename + f"_hmsingle")
+        plotter.plot(columns=[-1], savedir=dirpath)
+
+        num_obs = len(plotter.data[0])
+        num_timesteps = len(plotter.data)
+        hmobs_startindex = 46
+        grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
+        grid_angles = [(0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.1, 0)]
+        grid_transforms = [(-0.6, -0.4), (-0.6, 0.4), (0.4, -0.4), (0.4, 0.4), (-0.8, 0)]
+        grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
+
+        datalim = (0, 6)
+        datashift = 3  # Amount to shift for better visualisation
+        plotter.data = plotter.data + datashift
+        # Generate GIF of heightmap over time
+        if len(grid_sizes) == 1 and (grid_sizes[0][0] == 1 or grid_sizes[0][1] == 1):
             # bar graph plot
             for i in range(num_timesteps):
                 plt.figure()
-                data = plotter.data[i][hmobs_endindex - np.prod(grid_size) - 4 : hmobs_endindex]
-                data += 1  # Shifting for better visualisation
-                x_space = np.arange(len(data))
-                x_space[-4:] += 1  # Leave a gap for plotting of foot rays
-                plt.bar(x=x_space, height=data)
-                plt.ylim((0, 2))
+                data = plotter.data[i][hmobs_startindex:]
+                plt.bar(x=np.arange(len(data)), height=data)
+                plt.ylim(datalim)
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
@@ -124,34 +123,44 @@ if __name__ == "__main__":
                 os.remove(f)
             print("Removed unnessary image files")
         else:
-            # scatter plot
-            kx = grid_size[0] / 2 - 0.5
-            xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
-            ky = grid_size[1] / 2 - 0.5
-            yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
-            xx, yy = np.meshgrid(xvalues, yvalues)
-            # generate images
-            images = []
-            dpi = 60
-            fig = plt.figure(dpi=dpi)
-            ax = fig.add_subplot()
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            for i in range(num_timesteps):
-                img = ax.scatter(
-                    xx, yy, c=plotter.data[i][hmobs_endindex - np.prod(grid_size) - 4 : hmobs_endindex - 4], vmin=-3, vmax=3
-                )
-                fig.colorbar(img, cax=cax, orientation="vertical")
-                image = get_img_from_fig(fig, dpi=dpi)
-                images.append(image)
-            plt.close(fig)
+            # 3d bar plot
+            grid_end_indices = [np.prod(s) for s in grid_sizes]
+            grid_end_indices = np.cumsum(grid_end_indices) + hmobs_startindex
+            subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
+            for t in range(num_timesteps):
+                fig = plt.figure()
+                for i in range(len(grid_sizes)):
+                    ax = fig.add_subplot(int(subplot_size + str(i + 1)), projection="3d")
+                    x = np.arange(grid_sizes[i][0])
+                    y = np.arange(grid_sizes[i][1])
+                    xx, yy = np.meshgrid(x, y)
+                    x, y = xx.ravel(), yy.ravel()
+                    z = np.zeros(len(x))
+                    dx = dy = 1
+                    start_index = hmobs_startindex if i == 0 else grid_end_indices[i - 1]
+                    dz = plotter.data[t][start_index : grid_end_indices[i]]
+                    ax.set_zlim(datalim)
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+                    # ax.set_zticklabels([])
+                    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
+                    ax.set_title(grid_names[i])
+                plt.savefig(os.path.join(dirpath, f"tmp{t}"))
+                plt.close()
             print("Generated images for video")
             # build gif
+            files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
             heightmap_video_path = os.path.join(dirpath, basename + "_hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
-                for image in images:
+                for f in files:
+                    image = imageio.imread(f)
                     writer.append_data(image)
             print("Created heightmap video")
+            # remove images
+            for f in files:
+                os.remove(f)
+            print("Removed unnessary image files")
 
         if args.stitch_path:
             replay_video_path = args.stitch_path

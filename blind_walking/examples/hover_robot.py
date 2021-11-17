@@ -76,7 +76,7 @@ def get_video_save_path(env: Monitor):
     )
 
 
-def main():
+def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--no-hover", action="store_true", default=False, help="Do not generate heightmap data with hover robot"
@@ -88,10 +88,10 @@ def main():
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_size = (10, 1)
-    grid_unit = 0.05  # Unused in LocalTerrainDepthByAngleSensor
-    grid_angle = 0.1
-    grid_transform = (-0.7, 0)
+    grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
+    grid_angles = [(0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.1, 0)]
+    grid_transforms = [(-0.6, -0.4), (-0.6, 0.4), (0.4, -0.4), (0.4, 0.4), (-0.8, 0)]
+    grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
     num_timesteps = 1000
 
     if not args.no_hover:
@@ -99,8 +99,13 @@ def main():
         robot_sensor_list = []
         env_sensor_list = [
             environment_sensors.LocalTerrainDepthByAngleSensor(
-                grid_size=grid_size, grid_angle=grid_angle, transform_angle=grid_transform, noisy_reading=False
-            ),
+                grid_size=grid_sizes[i],
+                grid_angle=grid_angles[i],
+                transform_angle=grid_transforms[i],
+                noisy_reading=False,
+                name=grid_names[i],
+            )
+            for i in range(len(grid_sizes))
         ]
         env_randomizer_list = []
         env_modifier_list = [MultipleTerrain()]
@@ -141,7 +146,7 @@ def main():
             env.pybullet_client.resetBasePositionAndOrientation(env.robot.quadruped, position, default_orientation)
             obs, _, _, _ = env.step(zero_action)
             # Record heightmap data
-            hm_logger.update([obs.reshape(grid_size)])
+            hm_logger.update([obs])
 
         # Close environment and save data
         env.close()
@@ -149,23 +154,23 @@ def main():
         print("Collected data")
 
     if not args.no_plot:
+        datalim = (0.2, 1.4)
         dirpath = os.path.dirname(__file__)
         datapath = os.path.join(dirpath, "heightmap.npy")
         data = np.load(datapath)
 
         # Plot one data point of the heightmap
-        for i in range(grid_size[0]):
-            plotter = Plotter(datapath, f"hm_single{i}")
-            plotter.plot(columns=[i], ylim=(0.2, 1.4), savedir=dirpath)
+        plotter = Plotter(datapath, "hm_single")
+        plotter.plot(columns=[-1], ylim=datalim, savedir=dirpath)
 
         # Generate GIF of heightmap over time
-        if grid_size[0] == 1 or grid_size[1] == 1:
+        if len(grid_sizes) == 1 and (grid_sizes[0][0] == 1 or grid_sizes[0][1] == 1):
             # bar graph plot
             for i in range(num_timesteps):
                 plt.figure()
                 data = np.array(plotter.data[i])[:, 0]
                 plt.bar(x=np.arange(len(data)), height=np.flip(data))
-                plt.ylim((0.2, 1.4))
+                plt.ylim(datalim)
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
             print("Generated images for video")
@@ -183,32 +188,44 @@ def main():
                 os.remove(f)
             print("Removed unnessary image files")
         else:
-            # scatter plot
-            kx = grid_size[0] / 2 - 0.5
-            xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
-            ky = grid_size[1] / 2 - 0.5
-            yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
-            xx, yy = np.meshgrid(xvalues, yvalues)
-            # generate images
-            images = []
-            dpi = 60
-            fig = plt.figure(dpi=dpi)
-            ax = fig.add_subplot()
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            for i in range(num_timesteps):
-                img = ax.scatter(xx, yy, c=plotter.data[i], vmin=0.2, vmax=0.8)
-                fig.colorbar(img, cax=cax, orientation="vertical")
-                image = get_img_from_fig(fig, dpi=dpi)
-                images.append(image)
-            plt.close(fig)
+            # 3d bar plot
+            grid_end_indices = [np.prod(s) for s in grid_sizes]
+            grid_end_indices = np.cumsum(grid_end_indices)
+            subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
+            for t in range(num_timesteps):
+                fig = plt.figure()
+                for i in range(len(grid_sizes)):
+                    ax = fig.add_subplot(int(subplot_size + str(i + 1)), projection="3d")
+                    x = np.arange(grid_sizes[i][0])
+                    y = np.arange(grid_sizes[i][1])
+                    xx, yy = np.meshgrid(x, y)
+                    x, y = xx.ravel(), yy.ravel()
+                    z = np.zeros(len(x))
+                    dx = dy = 1
+                    start_index = 0 if i == 0 else grid_end_indices[i - 1]
+                    dz = plotter.data[t][start_index : grid_end_indices[i]]
+                    ax.set_zlim(datalim)
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+                    # ax.set_zticklabels([])
+                    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
+                    ax.set_title(grid_names[i])
+                plt.savefig(os.path.join(dirpath, f"tmp{t}"))
+                plt.close()
             print("Generated images for video")
             # build gif
+            files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+            files.sort(key=alphanum_key)
             heightmap_video_path = os.path.join(dirpath, "hm.mp4")
             with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
-                for image in images:
+                for f in files:
+                    image = imageio.imread(f)
                     writer.append_data(image)
             print("Created heightmap video")
+            # remove images
+            for f in files:
+                os.remove(f)
+            print("Removed unnessary image files")
 
         # stitch both videos together
         if args.record:
