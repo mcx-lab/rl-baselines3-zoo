@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import glob
 import imageio
 import cv2
+import itertools
+from typing import Union
+from pathlib import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -61,6 +64,49 @@ def get_frames_from_video_path(video_path: str):
         success, image = vidcap.read()
         images.append(image)
     return images
+
+
+def iter_video_frames(video_path: Union[Path, str]):
+    """Iterate over frames in a video.
+
+    Avoids loading all frames into memory at once to prevent OoM errors."""
+    vidcap = cv2.VideoCapture(str(video_path))
+    success = True
+    while success:
+        success, image = vidcap.read()
+        if success:
+            yield image
+
+
+def stitch_videos(in_path1: Path, in_path2: Union[Path, str], out_path: Union[Path, str], verbose: int = 0):
+    """Stitch two videos together by concatenating horizontally.
+
+    Stitched video will be the length of the shorter video.
+
+    Args:
+        - in_path1: Path to first video
+        - in_path2: Path to second video. Will be resized to size of first video
+        - out_path: Path to save output video
+        - verbose: Set verbose = 1 to print stitching information.
+    """
+    frames1 = iter_video_frames(in_path1)
+    frames2 = iter_video_frames(in_path2)
+
+    with imageio.get_writer(out_path, mode="I", fps=30) as writer:
+        # Use itertools.zip_longest to iterate sequences of different length
+        # Shorter sequence will be padded with fillvalue = None
+        for index, (f1, f2) in enumerate(itertools.zip_longest(frames1, frames2, fillvalue=None)):
+            # Loop only to the minimum length iterator
+            if f1 is None or f2 is None:
+                break
+            if verbose >= 1 and index % 100 == 99:
+                print(f"{index + 1} frames stitched")
+            dsize = f1.shape[1], f1.shape[0]
+            f2 = cv2.resize(f2, dsize=dsize)
+            stitch = cv2.hconcat([f1, f2])
+            writer.append_data(stitch)
+    if verbose >= 1:
+        print(f"Stitching completed. In total, {index+1} frames were stitched")
 
 
 if __name__ == "__main__":
