@@ -260,8 +260,6 @@ class A1(minitaur.Minitaur):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
         self._enable_clip_motor_commands = enable_clip_motor_commands
-        # # For visualising rays
-        # self.ball_ids = []
 
         motor_kp = [
             ABDUCTION_P_GAIN,
@@ -485,10 +483,12 @@ class A1(minitaur.Minitaur):
           N x M numpy array of floats
         """
         # # For visualising rays
-        # if len(self.ball_ids) > 36:
-        #     for i in self.ball_ids:
-        #         self._pybullet_client.removeBody(i)
+        # if not hasattr(self, 'ball_ids'):
         #     self.ball_ids = []
+        # if len(self.ball_ids) > 36:
+        #    for i in self.ball_ids:
+        #        self._pybullet_client.removeBody(i)
+        #    self.ball_ids = []
 
         base_pos = self.GetBasePosition()
         rpy = self.GetTrueBaseRollPitchYaw()
