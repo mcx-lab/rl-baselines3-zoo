@@ -295,7 +295,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_yaw = self._current_yaw
-        self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
+        self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
 
         # # Hardcoded, for better training of speed change
         # speed_timestep_signals = [1900, 1600, 1300, 1000]
@@ -315,7 +315,7 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
 
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_base_pos = self._current_base_pos
-        self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
+        self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
         self._last_yaw = self._current_yaw
 
     def _get_observation(self) -> _ARRAY:
@@ -381,7 +381,7 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_yaw = self._current_yaw
-        self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
+        self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -392,7 +392,7 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
 
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_base_pos = self._current_base_pos
-        self._current_yaw = self._env._robot.GetBaseRollPitchYaw()[2]
+        self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
         self._last_yaw = self._current_yaw
 
     def _get_observation(self) -> _ARRAY:
