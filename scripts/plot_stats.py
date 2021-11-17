@@ -16,7 +16,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 def tryint(s):
     try:
         return int(s)
-    except:
+    except Exception as _:
         return s
 
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         dirpath = args.input_folder
 
         # Plot one data point of the heightmap
-        plotter = Plotter(f, basename + f"_hmsingle")
+        plotter = Plotter(f, basename + "_hmsingle")
         plotter.plot(columns=[-1], savedir=dirpath)
 
         num_obs = len(plotter.data[0])
