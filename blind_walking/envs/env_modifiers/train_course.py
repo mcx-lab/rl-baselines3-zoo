@@ -12,9 +12,9 @@ Equal chances for the robot to encounter going up and going down the stairs.
 class TrainStairs(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rise_levels = [0.02, 0.05]
+        self.step_rise_levels = [0.02, 0.05, 0.075, 0.10]
         self.num_levels = len(self.step_rise_levels)
-        self.num_steps = 5
+        self.num_steps = 10
         self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
@@ -34,10 +34,14 @@ class TrainStairs(EnvModifier):
             start_x += self.stair_length + self.stair_gap
 
     def _reset(self, env):
-        # Check if robot has succeeded current level
-        if self._level < self.num_levels and self.succeed_level(env):
-            print(f"LEVEL {self._level} PASSED!")
+        if self._level > 0 and self.down_level(env):
+            # robot down-levels
+            self._level -= 1
+            print(f"DOWNGRADE TO LEVEL {self._level}")
+        elif self._level < self.num_levels and self.up_level(env):
+            # robot up-levels
             self._level += 1
+            print(f"LEVEL UP TO LEVEL {self._level}!")
         level = self._level
         if level >= self.num_levels:
             # Loop back to randomly selected level
@@ -45,9 +49,6 @@ class TrainStairs(EnvModifier):
             level_probs = level_list / sum(level_list)
             level = np.random.choice(self.num_levels, p=level_probs)
             print(f"LOOP TO LEVEL {level}")
-        elif level > 0 and np.random.uniform() < 0.2:
-            # Redo previous level
-            level -= 1
 
         x_pos = level * (self.stair_length + self.stair_gap)
         z_pos = 0
@@ -57,7 +58,7 @@ class TrainStairs(EnvModifier):
             z_pos = self.step_rise_levels[level] * self.num_steps
         self.adjust_position = (x_pos, 0, z_pos)
 
-    def succeed_level(self, env):
+    def up_level(self, env):
         """To succeed the current level, robot needs to climb over the current stair level
         and reach the start of next stair level"""
         base_pos = env._robot.GetBasePosition()
@@ -68,6 +69,13 @@ class TrainStairs(EnvModifier):
             and base_pos[1] > -boxHalfWidth
             and base_pos[1] < boxHalfWidth
         )
+
+    def down_level(self, env):
+        """Downgrade to the previous level if robot was unable to travel a quarter of the stair length"""
+        start_pos = self.adjust_position
+        base_pos = env._robot.GetBasePosition()
+        x_dist_travelled = base_pos[0] - start_pos[0]
+        return x_dist_travelled < self.stair_length / 5
 
 
 class TrainUneven(EnvModifier):
@@ -113,6 +121,7 @@ class TrainMultiple(EnvModifier):
         self.adjust_position = (0, 0, 0)
 
     def _select_stairs_level(self, env):
+        # Check if robot has succeeded current level
         if self._stair_level < self.num_levels and self.succeed_level(env):
             print(f"LEVEL {self._stair_level} PASSED!")
             self._stair_level += 1
@@ -144,7 +153,6 @@ class TrainMultiple(EnvModifier):
             self._reset_to_heightfield()
         else:
             # See stairs
-            # Check if robot has succeeded current level
             level = self._select_stairs_level(env)
             self._reset_to_stairs(level)
 
