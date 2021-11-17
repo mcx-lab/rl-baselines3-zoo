@@ -260,8 +260,6 @@ class A1(minitaur.Minitaur):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
         self._enable_clip_motor_commands = enable_clip_motor_commands
-        # # For visualising rays
-        # self.ball_ids = []
 
         motor_kp = [
             ABDUCTION_P_GAIN,
