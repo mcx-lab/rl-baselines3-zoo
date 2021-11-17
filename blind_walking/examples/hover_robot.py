@@ -89,8 +89,8 @@ def main():  # noqa: C901
     dx = 0.05
     dy = 0
     grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
-    grid_angles = [(0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.1, 0)]
-    grid_transforms = [(-0.6, -0.4), (-0.6, 0.4), (0.4, -0.4), (0.4, 0.4), (-0.8, 0)]
+    grid_angles = [(0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.1, 0)]
+    grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.8, 0)]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
     num_timesteps = 1000
 

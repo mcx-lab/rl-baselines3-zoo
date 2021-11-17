@@ -64,29 +64,29 @@ def build_regular_env(
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             environment_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
-                grid_angle=(0.2, 0.2),
-                transform_angle=(-0.6, -0.4),
+                grid_angle=(0.3, 0.3),
+                transform_angle=(-0.6, -0.5),
                 noisy_reading=False,
                 name="depthfr",
             ),
             environment_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
-                grid_angle=(0.2, 0.2),
-                transform_angle=(-0.6, 0.4),
+                grid_angle=(0.3, 0.3),
+                transform_angle=(-0.6, 0.5),
                 noisy_reading=False,
                 name="depthfl",
             ),
             environment_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
-                grid_angle=(0.2, 0.2),
-                transform_angle=(0.4, -0.4),
+                grid_angle=(0.3, 0.3),
+                transform_angle=(0.4, -0.5),
                 noisy_reading=False,
                 name="depthrr",
             ),
             environment_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
-                grid_angle=(0.2, 0.2),
-                transform_angle=(0.4, 0.4),
+                grid_angle=(0.3, 0.3),
+                transform_angle=(0.4, 0.5),
                 noisy_reading=False,
                 name="depthrl",
             ),
@@ -104,7 +104,7 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainMultiple()]
+        env_modifier_list = [train_course.TrainUneven()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
