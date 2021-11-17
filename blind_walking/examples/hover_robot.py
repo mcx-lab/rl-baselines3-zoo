@@ -76,7 +76,7 @@ def get_video_save_path(env: Monitor):
     )
 
 
-def main():
+def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--no-hover", action="store_true", default=False, help="Do not generate heightmap data with hover robot"
@@ -160,7 +160,7 @@ def main():
         data = np.load(datapath)
 
         # Plot one data point of the heightmap
-        plotter = Plotter(datapath, f"hm_single")
+        plotter = Plotter(datapath, "hm_single")
         plotter.plot(columns=[-1], ylim=datalim, savedir=dirpath)
 
         # Generate GIF of heightmap over time
