@@ -195,6 +195,20 @@ class LocomotionGymEnv(gym.Env):
                 return sensor_
         return None
 
+    def get_sensor_start_end_index(self, name: str) -> Tuple[int, int]:
+        """Returns the start and end indices of the observation space
+        corresponding to a given sensor.
+
+        Assumes that all observations are concatenated into a Box space."""
+        end_index = 0
+        start_index = None
+        for sensor_ in self.all_sensors():
+            start_index = end_index
+            end_index += np.prod(sensor_.get_shape())
+            if sensor_.get_name() == name:
+                break
+        return (start_index, end_index)
+
     def reset(
         self,
         initial_motor_angles=None,
