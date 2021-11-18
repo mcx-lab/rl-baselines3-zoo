@@ -485,7 +485,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, 'ball_ids'):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 36:
+        # if len(self.ball_ids) > 40:
         #    for i in self.ball_ids:
         #        self._pybullet_client.removeBody(i)
         #    self.ball_ids = []
@@ -494,8 +494,13 @@ class A1(minitaur.Minitaur):
         rpy = self.GetTrueBaseRollPitchYaw()
         imaginary_wall_dist = 8.0
 
+        # Calculate origin position, slightly below base position
+        orientation = self.GetTrueBaseOrientation()
+        rot_matrix = self._pybullet_client.getMatrixFromQuaternion(orientation)
+        local_up_vec = rot_matrix[6:]
+        tmp_coord = 0.07 * np.array([1.0, 1.0, -1.0]) * np.asarray(local_up_vec)
+        origin_world = base_pos + tmp_coord
         # Transform origin_world to robot base yaw frame
-        origin_world = base_pos
         origin_base = np.array(origin_world)
         origin_base[:2] = transform_to_rotated_frame(origin_world[:2], rpy[2])
 
@@ -525,7 +530,7 @@ class A1(minitaur.Minitaur):
                 target_coords.append((x, y, z))
 
         # Calculate depth data
-        origin_coords = [base_pos] * len(target_coords)
+        origin_coords = [origin_world] * len(target_coords)
         hit_coordinates = []
         ray_intersection_infos = self._pybullet_client.rayTestBatch(origin_coords, target_coords)
         for i, info in enumerate(ray_intersection_infos):
@@ -540,6 +545,13 @@ class A1(minitaur.Minitaur):
 
         # # For visualising rays
         # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
+        # if len(self.ball_ids) == 0:
+        #     ballid = self._pybullet_client.createMultiBody(
+        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
+        #     )
+        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
+        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        #     self.ball_ids.append(ballid)
         # for coord in hit_coordinates:
         #     ballid = self._pybullet_client.createMultiBody(
         #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
