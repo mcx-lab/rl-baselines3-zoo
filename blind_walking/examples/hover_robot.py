@@ -83,6 +83,7 @@ def main():  # noqa: C901
     )
     parser.add_argument("--no-plot", action="store_true", default=False, help="Do not generate heightmap plots")
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
     args = parser.parse_args()
 
     # Data parameters
@@ -92,7 +93,7 @@ def main():  # noqa: C901
     grid_angles = [(0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.1, 0)]
     grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.8, 0)]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
-    num_timesteps = 1000
+    num_timesteps = args.n_timesteps
 
     if not args.no_hover:
         # Environment parameters
