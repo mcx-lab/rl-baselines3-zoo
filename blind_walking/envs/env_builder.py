@@ -18,9 +18,9 @@ from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
-from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.envs.sensors import environment_sensors, robot_sensors
 from blind_walking.envs.tasks import forward_task, forward_task_pos
+from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.robots import a1, laikago, robot_config
 
 
@@ -57,46 +57,46 @@ def build_regular_env(
             robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
             robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
             robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
-        ]
-    if env_sensor_list is None:
-        env_sensor_list = [
-            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
                 grid_angle=(0.2, 0.2),
                 transform_angle=(-0.6, -0.4),
                 noisy_reading=True,
                 name="depthfr",
             ),
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
                 grid_angle=(0.2, 0.2),
                 transform_angle=(-0.6, 0.4),
                 noisy_reading=True,
                 name="depthfl",
             ),
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
                 grid_angle=(0.2, 0.2),
                 transform_angle=(0.4, -0.4),
                 noisy_reading=True,
                 name="depthrr",
             ),
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(3, 3),
                 grid_angle=(0.2, 0.2),
                 transform_angle=(0.4, 0.4),
                 noisy_reading=True,
                 name="depthrl",
             ),
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=(10, 1),
                 grid_angle=(0.1, 0),
                 transform_angle=(-0.8, 0),
                 noisy_reading=True,
                 name="depthmiddle",
             ),
+        ]
+    if env_sensor_list is None:
+        env_sensor_list = [
+            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
         ]
 
     if env_randomizer_list is None:
