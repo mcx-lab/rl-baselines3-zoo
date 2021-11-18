@@ -241,6 +241,8 @@ class Minitaur(object):
     def _StepInternal(self, action, motor_control_mode=None):
         self.ApplyAction(action, motor_control_mode)
         self._pybullet_client.stepSimulation()
+        for sensor in self.GetAllSensors():
+            sensor.on_simulation_step()
         self.ReceiveObservation()
         self._state_action_counter += 1
 
