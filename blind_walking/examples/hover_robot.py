@@ -169,7 +169,7 @@ def main():  # noqa: C901
             for i in range(num_timesteps):
                 plt.figure()
                 data = np.array(plotter.data[i])[:, 0]
-                plt.bar(x=np.arange(len(data)), height=np.flip(data))
+                plt.bar(x=np.arange(len(data)), height=data)
                 plt.ylim(datalim)
                 plt.savefig(os.path.join(dirpath, f"tmp{i}"))
                 plt.close()
