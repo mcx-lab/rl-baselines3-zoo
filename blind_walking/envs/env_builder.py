@@ -62,6 +62,7 @@ def build_regular_env(
                 grid_angle=(0.2, 0.2),
                 transform_angle=(-0.6, -0.4),
                 noisy_reading=True,
+                use_filter=True,
                 name="depthfr",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -69,6 +70,7 @@ def build_regular_env(
                 grid_angle=(0.2, 0.2),
                 transform_angle=(-0.6, 0.4),
                 noisy_reading=True,
+                use_filter=True,
                 name="depthfl",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -76,6 +78,7 @@ def build_regular_env(
                 grid_angle=(0.2, 0.2),
                 transform_angle=(0.4, -0.4),
                 noisy_reading=True,
+                use_filter=True,
                 name="depthrr",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -83,6 +86,7 @@ def build_regular_env(
                 grid_angle=(0.2, 0.2),
                 transform_angle=(0.4, 0.4),
                 noisy_reading=True,
+                use_filter=True,
                 name="depthrl",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -90,6 +94,7 @@ def build_regular_env(
                 grid_angle=(0.1, 0),
                 transform_angle=(-0.8, 0),
                 noisy_reading=True,
+                use_filter=True,
                 name="depthmiddle",
             ),
         ]
@@ -104,7 +109,7 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainMultiple()]
+        env_modifier_list = [heightfield.HeightField()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
