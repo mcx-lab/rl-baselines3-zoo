@@ -111,6 +111,14 @@ class Sensor(object):
         """
         pass
 
+    def on_simulation_step(self):
+        """A callback function for the pybullet.stepSimulation() event.
+
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        pass
+
     def on_terminate(self, env):
         """A callback function for the terminate event.
 

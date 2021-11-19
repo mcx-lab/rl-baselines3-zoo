@@ -18,7 +18,7 @@ import typing
 
 import numpy as np
 from blind_walking.envs.sensors import sensor
-from blind_walking.robots import minitaur_pose_utils
+from blind_walking.robots import action_filter, minitaur_pose_utils
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint: disable=invalid-name
@@ -615,3 +615,82 @@ class FootContactSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         return self._robot.GetFootContacts()
+
+
+class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
+    """A sensor that gets the depth from the robot to the ground"""
+
+    def __init__(
+        self,
+        noisy_reading: bool = True,
+        grid_angle: typing.Tuple[float] = (0.1, 0.1),
+        grid_size: typing.Tuple[int] = (10, 10),
+        transform_angle: typing.Tuple[float] = (0, 0),
+        lower_bound: _FLOAT_OR_ARRAY = 0.0,
+        upper_bound: _FLOAT_OR_ARRAY = 8.0,
+        name: typing.Text = "LocalTerrainDepthByAngle",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+        use_filter: bool = False,
+    ) -> None:
+        """Constructs LocalTerrainDepthByAngleSensor.
+
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          lower_bound: the lower bound of the terrain view.
+          upper_bound: the upper bound of the terrain view.
+          name: the name of the sensor.
+          dtype: data type of sensor value.
+        """
+        self._env = None
+        self._noisy_reading = noisy_reading
+        self.grid_angle = grid_angle
+        self.grid_size = grid_size
+        self.transform_angle = transform_angle
+        self.use_filter = use_filter
+
+        shape = (1, grid_size[0], grid_size[1])
+        super(LocalTerrainDepthByAngleSensor, self).__init__(
+            name=name,
+            shape=shape,
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns (and maybe filters) the local distances to ground"""
+        if self.use_filter:
+            return self._filtered_heightmap
+        else:
+            return self._get_heightmap()
+
+    def _get_heightmap(self):
+        """Returns the local distances to ground"""
+        heightmap = self._robot.GetLocalTerrainDepthByAngle(
+            grid_angle=self.grid_angle, grid_size=self.grid_size, transform_angle=self.transform_angle
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
+        # Add noise
+        if self._noisy_reading:
+            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+        # Clip readings
+        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
+        return heightmap
+
+    def on_simulation_step(self):
+        if self.use_filter:
+            if not hasattr(self, "filter"):
+                self.filter = action_filter.ActionFilterButter(
+                    lowcut=[0.0],
+                    highcut=[6.0],  # Hz
+                    sampling_rate=1 / self._robot.time_step,
+                    order=1,
+                    num_joints=np.prod(self.get_shape()),
+                )
+
+            heightmap = self._get_heightmap()
+            orig_shape = heightmap.shape
+            filtered_flat_heightmap = self.filter.filter(heightmap.reshape(-1))
+            self._filtered_heightmap = filtered_flat_heightmap.reshape(orig_shape)
