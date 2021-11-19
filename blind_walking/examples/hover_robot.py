@@ -91,7 +91,8 @@ def main():  # noqa: C901
     dy = 0
     grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
     grid_angles = [(0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.1, 0)]
-    grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.8, 0)]
+    grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.5, 0)]
+    ray_origins = ["body", "body", "body", "body", "head"]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
     num_timesteps = args.n_timesteps
 
@@ -103,6 +104,7 @@ def main():  # noqa: C901
                 grid_size=grid_sizes[i],
                 grid_angle=grid_angles[i],
                 transform_angle=grid_transforms[i],
+                ray_origin=ray_origins[i],
                 noisy_reading=False,
                 name=grid_names[i],
             )

@@ -471,13 +471,16 @@ class A1(minitaur.Minitaur):
         depth_view = np.array(depth_view).reshape(grid_size)
         return depth_view
 
-    def GetLocalTerrainDepthByAngle(self, grid_angle=(0.1, 0.1), grid_size=[10, 10], transform_angle=(0, 0)):
+    def GetLocalTerrainDepthByAngle(
+        self, grid_angle=(0.1, 0.1), grid_size=[10, 10], transform_angle=(0, 0), ray_origin="body"
+    ):
         """Returns the depth of the terrain as seen from a single point.
 
         Args:
           grid_angle: Angle between each ray
           grid_size: Number of squares along one side of grid
           transform_angle: The angle to transform the terrain view
+          ray_origin: The origin of where the rays come from - "body" or "head"
 
         Returns:
           N x M numpy array of floats
@@ -497,8 +500,14 @@ class A1(minitaur.Minitaur):
         # Calculate origin position, slightly below base position
         orientation = self.GetTrueBaseOrientation()
         rot_matrix = self._pybullet_client.getMatrixFromQuaternion(orientation)
-        local_up_vec = rot_matrix[6:]
-        tmp_coord = 0.07 * np.array([1.0, 1.0, -1.0]) * np.asarray(local_up_vec)
+        if ray_origin == "body":
+            local_axis_vec = rot_matrix[6:]
+            tmp_coord = 0.07 * np.array([1.0, 1.0, -1.0]) * np.asarray(local_axis_vec)
+        elif ray_origin == "head":
+            local_axis_vec = rot_matrix[:3]
+            tmp_coord = 0.27 * np.array([1.0, -1.0, -1.0]) * np.asarray(local_axis_vec)
+        else:
+            raise Exception("Ray origin specified does not exist")
         origin_world = base_pos + tmp_coord
         # Transform origin_world to robot base yaw frame
         origin_base = np.array(origin_world)
@@ -545,13 +554,12 @@ class A1(minitaur.Minitaur):
 
         # # For visualising rays
         # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
-        # if len(self.ball_ids) == 0:
-        #     ballid = self._pybullet_client.createMultiBody(
-        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
-        #     )
-        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
-        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
-        #     self.ball_ids.append(ballid)
+        # ballid = self._pybullet_client.createMultiBody(
+        #     baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
+        # )
+        # self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[0, 0, 1, 1])
+        # self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        # self.ball_ids.append(ballid)
         # for coord in hit_coordinates:
         #     ballid = self._pybullet_client.createMultiBody(
         #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]

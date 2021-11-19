@@ -612,6 +612,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         grid_angle: typing.Tuple[float] = (0.1, 0.1),
         grid_size: typing.Tuple[int] = (10, 10),
         transform_angle: typing.Tuple[float] = (0, 0),
+        ray_origin: typing.Text = "body",
         lower_bound: _FLOAT_OR_ARRAY = 0.0,
         upper_bound: _FLOAT_OR_ARRAY = 8.0,
         name: typing.Text = "LocalTerrainDepthByAngle",
@@ -633,6 +634,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         self.grid_angle = grid_angle
         self.grid_size = grid_size
         self.transform_angle = transform_angle
+        self.ray_origin = ray_origin
 
         shape = (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthByAngleSensor, self).__init__(
@@ -654,7 +656,10 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
         heightmap = self._env.robot.GetLocalTerrainDepthByAngle(
-            grid_angle=self.grid_angle, grid_size=self.grid_size, transform_angle=self.transform_angle
+            grid_angle=self.grid_angle,
+            grid_size=self.grid_size,
+            transform_angle=self.transform_angle,
+            ray_origin=self.ray_origin,
         ).reshape(1, self.grid_size[0], self.grid_size[1])
         # Add noise
         if self._noisy_reading:
