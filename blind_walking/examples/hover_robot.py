@@ -14,7 +14,7 @@ from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
-from blind_walking.envs.sensors import environment_sensors
+from blind_walking.envs.sensors import robot_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
 from gym.wrappers import Monitor
@@ -128,17 +128,18 @@ def main():  # noqa: C901
 
     if not args.no_hover:
         # Environment parameters
-        robot_sensor_list = []
-        env_sensor_list = [
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+        robot_sensor_list = [
+            robot_sensors.LocalTerrainDepthByAngleSensor(
                 grid_size=grid_sizes[i],
                 grid_angle=grid_angles[i],
                 transform_angle=grid_transforms[i],
                 noisy_reading=False,
+                use_filter=True,
                 name=grid_names[i],
             )
             for i in range(len(grid_sizes))
         ]
+        env_sensor_list = []
         env_randomizer_list = []
         env_modifier_list = [MultipleTerrain()]
         obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
