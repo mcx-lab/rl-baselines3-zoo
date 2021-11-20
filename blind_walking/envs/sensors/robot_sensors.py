@@ -632,6 +632,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
         use_filter: bool = False,
+        filter_every: int = 1,
     ) -> None:
         """Constructs LocalTerrainDepthByAngleSensor.
 
@@ -642,6 +643,10 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
           upper_bound: the upper bound of the terrain view.
           name: the name of the sensor.
           dtype: data type of sensor value.
+          use_filter: Whether to apply filtering,
+          filter_every: Filter will receive observation every
+            (filter_every) simulation steps. Only used if
+            use_filter is True.
         """
         self._env = None
         self._noisy_reading = noisy_reading
@@ -649,6 +654,7 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
         self.grid_size = grid_size
         self.transform_angle = transform_angle
         self.use_filter = use_filter
+        self.filter_every = filter_every
 
         shape = (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthByAngleSensor, self).__init__(
@@ -682,15 +688,20 @@ class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
     def on_simulation_step(self):
         if self.use_filter:
             if not hasattr(self, "filter"):
+                # First time setup of filter
                 self.filter = action_filter.ActionFilterButter(
                     lowcut=[0.0],
                     highcut=[6.0],  # Hz
-                    sampling_rate=1 / self._robot.time_step,
+                    sampling_rate=1 / (self._robot.time_step * self.filter_every),
                     order=1,
                     num_joints=np.prod(self.get_shape()),
                 )
+                self.filter_counter = 0
 
-            heightmap = self._get_heightmap()
-            orig_shape = heightmap.shape
-            filtered_flat_heightmap = self.filter.filter(heightmap.reshape(-1))
-            self._filtered_heightmap = filtered_flat_heightmap.reshape(orig_shape)
+            if self.filter_counter % self.filter_every == 0:
+                heightmap = self._get_heightmap()
+                orig_shape = heightmap.shape
+                filtered_flat_heightmap = self.filter.filter(heightmap.reshape(-1))
+                self._filtered_heightmap = filtered_flat_heightmap.reshape(orig_shape)
+
+            self.filter_counter += 1
