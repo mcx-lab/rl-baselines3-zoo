@@ -20,6 +20,7 @@ def test_local_terrain_depth_by_angle_sensor_filtered():
         noisy_reading=True,
         name="depthmiddle",
         use_filter=True,
+        filter_every=7,
     )
 
     env = A1GymEnv(
@@ -30,8 +31,11 @@ def test_local_terrain_depth_by_angle_sensor_filtered():
     )
     env.reset()
     sensor.on_simulation_step = count_function_calls_wrapper(sensor.on_simulation_step)
+    env.robot.GetLocalTerrainDepthByAngle = count_function_calls_wrapper(env.robot.GetLocalTerrainDepthByAngle)
     env.step(env.action_space.sample())
+    assert sensor.filter_every == 7
     assert sensor.on_simulation_step.calls == env._num_action_repeat
+    assert env.robot.GetLocalTerrainDepthByAngle.calls == env._num_action_repeat // sensor.filter_every
 
 
 if __name__ == "__main__":
