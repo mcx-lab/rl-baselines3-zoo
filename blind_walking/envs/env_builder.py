@@ -63,6 +63,7 @@ def build_regular_env(
                 transform_angle=(-0.6, -0.4),
                 noisy_reading=True,
                 use_filter=True,
+                filter_every=30,
                 name="depthfr",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -71,6 +72,7 @@ def build_regular_env(
                 transform_angle=(-0.6, 0.4),
                 noisy_reading=True,
                 use_filter=True,
+                filter_every=30,
                 name="depthfl",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -79,6 +81,7 @@ def build_regular_env(
                 transform_angle=(0.4, -0.4),
                 noisy_reading=True,
                 use_filter=True,
+                filter_every=30,
                 name="depthrr",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -87,6 +90,7 @@ def build_regular_env(
                 transform_angle=(0.4, 0.4),
                 noisy_reading=True,
                 use_filter=True,
+                filter_every=30,
                 name="depthrl",
             ),
             robot_sensors.LocalTerrainDepthByAngleSensor(
@@ -95,6 +99,7 @@ def build_regular_env(
                 transform_angle=(-0.8, 0),
                 noisy_reading=True,
                 use_filter=True,
+                filter_every=30,
                 name="depthmiddle",
             ),
         ]
