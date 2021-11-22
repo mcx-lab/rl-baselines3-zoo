@@ -128,12 +128,12 @@ class TrainMultiple(EnvModifier):
             level -= 1
         return level
 
-    def _reset_to_stairs(self, level):
+    def _reset_to_stairs(self, level, at_bottom=False):
         """Reset position to just before the stairs of a given level"""
         x_pos = self.hf_length + level * (self.stair_length + self.stair_gap)
         z_pos = 0
-        # Equal chances to encouter going up and down the stair level
-        if np.random.uniform() < 0.4:
+        if not at_bottom and np.random.uniform() < 0.4:
+            # Set position to be at the top of stairs
             x_pos += self.stair_gap + self.stair_length / 2 - 1
             z_pos = self.step_rise_levels[level] * self.num_steps
         self.adjust_position = (x_pos, 0, z_pos)
@@ -160,9 +160,9 @@ class TrainMultiple(EnvModifier):
         if self._reset_manual_override == "heightfield":
             self._reset_to_heightfield()
         elif self._reset_manual_override == "stairs_0":
-            self._reset_to_stairs(level=0)
+            self._reset_to_stairs(level=0, at_bottom=True)
         elif self._reset_manual_override == "stairs_1":
-            self._reset_to_stairs(level=1)
+            self._reset_to_stairs(level=1, at_bottom=True)
         else:
             raise ValueError(f"Invalid override {self._reset_manual_override}")
 
