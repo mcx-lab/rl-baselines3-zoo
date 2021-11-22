@@ -471,13 +471,16 @@ class A1(minitaur.Minitaur):
         depth_view = np.array(depth_view).reshape(grid_size)
         return depth_view
 
-    def GetLocalTerrainDepthByAngle(self, grid_angle=(0.1, 0.1), grid_size=[10, 10], transform_angle=(0, 0)):
+    def GetLocalTerrainDepthByAngle(
+        self, grid_angle=(0.1, 0.1), grid_size=[10, 10], transform_angle=(0, 0), ray_origin="body"
+    ):
         """Returns the depth of the terrain as seen from a single point.
 
         Args:
           grid_angle: Angle between each ray
           grid_size: Number of squares along one side of grid
           transform_angle: The angle to transform the terrain view
+          ray_origin: The origin of where the rays come from - "body" or "head"
 
         Returns:
           N x M numpy array of floats
@@ -485,7 +488,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, 'ball_ids'):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 36:
+        # if len(self.ball_ids) > 40:
         #    for i in self.ball_ids:
         #        self._pybullet_client.removeBody(i)
         #    self.ball_ids = []
@@ -494,8 +497,19 @@ class A1(minitaur.Minitaur):
         rpy = self.GetTrueBaseRollPitchYaw()
         imaginary_wall_dist = 8.0
 
+        # Calculate origin position, slightly below base position
+        orientation = self.GetTrueBaseOrientation()
+        rot_matrix = self._pybullet_client.getMatrixFromQuaternion(orientation)
+        if ray_origin == "body":
+            local_axis_vec = rot_matrix[6:]
+            tmp_coord = 0.07 * np.array([1.0, 1.0, -1.0]) * np.asarray(local_axis_vec)
+        elif ray_origin == "head":
+            local_axis_vec = rot_matrix[:3]
+            tmp_coord = 0.27 * np.array([1.0, -1.0, -1.0]) * np.asarray(local_axis_vec)
+        else:
+            raise Exception("Ray origin specified does not exist")
+        origin_world = base_pos + tmp_coord
         # Transform origin_world to robot base yaw frame
-        origin_world = base_pos
         origin_base = np.array(origin_world)
         origin_base[:2] = transform_to_rotated_frame(origin_world[:2], rpy[2])
 
@@ -525,7 +539,7 @@ class A1(minitaur.Minitaur):
                 target_coords.append((x, y, z))
 
         # Calculate depth data
-        origin_coords = [base_pos] * len(target_coords)
+        origin_coords = [origin_world] * len(target_coords)
         hit_coordinates = []
         ray_intersection_infos = self._pybullet_client.rayTestBatch(origin_coords, target_coords)
         for i, info in enumerate(ray_intersection_infos):
@@ -540,6 +554,12 @@ class A1(minitaur.Minitaur):
 
         # # For visualising rays
         # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
+        # ballid = self._pybullet_client.createMultiBody(
+        #     baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
+        # )
+        # self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[0, 0, 1, 1])
+        # self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        # self.ball_ids.append(ballid)
         # for coord in hit_coordinates:
         #     ballid = self._pybullet_client.createMultiBody(
         #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]

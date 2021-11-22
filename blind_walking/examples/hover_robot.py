@@ -83,16 +83,18 @@ def main():  # noqa: C901
     )
     parser.add_argument("--no-plot", action="store_true", default=False, help="Do not generate heightmap plots")
     parser.add_argument("--record", action="store_true", default=False, help="Record video")
+    parser.add_argument("-n", "--n-timesteps", help="number of timesteps", default=1000, type=int)
     args = parser.parse_args()
 
     # Data parameters
     dx = 0.05
     dy = 0
     grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
-    grid_angles = [(0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.2, 0.2), (0.1, 0)]
-    grid_transforms = [(-0.6, -0.4), (-0.6, 0.4), (0.4, -0.4), (0.4, 0.4), (-0.8, 0)]
+    grid_angles = [(0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.1, 0)]
+    grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.5, 0)]
+    ray_origins = ["body", "body", "body", "body", "head"]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
-    num_timesteps = 1000
+    num_timesteps = args.n_timesteps
 
     if not args.no_hover:
         # Environment parameters
@@ -102,6 +104,7 @@ def main():  # noqa: C901
                 grid_size=grid_sizes[i],
                 grid_angle=grid_angles[i],
                 transform_angle=grid_transforms[i],
+                ray_origin=ray_origins[i],
                 noisy_reading=False,
                 name=grid_names[i],
             )
@@ -164,37 +167,25 @@ def main():  # noqa: C901
         plotter.plot(columns=[-1], ylim=datalim, savedir=dirpath)
 
         # Generate GIF of heightmap over time
-        if len(grid_sizes) == 1 and (grid_sizes[0][0] == 1 or grid_sizes[0][1] == 1):
-            # bar graph plot
-            for i in range(num_timesteps):
-                plt.figure()
-                data = np.array(plotter.data[i])[:, 0]
-                plt.bar(x=np.arange(len(data)), height=np.flip(data))
-                plt.ylim(datalim)
-                plt.savefig(os.path.join(dirpath, f"tmp{i}"))
-                plt.close()
-            print("Generated images for video")
-            # build gif
-            files = glob.glob(os.path.join(dirpath, "tmp*.png"))
-            files.sort(key=alphanum_key)
-            heightmap_video_path = os.path.join(dirpath, "hm.mp4")
-            with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
-                for f in files:
-                    image = imageio.imread(f)
-                    writer.append_data(image)
-            print("Created heightmap video")
-            # remove images
-            for f in files:
-                os.remove(f)
-            print("Removed unnessary image files")
-        else:
-            # 3d bar plot
-            grid_end_indices = [np.prod(s) for s in grid_sizes]
-            grid_end_indices = np.cumsum(grid_end_indices)
-            subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
-            for t in range(num_timesteps):
-                fig = plt.figure()
-                for i in range(len(grid_sizes)):
+        hmobs_startindex = 0
+        grid_end_indices = [np.prod(s) for s in grid_sizes]
+        grid_end_indices = np.cumsum(grid_end_indices) + hmobs_startindex
+        subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
+        for t in range(num_timesteps):
+            fig = plt.figure()
+            for i in range(len(grid_sizes)):
+                start_index = hmobs_startindex if i == 0 else grid_end_indices[i - 1]
+                data = plotter.data[t][start_index : grid_end_indices[i]]
+                if any(np.array(grid_sizes[i]) == 1):
+                    # 2d bar plot
+                    ax = fig.add_subplot(int(subplot_size + str(i + 1)))
+                    ax.bar(x=np.arange(len(data)), height=data)
+                    ax.set_xticklabels([])
+                    ax.set_ylim(datalim)
+                    ax.yaxis.tick_right()
+                    ax.set_title(grid_names[i])
+                else:
+                    # 3d bar plot
                     ax = fig.add_subplot(int(subplot_size + str(i + 1)), projection="3d")
                     x = np.arange(grid_sizes[i][0])
                     y = np.arange(grid_sizes[i][1])
@@ -202,30 +193,28 @@ def main():  # noqa: C901
                     x, y = xx.ravel(), yy.ravel()
                     z = np.zeros(len(x))
                     dx = dy = 1
-                    start_index = 0 if i == 0 else grid_end_indices[i - 1]
-                    dz = plotter.data[t][start_index : grid_end_indices[i]]
+                    dz = data
                     ax.set_zlim(datalim)
                     ax.set_xticklabels([])
                     ax.set_yticklabels([])
-                    # ax.set_zticklabels([])
                     ax.bar3d(x, y, z, dx, dy, dz, shade=True)
                     ax.set_title(grid_names[i])
-                plt.savefig(os.path.join(dirpath, f"tmp{t}"))
-                plt.close()
-            print("Generated images for video")
-            # build gif
-            files = glob.glob(os.path.join(dirpath, "tmp*.png"))
-            files.sort(key=alphanum_key)
-            heightmap_video_path = os.path.join(dirpath, "hm.mp4")
-            with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
-                for f in files:
-                    image = imageio.imread(f)
-                    writer.append_data(image)
-            print("Created heightmap video")
-            # remove images
+            plt.savefig(os.path.join(dirpath, f"tmp{t}"))
+            plt.close()
+        print("Generated images for video")
+        # build gif
+        files = glob.glob(os.path.join(dirpath, "tmp*.png"))
+        files.sort(key=alphanum_key)
+        heightmap_video_path = os.path.join(dirpath, "hm.mp4")
+        with imageio.get_writer(heightmap_video_path, mode="I", fps=30) as writer:
             for f in files:
-                os.remove(f)
-            print("Removed unnessary image files")
+                image = imageio.imread(f)
+                writer.append_data(image)
+        print("Created heightmap video")
+        # remove images
+        for f in files:
+            os.remove(f)
+        print("Removed unnessary image files")
 
         # stitch both videos together
         if args.record:
