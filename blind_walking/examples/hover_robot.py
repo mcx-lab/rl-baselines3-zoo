@@ -4,14 +4,12 @@ import argparse
 import glob
 import io
 import os
+
 import cv2
 import gym
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import Parallel, delayed
-from gym.wrappers import Monitor
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
@@ -19,7 +17,11 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
+from gym.wrappers import Monitor
+from joblib import Parallel, delayed
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scripts.plot_stats import Plotter, alphanum_key, stitch_videos
+
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -90,9 +92,9 @@ def main():  # noqa: C901
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
-    grid_units = [(0.1, 0.1), (0.1, 0.1), (0.1, 0.1), (0.1, 0.1), (0.05, 0.05)]
-    grid_transforms = [(0.25, -0.2), (0.25, 0.2), (-0.25, -0.2), (-0.25, 0.2), (0.25, 0)]
+    grid_sizes = [(7, 7), (7, 7), (7, 7), (7, 7), (10, 1)]
+    grid_units = [(0.05, 0.05), (0.05, 0.05), (0.05, 0.05), (0.05, 0.05), (0.05, 0.05)]
+    grid_transforms = [(0.25, -0.15), (0.25, 0.15), (-0.25, -0.15), (-0.25, 0.15), (0.25, 0)]
     ray_origins = ["body", "body", "body", "body", "head"]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
     num_timesteps = args.n_timesteps
