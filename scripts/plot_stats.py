@@ -175,5 +175,5 @@ if __name__ == "__main__":
                 in_path1=replay_video_path,
                 in_path2=heightmap_video_path,
                 out_path=os.path.join(dirpath, "replay_and_hm.mp4"),
-                verbose=1,
+                verbose=0,
             )

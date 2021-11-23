@@ -9,6 +9,7 @@ import gym
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
+from joblib import Parallel, delayed
 from gym.wrappers import Monitor
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
@@ -89,9 +90,9 @@ def main():  # noqa: C901
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
-    grid_angles = [(0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.3, 0.3), (0.1, 0)]
-    grid_transforms = [(-0.6, -0.5), (-0.6, 0.5), (0.4, -0.5), (0.4, 0.5), (-0.5, 0)]
+    grid_sizes = [(4, 4), (4, 4), (4, 4), (4, 4), (10, 1)]
+    grid_units = [0.1, 0.1, 0.1, 0.1, 0.05]
+    grid_transforms = [(0.25, -0.25), (0.25, 0.25), (-0.25, -0.25), (-0.25, 0.25), (0.25, 0)]
     ray_origins = ["body", "body", "body", "body", "head"]
     grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
     num_timesteps = args.n_timesteps
@@ -100,10 +101,10 @@ def main():  # noqa: C901
         # Environment parameters
         robot_sensor_list = []
         env_sensor_list = [
-            environment_sensors.LocalTerrainDepthByAngleSensor(
+            environment_sensors.LocalTerrainDepthSensor(
                 grid_size=grid_sizes[i],
-                grid_angle=grid_angles[i],
-                transform_angle=grid_transforms[i],
+                grid_unit=grid_units[i],
+                transform=grid_transforms[i],
                 ray_origin=ray_origins[i],
                 noisy_reading=False,
                 name=grid_names[i],
@@ -157,7 +158,7 @@ def main():  # noqa: C901
         print("Collected data")
 
     if not args.no_plot:
-        datalim = (0.2, 1.4)
+        datalim = (0.2, 1.0)
         dirpath = os.path.dirname(__file__)
         datapath = os.path.join(dirpath, "heightmap.npy")
         data = np.load(datapath)
@@ -171,7 +172,8 @@ def main():  # noqa: C901
         grid_end_indices = [np.prod(s) for s in grid_sizes]
         grid_end_indices = np.cumsum(grid_end_indices) + hmobs_startindex
         subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
-        for t in range(num_timesteps):
+
+        def get_pic_of_timestep(t):
             fig = plt.figure()
             for i in range(len(grid_sizes)):
                 start_index = hmobs_startindex if i == 0 else grid_end_indices[i - 1]
@@ -201,6 +203,9 @@ def main():  # noqa: C901
                     ax.set_title(grid_names[i])
             plt.savefig(os.path.join(dirpath, f"tmp{t}"))
             plt.close()
+
+        Parallel(n_jobs=4)(delayed(get_pic_of_timestep)(t) for t in range(num_timesteps))
+        # for t in range(num_timesteps): get_pic_of_timestep(t)  # No parallelism
         print("Generated images for video")
         # build gif
         files = glob.glob(os.path.join(dirpath, "tmp*.png"))
@@ -222,7 +227,7 @@ def main():  # noqa: C901
                 in_path1=replay_video_path,
                 in_path2=heightmap_video_path,
                 out_path=os.path.join(dirpath, "replay_and_hm.mp4"),
-                verbose=1,
+                verbose=0,
             )
 
 
