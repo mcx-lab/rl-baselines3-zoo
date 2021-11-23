@@ -4,14 +4,12 @@ import argparse
 import glob
 import io
 import os
+
 import cv2
 import gym
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import Parallel, delayed
-from gym.wrappers import Monitor
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
@@ -19,7 +17,11 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
+from gym.wrappers import Monitor
+from joblib import Parallel, delayed
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scripts.plot_stats import Plotter, alphanum_key, stitch_videos
+
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -108,6 +110,7 @@ def main():  # noqa: C901
                 ray_origin=ray_origins[i],
                 noisy_reading=False,
                 name=grid_names[i],
+                visualize=True,
             )
             for i in range(len(grid_sizes))
         ]
@@ -141,6 +144,8 @@ def main():  # noqa: C901
         zero_action = np.zeros(12)
         position = default_position.copy()
         for _ in range(num_timesteps):
+            if (_) % 100 == 0:
+                print(_)
             # Update position
             position[0] += dx
             position[1] += dy
