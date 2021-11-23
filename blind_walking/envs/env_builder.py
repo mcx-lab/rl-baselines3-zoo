@@ -69,6 +69,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfr",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(7, 7),
@@ -77,6 +78,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfl",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(7, 7),
@@ -85,6 +87,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrr",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(7, 7),
@@ -93,6 +96,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrl",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(10, 1),
@@ -101,6 +105,7 @@ def build_regular_env(
                 ray_origin="head",
                 noisy_reading=False,
                 name="depthmiddle",
+                enc_name="visual",
             ),
         ]
 
@@ -115,7 +120,7 @@ def build_regular_env(
         task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
+        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
