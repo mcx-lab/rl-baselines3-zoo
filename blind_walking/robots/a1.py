@@ -453,12 +453,12 @@ class A1(minitaur.Minitaur):
           N x M numpy array of floats
         """
         # # For visualising rays
-        # if not hasattr(self, 'ball_ids'):
+        # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
         # if len(self.ball_ids) > 70:
-        #    for i in self.ball_ids:
-        #        self._pybullet_client.removeBody(i)
-        #    self.ball_ids = []
+        #     for i in self.ball_ids:
+        #         self._pybullet_client.removeBody(i)
+        #     self.ball_ids = []
 
         base_pos = self.GetBasePosition()
         rpy = self.GetTrueBaseRollPitchYaw()
@@ -481,11 +481,25 @@ class A1(minitaur.Minitaur):
         origin_base = np.array(origin_world)
         origin_base[:2] = transform_to_rotated_frame(origin_world[:2], rpy[2])
 
-        # Calculate target coordinates
+        # Calculate 2d target coordinates
         target_coords_base_2d = get_grid_coordinates(grid_unit, grid_size) + origin_base[:2] + transform
-        # Transform coordinates to world frame
+        # Transform 2d coordinates to world frame
         target_coords_world_2d = np.array([transform_to_rotated_frame(tcb, -rpy[2]) for tcb in target_coords_base_2d])
-        target_coords = [np.concatenate([tcw, [-0.001]]) for tcw in target_coords_world_2d]
+        # Calculate target z position
+        test_target_coords = [np.concatenate([tcw, [-0.001]]) for tcw in target_coords_world_2d]
+        test_origin_coords = [np.concatenate([tcw, [base_pos[2]]]) for tcw in target_coords_world_2d]
+        test_hit_coordinates = []
+        test_ray_intersection_infos = self._pybullet_client.rayTestBatch(test_origin_coords, test_target_coords)
+        for i, info in enumerate(test_ray_intersection_infos):
+            if info[0] == -1:
+                test_hit_position = test_target_coords[i]
+            else:
+                test_hit_position = info[3]
+            test_hit_coordinates.append(test_hit_position)
+        # Form 3d target coordinates
+        target_coords = [
+            np.concatenate([tcw, [test_hit_coordinates[i][2] - 0.001]]) for i, tcw in enumerate(target_coords_world_2d)
+        ]
 
         # Calculate depth data
         origin_coords = [origin_world] * len(target_coords)
