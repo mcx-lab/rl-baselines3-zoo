@@ -192,9 +192,9 @@ def get_grid_coordinates(grid_unit, grid_size):
       grid_size array of grid coordinates
     """
     kx = grid_size[0] / 2 - 0.5
-    xvalues = np.linspace(-kx * grid_unit, kx * grid_unit, num=grid_size[0])
+    xvalues = np.linspace(-kx * grid_unit[0], kx * grid_unit[0], num=grid_size[0])
     ky = grid_size[1] / 2 - 0.5
-    yvalues = np.linspace(-ky * grid_unit, ky * grid_unit, num=grid_size[1])
+    yvalues = np.linspace(-ky * grid_unit[1], ky * grid_unit[1], num=grid_size[1])
     xx, yy = np.meshgrid(xvalues, yvalues)
     coordinates = np.array(list(zip(xx.flatten(), yy.flatten())))
     return coordinates
@@ -440,7 +440,7 @@ class A1(minitaur.Minitaur):
         z_coordinates = np.array(z_coordinates).reshape(grid_size)
         return z_coordinates
 
-    def GetLocalTerrainDepth(self, grid_unit=0.1, grid_size=[10, 10], transform=(0, 0), ray_origin="body"):
+    def GetLocalTerrainDepth(self, grid_unit=(0.1, 0.1), grid_size=[10, 10], transform=(0, 0), ray_origin="body"):
         """Returns the depth of the terrain as seen from a single point.
 
         Args:

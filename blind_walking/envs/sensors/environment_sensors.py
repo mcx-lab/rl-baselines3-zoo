@@ -534,7 +534,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         noisy_reading: bool = True,
-        grid_unit: float = 0.1,
+        grid_unit: typing.Tuple[float] = (0.1, 0.1),
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
         ray_origin: typing.Text = "body",
