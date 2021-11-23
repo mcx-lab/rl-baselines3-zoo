@@ -537,9 +537,9 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         grid_unit: float = 0.1,
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
-        eachfoot: bool = False,
-        lower_bound: _FLOAT_OR_ARRAY = 0,
-        upper_bound: _FLOAT_OR_ARRAY = 1,
+        ray_origin: typing.Text = "body",
+        lower_bound: _FLOAT_OR_ARRAY = 0.0,
+        upper_bound: _FLOAT_OR_ARRAY = 8.0,
         name: typing.Text = "LocalTerrainDepth",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
@@ -559,12 +559,9 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         self.grid_unit = grid_unit
         self.grid_size = grid_size
         self.transform = transform
-        self.eachfoot = eachfoot
+        self.ray_origin = ray_origin
 
-        if eachfoot:
-            name = f"{name}-eachfoot"
-
-        shape = (grid_size[0] * grid_size[1] * 4,) if self.eachfoot else (1, grid_size[0], grid_size[1])
+        shape = (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthSensor, self).__init__(
             name=name,
             shape=shape,
@@ -583,23 +580,17 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         """Returns the local distances to ground"""
-        if self.eachfoot:
-            foot_positions = self._env.robot.GetFootPositionsInBaseFrame()
-            heightmap = []
-            for foot_pos in foot_positions:
-                transform = np.array(self.transform) + np.array(foot_pos[:2])
-                local_heightmap = self._env.robot.GetLocalTerrainDepth(
-                    grid_unit=self.grid_unit, grid_size=self.grid_size, transform=transform
-                )
-                heightmap = np.concatenate((heightmap, local_heightmap), axis=None)
-        else:
-            heightmap = self._env.robot.GetLocalTerrainDepth(
-                grid_unit=self.grid_unit, grid_size=self.grid_size, transform=self.transform
-            ).reshape(1, self.grid_size[0], self.grid_size[1])
-
+        heightmap = self._env.robot.GetLocalTerrainDepth(
+            grid_unit=self.grid_unit,
+            grid_size=self.grid_size,
+            transform=self.transform,
+            ray_origin=self.ray_origin,
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
+        # Add noise
         if self._noisy_reading:
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
-            heightmap = np.maximum(heightmap, 0)
+        # Clip readings
+        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
         return heightmap
 
 
