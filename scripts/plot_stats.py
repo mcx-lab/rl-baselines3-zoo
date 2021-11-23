@@ -45,27 +45,6 @@ class Plotter:
         plt.close()
 
 
-def get_img_from_fig(fig, dpi=24):
-    io_buf = io.BytesIO()
-    fig.savefig(io_buf, format="raw", dpi=dpi)
-    io_buf.seek(0)
-    img_arr = np.reshape(
-        np.frombuffer(io_buf.getvalue(), dtype=np.uint8), newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1)
-    )
-    io_buf.close()
-    return img_arr
-
-
-def get_frames_from_video_path(video_path: str):
-    vidcap = cv2.VideoCapture(video_path)
-    images = []
-    success = True
-    while success:
-        success, image = vidcap.read()
-        images.append(image)
-    return images
-
-
 def iter_video_frames(video_path: Union[Path, str]):
     """Iterate over frames in a video.
 
@@ -192,21 +171,9 @@ if __name__ == "__main__":
         print("Removed unnessary image files")
 
         if args.stitch_path:
-            replay_video_path = args.stitch_path
-            print(f"Stitching video from {replay_video_path}")
-            replay_frames = get_frames_from_video_path(replay_video_path)[:num_timesteps]
-            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:num_timesteps]
-
-            assert len(replay_frames) == len(heightmap_frames)
-            replay_and_heightmap_frames = []
-            for rp, hm in zip(replay_frames, heightmap_frames):
-                dsize = rp.shape[1], rp.shape[0]
-                hm = cv2.resize(hm, dsize=dsize)
-                rp_and_hm = cv2.hconcat([rp, hm])
-                replay_and_heightmap_frames.append(rp_and_hm)
-
-            stitch_video_path = os.path.join(dirpath, "replay_and_hm.mp4")
-            with imageio.get_writer(stitch_video_path, mode="I", fps=30) as writer:
-                for rp_and_hm in replay_and_heightmap_frames:
-                    writer.append_data(rp_and_hm)
-            print("Finished stitching videos")
+            stitch_videos(
+                in_path1=replay_video_path,
+                in_path2=heightmap_video_path,
+                out_path=os.path.join(dirpath, "replay_and_hm.mp4"),
+                verbose=1,
+            )

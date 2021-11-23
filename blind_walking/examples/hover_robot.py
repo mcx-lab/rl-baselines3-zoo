@@ -18,7 +18,7 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
-from scripts.plot_stats import Plotter, get_img_from_fig, get_frames_from_video_path, alphanum_key
+from scripts.plot_stats import Plotter, alphanum_key, stitch_videos
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
@@ -218,23 +218,12 @@ def main():  # noqa: C901
 
         # stitch both videos together
         if args.record:
-            print(f"Stitching video from {replay_video_path}")
-            replay_frames = get_frames_from_video_path(replay_video_path)[:num_timesteps]
-            heightmap_frames = get_frames_from_video_path(heightmap_video_path)[:num_timesteps]
-
-            assert len(replay_frames) == len(heightmap_frames)
-            replay_and_heightmap_frames = []
-            for rp, hm in zip(replay_frames, heightmap_frames):
-                dsize = rp.shape[1], rp.shape[0]
-                hm = cv2.resize(hm, dsize=dsize)
-                rp_and_hm = cv2.hconcat([rp, hm])
-                replay_and_heightmap_frames.append(rp_and_hm)
-
-            stitch_video_path = os.path.join(dirpath, "replay_and_hm.mp4")
-            with imageio.get_writer(stitch_video_path, mode="I", fps=30) as writer:
-                for rp_and_hm in replay_and_heightmap_frames:
-                    writer.append_data(rp_and_hm)
-            print("Finished stitching videos")
+            stitch_videos(
+                in_path1=replay_video_path,
+                in_path2=heightmap_video_path,
+                out_path=os.path.join(dirpath, "replay_and_hm.mp4"),
+                verbose=1,
+            )
 
 
 if __name__ == "__main__":
