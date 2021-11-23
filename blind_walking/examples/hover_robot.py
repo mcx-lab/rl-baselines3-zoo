@@ -204,7 +204,7 @@ def main():  # noqa: C901
             plt.savefig(os.path.join(dirpath, f"tmp{t}"))
             plt.close()
 
-        Parallel(n_jobs=4)(delayed(get_pic_of_timestep)(t) for t in range(num_timesteps))
+        Parallel(n_jobs=2)(delayed(get_pic_of_timestep)(t) for t in range(num_timesteps))
         # for t in range(num_timesteps): get_pic_of_timestep(t)  # No parallelism
         print("Generated images for video")
         # build gif

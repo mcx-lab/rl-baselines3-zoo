@@ -10,6 +10,7 @@ import cv2
 import itertools
 from typing import Union
 from pathlib import Path
+from joblib import Parallel, delayed
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -125,7 +126,8 @@ if __name__ == "__main__":
         grid_end_indices = [np.prod(s) for s in grid_sizes]
         grid_end_indices = np.cumsum(grid_end_indices) + hmobs_startindex
         subplot_size = "2" + str(int(np.ceil(len(grid_sizes) / 2)))
-        for t in range(num_timesteps):
+
+        def get_pic_of_timestep(t):
             fig = plt.figure()
             for i in range(len(grid_sizes)):
                 start_index = hmobs_startindex if i == 0 else grid_end_indices[i - 1]
@@ -155,6 +157,9 @@ if __name__ == "__main__":
                     ax.set_title(grid_names[i])
             plt.savefig(os.path.join(dirpath, f"tmp{t}"))
             plt.close()
+
+        Parallel(n_jobs=2)(delayed(get_pic_of_timestep)(t) for t in range(num_timesteps))
+        # for t in range(num_timesteps): get_pic_of_timestep(t)  # No parallelism
         print("Generated images for video")
         # build gif
         files = glob.glob(os.path.join(dirpath, "tmp*.png"))
