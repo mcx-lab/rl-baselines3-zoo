@@ -538,11 +538,12 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
         ray_origin: typing.Text = "body",
-        lower_bound: _FLOAT_OR_ARRAY = 0.0,
+        lower_bound: _FLOAT_OR_ARRAY = 0.1,
         upper_bound: _FLOAT_OR_ARRAY = 8.0,
         name: typing.Text = "LocalTerrainDepth",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
+        visualize: bool = False,
     ) -> None:
         """Constructs LocalTerrainDepthSensor.
 
@@ -553,6 +554,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
           upper_bound: the upper bound of the terrain view.
           name: the name of the sensor.
           dtype: data type of sensor value.
+          visualize: if True, renders heightmap locations
         """
         self._env = None
         self._noisy_reading = noisy_reading
@@ -560,6 +562,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         self.grid_size = grid_size
         self.transform = transform
         self.ray_origin = ray_origin
+        self.visualize = visualize
 
         shape = (1, grid_size[0], grid_size[1])
         super(LocalTerrainDepthSensor, self).__init__(
@@ -585,12 +588,13 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             grid_size=self.grid_size,
             transform=self.transform,
             ray_origin=self.ray_origin,
+            visualize=self.visualize,
         ).reshape(1, self.grid_size[0], self.grid_size[1])
         # Add noise
         if self._noisy_reading:
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
         # Clip readings
-        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
+        heightmap = np.minimum(np.maximum(heightmap, self.get_lower_bound()), self.get_upper_bound())
         return heightmap
 
 

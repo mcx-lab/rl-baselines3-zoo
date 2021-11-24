@@ -440,7 +440,9 @@ class A1(minitaur.Minitaur):
         z_coordinates = np.array(z_coordinates).reshape(grid_size)
         return z_coordinates
 
-    def GetLocalTerrainDepth(self, grid_unit=(0.1, 0.1), grid_size=[10, 10], transform=(0, 0), ray_origin="body"):
+    def GetLocalTerrainDepth(
+        self, grid_unit=(0.1, 0.1), grid_size=[10, 10], transform=(0, 0), ray_origin="body", visualize=False
+    ):
         """Returns the depth of the terrain as seen from a single point.
 
         Args:
@@ -452,13 +454,14 @@ class A1(minitaur.Minitaur):
         Returns:
           N x M numpy array of floats
         """
-        # # For visualising rays
-        # if not hasattr(self, "ball_ids"):
-        #     self.ball_ids = []
-        # if len(self.ball_ids) > 70:
-        #     for i in self.ball_ids:
-        #         self._pybullet_client.removeBody(i)
-        #     self.ball_ids = []
+        if visualize:
+            # For visualising rays
+            if not hasattr(self, "ball_ids"):
+                self.ball_ids = []
+            if len(self.ball_ids) > 70:
+                for i in self.ball_ids:
+                    self._pybullet_client.removeBody(i)
+                self.ball_ids = []
 
         base_pos = self.GetBasePosition()
         rpy = self.GetTrueBaseRollPitchYaw()
@@ -515,21 +518,21 @@ class A1(minitaur.Minitaur):
         depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
         depth_view = np.array(depth_view).reshape(grid_size)
 
-        # # For visualising rays
-        # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
-        # ballid = self._pybullet_client.createMultiBody(
-        #     baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
-        # )
-        # self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[0, 0, 1, 1])
-        # self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
-        # self.ball_ids.append(ballid)
-        # for coord in hit_coordinates:
-        #     ballid = self._pybullet_client.createMultiBody(
-        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
-        #     )
-        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
-        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
-        #     self.ball_ids.append(ballid)
+        if visualize:
+            ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
+            ballid = self._pybullet_client.createMultiBody(
+                baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
+            )
+            self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[0, 0, 1, 1])
+            self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+            self.ball_ids.append(ballid)
+            for coord in hit_coordinates:
+                ballid = self._pybullet_client.createMultiBody(
+                    baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
+                )
+                self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
+                self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+                self.ball_ids.append(ballid)
 
         return depth_view
 
