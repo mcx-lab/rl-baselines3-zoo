@@ -108,8 +108,8 @@ class HeightField(EnvModifier):
                     self.heightfieldData[2 * i + 1 + (2 * j + 1) * numHeightfieldRows] = height
             # GEOM_CONCAVE_INTERNAL_EDGE may help avoid getting stuck at an internal (shared) edge of the triangle/heightfield.
             # GEOM_CONCAVE_INTERNAL_EDGE is a bit slower to build though.
-            # flags = p.GEOM_CONCAVE_INTERNAL_EDGE
-            flags = 0
+            flags = p.GEOM_CONCAVE_INTERNAL_EDGE
+            # flags = 0
             self.terrainShape = p.createCollisionShape(
                 shapeType=p.GEOM_HEIGHTFIELD,
                 flags=flags,
