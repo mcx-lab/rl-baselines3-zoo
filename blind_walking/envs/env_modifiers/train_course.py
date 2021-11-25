@@ -93,7 +93,9 @@ class TrainUneven(EnvModifier):
         else:
             # See heightfield
             self.adjust_position = (0, 0, 0)
-            self.hf._reset(env, heightPerturbationRange=0.08)
+            if np.random.uniform() < 0.5:
+                # Reset heightfield
+                self.hf._reset(env, heightPerturbationRange=0.08)
 
 
 class TrainMultiple(EnvModifier):
