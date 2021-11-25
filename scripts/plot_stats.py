@@ -116,7 +116,7 @@ if __name__ == "__main__":
         num_obs = len(plotter.data[0])
         num_timesteps = len(plotter.data)
         hmobs_startindex = 46
-        grid_sizes = [(4, 4), (4, 4), (4, 4), (4, 4), (10, 1)]
+        grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
         grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
 
         datalim = (0, 5)

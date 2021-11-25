@@ -63,33 +63,33 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(4, 4),
+                grid_size=(3, 3),
                 grid_unit=(0.1, 0.1),
-                transform=(0.25, -0.25),
+                transform=(0.25, -0.2),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfr",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(4, 4),
+                grid_size=(3, 3),
                 grid_unit=(0.1, 0.1),
-                transform=(0.25, 0.25),
+                transform=(0.25, 0.2),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfl",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(4, 4),
+                grid_size=(3, 3),
                 grid_unit=(0.1, 0.1),
-                transform=(-0.25, -0.25),
+                transform=(-0.25, -0.2),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrr",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(4, 4),
+                grid_size=(3, 3),
                 grid_unit=(0.1, 0.1),
-                transform=(-0.25, 0.25),
+                transform=(-0.25, 0.2),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrl",
@@ -109,7 +109,7 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainMultiple()]
+        env_modifier_list = [train_course.TrainUneven()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
