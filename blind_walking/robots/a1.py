@@ -463,7 +463,7 @@ class A1(minitaur.Minitaur):
         Returns:
           N x M numpy array of floats
         """
-        # For visualising rays
+        # # For visualising rays
         # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
         # if len(self.ball_ids) > 70:
