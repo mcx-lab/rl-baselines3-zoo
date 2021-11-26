@@ -86,17 +86,6 @@ class TrainUneven(EnvModifier):
     def _generate(self, env):
         self.hf._generate(env, start_x=10, heightPerturbationRange=0.08)
 
-    def _reset(self, env):
-        if np.random.uniform() < 0.1:
-            # See plain terrain
-            self.adjust_position = (20, 0, 0)
-        else:
-            # See heightfield
-            self.adjust_position = (0, 0, 0)
-            if np.random.uniform() < 0.5:
-                # Reset heightfield
-                self.hf._reset(env, heightPerturbationRange=0.08)
-
 
 class TrainMultiple(EnvModifier):
     def __init__(self):
