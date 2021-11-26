@@ -16,6 +16,7 @@
 import copy
 import math
 import re
+from typing import Tuple
 
 import numba
 import numpy as np
@@ -198,6 +199,16 @@ def get_grid_coordinates(grid_unit, grid_size):
     xx, yy = np.meshgrid(xvalues, yvalues)
     coordinates = np.array(list(zip(xx.flatten(), yy.flatten())))
     return coordinates
+
+
+def draw_debug_sphere(pybullet_client, position: Tuple[float, float, float], rgba_color=[1, 0, 0, 1], radius=0.02) -> int:
+    ballShape = pybullet_client.createCollisionShape(shapeType=pybullet_client.GEOM_SPHERE, radius=radius)
+    ball_id = pybullet_client.createMultiBody(
+        baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=position, baseOrientation=[0, 0, 0, 1]
+    )
+    pybullet_client.changeVisualShape(ball_id, -1, rgbaColor=rgba_color)
+    pybullet_client.setCollisionFilterGroupMask(ball_id, -1, 0, 0)
+    return ball_id
 
 
 class A1(minitaur.Minitaur):
@@ -516,19 +527,10 @@ class A1(minitaur.Minitaur):
         depth_view = np.array(depth_view).reshape(grid_size)
 
         # # For visualising rays
-        # ballShape = self._pybullet_client.createCollisionShape(shapeType=self._pybullet_client.GEOM_SPHERE, radius=0.02)
-        # ballid = self._pybullet_client.createMultiBody(
-        #     baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=origin_world, baseOrientation=[0, 0, 0, 1]
-        # )
-        # self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[0, 0, 1, 1])
-        # self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        # ballid = draw_debug_sphere(self._pybullet_client, origin_world, [0, 0, 1, 1])
         # self.ball_ids.append(ballid)
         # for coord in hit_coordinates:
-        #     ballid = self._pybullet_client.createMultiBody(
-        #         baseMass=0, baseCollisionShapeIndex=ballShape, basePosition=coord, baseOrientation=[0, 0, 0, 1]
-        #     )
-        #     self._pybullet_client.changeVisualShape(ballid, -1, rgbaColor=[1, 0, 0, 1])
-        #     self._pybullet_client.setCollisionFilterGroupMask(ballid, -1, 0, 0)
+        #     ballid = draw_debug_sphere(self._pybullet_client, coord, [1, 0, 0, 1])
         #     self.ball_ids.append(ballid)
 
         return depth_view
