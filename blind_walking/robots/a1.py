@@ -466,7 +466,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 70:
+        # if len(self.ball_ids) > 40:
         #     for i in self.ball_ids:
         #         self._pybullet_client.removeBody(i)
         #     self.ball_ids = []
@@ -502,6 +502,10 @@ class A1(minitaur.Minitaur):
         test_hit_coordinates = []
         test_ray_intersection_infos = self._pybullet_client.rayTestBatch(test_origin_coords, test_target_coords)
         for i, info in enumerate(test_ray_intersection_infos):
+            # If test ray hit robot, try again
+            if info[0] == self.quadruped:
+                info = self._pybullet_client.rayTest(info[3], test_target_coords[i])[0]
+            # Check if test ray hit anything
             if info[0] == -1:
                 test_hit_position = test_target_coords[i]
             else:
