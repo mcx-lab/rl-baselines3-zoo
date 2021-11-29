@@ -119,8 +119,8 @@ if __name__ == "__main__":
         grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
         grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
 
-        datalim = (0, 6)
-        datashift = 3  # Amount to shift for better visualisation
+        datalim = (0, 5)
+        datashift = 2  # Amount to shift for better visualisation
         plotter.data = plotter.data + datashift
         # Generate GIF of heightmap over time
         grid_end_indices = [np.prod(s) for s in grid_sizes]
@@ -177,8 +177,8 @@ if __name__ == "__main__":
 
         if args.stitch_path:
             stitch_videos(
-                in_path1=replay_video_path,
+                in_path1=args.stitch_path,
                 in_path2=heightmap_video_path,
-                out_path=os.path.join(dirpath, "replay_and_hm.mp4"),
+                out_path=os.path.join(dirpath, basename + "_replay.mp4"),
                 verbose=0,
             )
