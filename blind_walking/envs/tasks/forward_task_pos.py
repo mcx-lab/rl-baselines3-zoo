@@ -23,6 +23,7 @@ class ForwardTask(object):
         self.last_base_orientation = np.zeros(3)
         self.current_foot_contacts = np.zeros(num_legs)
         self.last_foot_contacts = np.zeros(num_legs)
+        self.feet_air_time = np.zeros(num_legs)
 
         self._target_pos = [0, 0]
 
@@ -47,6 +48,7 @@ class ForwardTask(object):
         self.current_base_orientation = self.last_base_orientation
         self.last_foot_contacts = env.robot.GetFootContacts()
         self.current_foot_contacts = self.last_foot_contacts
+        self.feet_air_time = env.robot._feet_air_time
 
         self.motor_inertia = [i[0] for i in env.robot._motor_inertia]
 
@@ -66,6 +68,7 @@ class ForwardTask(object):
         self.current_base_orientation = env.robot.GetBaseOrientation()
         self.last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
+        self.feet_air_time = env.robot._feet_air_time
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
@@ -118,18 +121,23 @@ class ForwardTask(object):
         # Penalty for lost of more than two foot contacts
         contact_reward = min(sum(self.current_foot_contacts), 2) - 2
 
+        # Reward for feet air time
+        airtime_reward = np.sum(self.feet_air_time - (0.5 * self._env._env_time_step))
+
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": distance_reward * 0.02,
+            "distance": distance_reward * 0.03,
             "dxy": dxy_reward * 0.0,
             "dz": dz_reward * 0.0,
             "shake": shake_reward * 0.001,
             "energy": energy_reward * 0.0005,
             "energy_rot": energy_rot_reward * 0.0005,
-            "contact": contact_reward * 0.0,
+            "contact": contact_reward * 0.001,
+            "airtime": airtime_reward * 0.01,
         }
+
         reward = sum([o for o in weighted_objectives.values()])
         return reward, weighted_objectives
 
