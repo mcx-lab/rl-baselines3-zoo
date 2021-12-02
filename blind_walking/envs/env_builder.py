@@ -18,9 +18,9 @@ from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
-from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.envs.sensors import environment_sensors, robot_sensors
 from blind_walking.envs.tasks import forward_task, forward_task_pos
+from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.robots import a1, laikago, robot_config
 
 
@@ -63,36 +63,40 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(3, 3),
-                grid_unit=(0.1, 0.1),
-                transform=(0.25, -0.2),
+                grid_size=(7, 7),
+                grid_unit=(0.05, 0.05),
+                transform=(0.25, -0.15),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfr",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(3, 3),
-                grid_unit=(0.1, 0.1),
-                transform=(0.25, 0.2),
+                grid_size=(7, 7),
+                grid_unit=(0.05, 0.05),
+                transform=(0.25, 0.15),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthfl",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(3, 3),
-                grid_unit=(0.1, 0.1),
-                transform=(-0.25, -0.2),
+                grid_size=(7, 7),
+                grid_unit=(0.05, 0.05),
+                transform=(-0.25, -0.15),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrr",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(3, 3),
-                grid_unit=(0.1, 0.1),
-                transform=(-0.25, 0.2),
+                grid_size=(7, 7),
+                grid_unit=(0.05, 0.05),
+                transform=(-0.25, 0.15),
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthrl",
+                enc_name="visual",
             ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(10, 1),
@@ -101,6 +105,7 @@ def build_regular_env(
                 ray_origin="head",
                 noisy_reading=False,
                 name="depthmiddle",
+                enc_name="visual",
             ),
         ]
 
@@ -115,7 +120,7 @@ def build_regular_env(
         task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
-        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
+        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
