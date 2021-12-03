@@ -131,11 +131,11 @@ class ForwardTask(object):
             "distance": distance_reward * 0.03,
             "dxy": dxy_reward * 0.0,
             "dz": dz_reward * 0.0,
-            "shake": shake_reward * 0.001,
+            "shake": shake_reward * 0.01,
             "energy": energy_reward * 0.0005,
-            "energy_rot": energy_rot_reward * 0.0005,
-            "contact": contact_reward * 0.001,
-            "airtime": airtime_reward * 0.01,
+            "energy_rot": energy_rot_reward * 0.0,
+            "contact": contact_reward * 0.0,
+            "airtime": airtime_reward * 0.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
