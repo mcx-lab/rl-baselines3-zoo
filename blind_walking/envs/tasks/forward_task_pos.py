@@ -24,6 +24,7 @@ class ForwardTask(object):
         self.current_foot_contacts = np.zeros(num_legs)
         self.last_foot_contacts = np.zeros(num_legs)
         self.feet_air_time = np.zeros(num_legs)
+        self.feet_contact_lost = np.zeros(num_legs)
 
         self._target_pos = [0, 0]
 
@@ -49,6 +50,7 @@ class ForwardTask(object):
         self.last_foot_contacts = env.robot.GetFootContacts()
         self.current_foot_contacts = self.last_foot_contacts
         self.feet_air_time = env.robot._feet_air_time
+        self.feet_contact_lost = env.robot._feet_contact_lost
 
         self.motor_inertia = [i[0] for i in env.robot._motor_inertia]
 
@@ -69,6 +71,7 @@ class ForwardTask(object):
         self.last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
         self.feet_air_time = env.robot._feet_air_time
+        self.feet_contact_lost = env.robot._feet_contact_lost
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
@@ -119,7 +122,8 @@ class ForwardTask(object):
         )
 
         # Penalty for lost of more than two foot contacts
-        contact_reward = min(sum(self.current_foot_contacts), 2) - 2
+        # contact_reward = min(sum(self.current_foot_contacts), 2) - 2
+        contact_reward = -self.feet_contact_lost
 
         # Reward for feet air time
         airtime_reward = np.sum(self.feet_air_time - (0.5 * self._env._env_time_step))
@@ -134,7 +138,7 @@ class ForwardTask(object):
             "shake": shake_reward * 0.01,
             "energy": energy_reward * 0.0005,
             "energy_rot": energy_rot_reward * 0.0,
-            "contact": contact_reward * 0.0,
+            "contact": contact_reward * 0.5,
             "airtime": airtime_reward * 0.0,
         }
 
