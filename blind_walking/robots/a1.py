@@ -836,6 +836,16 @@ class A1(minitaur.Minitaur):
         motor_angles = self.GetMotorAngles()
         return foot_positions_in_base_frame(motor_angles)
 
+    def GetFootPositionsInWorldFrame(self):
+        """Get the robot's foot position in the world frame."""
+        assert len(self._foot_link_ids) == self.num_legs
+        foot_positions = []
+        for foot_id in self.GetFootLinkIDs():
+            foot_state = self.pybullet_client.getLinkState(self.quadruped, foot_id)
+            foot_position = foot_state[0]
+            foot_positions.append(foot_position)
+        return np.stack(foot_positions, axis=0)
+
     def ComputeJacobian(self, leg_id):
         """Compute the Jacobian for a given leg."""
         # Does not work for Minitaur which has the four bar mechanism for now.
