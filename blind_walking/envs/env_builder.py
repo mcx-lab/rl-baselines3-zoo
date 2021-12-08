@@ -114,7 +114,7 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = []
+        env_modifier_list = [train_course.TrainStairs()]
 
     if task is None:
         task = forward_task_pos.ForwardTask()
