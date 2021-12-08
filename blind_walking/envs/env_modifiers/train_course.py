@@ -14,7 +14,7 @@ class TrainStairs(EnvModifier):
         super().__init__()
         self.step_rise_levels = [0.02, 0.05, 0.075, 0.10]
         self.num_levels = len(self.step_rise_levels)
-        self.num_steps = 1
+        self.num_steps = 3
         self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
