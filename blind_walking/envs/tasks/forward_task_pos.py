@@ -132,7 +132,7 @@ class ForwardTask(object):
         airtime_reward = np.sum(self.feet_air_time - (0.5 * self._env._env_time_step))
 
         # Penalty for action rate
-        action_reward = -np.power(np.linalg.norm(self.last_action), 2)
+        action_reward = -np.power(np.linalg.norm(self.last_action), 2) * self._env._env_time_step
 
         # Dictionary of:
         # - {name: reward * weight}
@@ -141,11 +141,11 @@ class ForwardTask(object):
             "distance": distance_reward * 0.03,
             "dxy": dxy_reward * 0.0,
             "dz": dz_reward * 0.0,
-            "shake": shake_reward * 0.01,
+            "shake": shake_reward * 0.03,
             "energy": energy_reward * 0.0005,
             "energy_rot": energy_rot_reward * 0.0,
             "contact": contact_reward * 0.5,
-            "airtime": airtime_reward * 0.0,
+            "airtime": airtime_reward * 0.5,
             "action": action_reward * 0.0,
         }
 
