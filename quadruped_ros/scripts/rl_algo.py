@@ -8,22 +8,15 @@ import sys
 import numpy as np
 import yaml
 from stable_baselines3.common.utils import set_random_seed
+from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import utils.import_envs  # noqa: F401 pylint: disable=unused-import
-from utils import ALGOS, create_test_env, get_saved_hyperparams
+from utils import create_test_env, get_saved_hyperparams
 
 
 def callback_rlalgo(obs):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', obs.data)
-    #action, _ = model.predict(obs, state=None, deterministic=True)
-    #return action
-
-
-def sub_rlalgo():
-    rospy.init_node('rl_algo', anonymous=True)
-    rospy.Subscriber('observations', String, callback_rlalgo)
-    rospy.spin()
+    rospy.loginfo(rospy.get_caller_id() + "I heard %s", obs.data)
 
 
 def main():  # noqa: C901
@@ -33,7 +26,6 @@ def main():  # noqa: C901
     args = parser.parse_args()
 
     env_id = "A1GymEnv-v0"
-    algo = "ppo"
     log_path = args.log_path
 
     # ######################### Create environment ######################### #
@@ -75,15 +67,21 @@ def main():  # noqa: C901
             "lr_schedule": lambda _: 0.0,
             "clip_range": lambda _: 0.0,
         }
-    
+
     model_path = os.path.join(log_path, f"{env_id}.zip")
-    model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects)
+    model = PPO.load(model_path, custom_objects=custom_objects, deterministic=True)
+    print(f"Loaded model from {model_path}")
 
-    # ######################### Enjoy Loop ######################### #
+    # ######################### ROS node ######################### #
 
-    sub_rlalgo()
-
-    env.close()
+    rospy.init_node("rl_algo", anonymous=True)
+    rospy.Subscriber("observations", String, callback_rlalgo)
+    rospy.spin()
+    # rate = rospy.Rate(33)  # hz
+    # while not rospy.is_shutdown():
+    #     action, _ = model.predict(obs, state=None, deterministic=True)
+    #     obs, reward, done, infos = env.step(action)
+    #     rate.sleep()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="quadruped_ros" name="dummy_obs" type="dummy_obs.py" />
+  <node pkg="quadruped_ros" name="rl_algo" type="rl_algo.py" args="-i ../A1GymEnv-v0_64/"/>
+
+</launch>
