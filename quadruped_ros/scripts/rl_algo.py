@@ -7,13 +7,12 @@ import os
 import sys
 import numpy as np
 import yaml
-from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 # import utils.import_envs  # noqa: F401 pylint: disable=unused-import
 # from utils import create_test_env, get_saved_hyperparams
-from quadruped_ros.msg import Observation
+from quadruped_ros.msg import Observation, Action
 
 
 cb_obs = Observation()
@@ -29,7 +28,7 @@ def callback_rlalgo(obs):
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--log-path", help="Path to folder containing pre-trained model", type=str, default="./")
-    parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
+    # parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
     args = parser.parse_args()
 
     env_id = "A1GymEnv-v0"
@@ -37,7 +36,6 @@ def main():  # noqa: C901
 
     # # ######################### Create environment ######################### #
 
-    # set_random_seed(args.seed)
     # stats_path = os.path.join(log_path, env_id)
     # hyperparams, stats_path = get_saved_hyperparams(stats_path, norm_reward=False, test_mode=True)
 
@@ -83,10 +81,14 @@ def main():  # noqa: C901
 
     rospy.init_node("rl_algo", anonymous=True)
     rospy.Subscriber("observations", Observation, callback_rlalgo)
+    pub_action = rospy.Publisher("actions", Action, queue_size=10)
     rate = rospy.Rate(33)  # hz
     while not rospy.is_shutdown():
         obs = cb_obs.data
         action, _ = model.predict(obs, state=None, deterministic=True)
+        msg_action = Action()
+        msg_action.data = action
+        pub_action.publish(msg_action)
         # obs, reward, done, infos = env.step(action)
         rate.sleep()
 
