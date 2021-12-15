@@ -1,5 +1,6 @@
 import math
 from pathlib import Path
+from typing import Optional
 
 import gym
 import torch as th
@@ -25,7 +26,13 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
     To be used with ObservationDictionarySplitByEncoderWrapper
     """
 
-    def __init__(self, observation_space: gym.spaces.Dict, visual_output_size: int = 16, load_pretrained=False):
+    def __init__(
+        self,
+        observation_space: gym.spaces.Dict,
+        visual_output_size: int = 16,
+        load_path: Optional[str] = None,
+        freeze: bool = False,
+    ):
         self.visual_output_size = visual_output_size
         flatten_output_size = math.prod(observation_space.spaces["flatten"].shape)
         visual_input_size = math.prod(observation_space.spaces["visual"].shape)
@@ -37,12 +44,12 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
         self.visual_encoder = nn.Sequential(nn.Linear(visual_input_size, visual_output_size), nn.ReLU())
 
         # Load the saved encoder from a previous run
-        if load_pretrained:
+        if load_path is not None:
             print("Loading pretrained encoder")
             from copy import deepcopy
 
             initial_weights = deepcopy(self.visual_encoder.state_dict())
-            pretrained_encoder = load_encoder(Path("mcx_logs") / "ppo" / "A1GymEnv-v0_4" / "A1GymEnv-v0.zip")
+            pretrained_encoder = load_encoder(Path(load_path) / "ppo" / "A1GymEnv-v0_4" / "A1GymEnv-v0.zip")
             self.visual_encoder.load_state_dict(pretrained_encoder.visual_encoder.state_dict())
 
             # Some basic sanity checks to ensure weights were loaded
@@ -51,6 +58,10 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
                 assert key in initial_weights
                 assert th.all(initial_weights[key] != value)
             print("Loaded weights successfully")
+
+            print(f"Visual encoder parameters will be {'frozen' if freeze else 'learnable'}")
+            for param in self.visual_encoder.parameters():
+                param.requires_grad = not freeze
 
     def forward(self, observations: TensorDict) -> th.Tensor:
         assert set(observations.keys()) == set(["flatten", "visual"])
