@@ -49,7 +49,7 @@ class LocomotionVisualEncoder(BaseFeaturesExtractor):
             from copy import deepcopy
 
             initial_weights = deepcopy(self.visual_encoder.state_dict())
-            pretrained_encoder = load_encoder(Path(load_path) / "ppo" / "A1GymEnv-v0_4" / "A1GymEnv-v0.zip")
+            pretrained_encoder = load_encoder(Path(load_path))
             self.visual_encoder.load_state_dict(pretrained_encoder.visual_encoder.state_dict())
 
             # Some basic sanity checks to ensure weights were loaded
