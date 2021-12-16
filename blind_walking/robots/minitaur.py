@@ -250,11 +250,18 @@ class Minitaur(object):
             action = self._FilterAction(action)
 
         self._feet_air_time = np.zeros(self.num_legs)
+        self._feet_contact_lost = 0
+        self._feet_contact_forces = np.zeros(self.num_legs)
+
         for i in range(self._action_repeat):
             proc_action = self.ProcessAction(action, i)
             self._StepInternal(proc_action, motor_control_mode)
             self._step_counter += 1
-            self._feet_air_time += (1 - np.array(self.GetFootContacts())) * self.time_step
+
+            foot_contacts = self.GetFootContacts()
+            self._feet_air_time += (1 - np.array(foot_contacts)) * self.time_step
+            self._feet_contact_lost += (2 - min(sum(foot_contacts), 2)) * self.time_step
+            self._feet_contact_forces += (np.array(self.GetFootContactForces())) * self.time_step
 
         self._last_action = action
 
@@ -720,6 +727,14 @@ class Minitaur(object):
             )
             contacts.append(contact_1 or contact_2)
         return contacts
+
+    def GetFootContactForces(self):
+        """Get minitaur's foot contact forces with the ground.
+
+        Returns:
+            A 4-dimensional array containing magnitude of force on each leg
+        """
+        pass
 
     def GetFootPositionsInBaseFrame(self):
         """Get the robot's foot position in the base frame."""
