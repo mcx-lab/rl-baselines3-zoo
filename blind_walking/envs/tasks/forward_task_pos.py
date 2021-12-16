@@ -97,7 +97,7 @@ class ForwardTask(object):
         distance_target = np.linalg.norm(self._target_pos)
         if distance_target:
             distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
-            distance_reward = min(distance_towards / distance_target, 1)
+            distance_reward = min(distance_towards / distance_target, 1) * self._env.env_time_step
         else:
             distance_reward = -np.linalg.norm(dxy_local)
         # Reward closeness to target position.
@@ -111,7 +111,7 @@ class ForwardTask(object):
         orientation = self.current_base_orientation
         rot_matrix = self._env.pybullet_client.getMatrixFromQuaternion(orientation)
         local_up_vec = rot_matrix[6:]
-        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
+        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))) * self._env.env_time_step
         # Penalty for energy usage.
         energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
         energy_rot_reward = (
@@ -128,9 +128,9 @@ class ForwardTask(object):
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": distance_reward * 1.0 * self._env.env_time_step,
-            "shake": shake_reward * 1.5 * self._env.env_time_step,
-            "energy": energy_reward * 0.0001 * self._env.env_time_step,
+            "distance": distance_reward * 1.0,
+            "shake": shake_reward * 1.5,
+            "energy": energy_reward * 0.0001,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
