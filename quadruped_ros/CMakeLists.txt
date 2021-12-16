@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  sensor_msgs
+  nav_msgs
   message_generation
 )
 
@@ -114,7 +116,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES quadruped_ros
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs nav_msgs message_runtime
   DEPENDS system_lib
 )
 
@@ -169,7 +171,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/dummy_obs.py
+  scripts/simulation.py
   scripts/rl_algo.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

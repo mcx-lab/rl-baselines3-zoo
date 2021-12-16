@@ -15,6 +15,8 @@ from quadruped_ros.msg import (
     TargetPositionSensor,
     HeightmapSensor,
 )
+from sensor_msgs.msg import Imu, JointState
+from nav_msgs.msg import Odometry
 
 
 _obs_basevelocity = [0.0] * 2
@@ -33,13 +35,13 @@ def callback_basevelocity(obs):
 
 def callback_imu(obs):
     global _obs_imu
-    _obs_imu[0] = obs.roll
-    _obs_imu[1] = obs.pitch
-    _obs_imu[2] = obs.yaw
+    _obs_imu[0] = obs.linear_acceleration.x
+    _obs_imu[1] = obs.linear_acceleration.y
+    _obs_imu[2] = obs.linear_acceleration.z
 
-    _obs_imu[3] = obs.droll
-    _obs_imu[4] = obs.dpitch
-    _obs_imu[5] = obs.dyaw
+    _obs_imu[3] = obs.angular_velocity.x
+    _obs_imu[4] = obs.angular_velocity.y
+    _obs_imu[5] = obs.angular_velocity.z
 
 
 def callback_motors(obs):
@@ -102,7 +104,7 @@ def main():  # noqa: C901
 
     rospy.init_node("rl_algo", anonymous=True)
     rospy.Subscriber("obs_basevelocity", BaseVelocitySensor, callback_basevelocity)
-    rospy.Subscriber("obs_imu", IMUSensor, callback_imu)
+    rospy.Subscriber("obs_imu", Imu, callback_imu)
     rospy.Subscriber("obs_motors", QuadrupedLeg, callback_motors)  # motor angles and velocity
     rospy.Subscriber("obs_targetpos", TargetPositionSensor, callback_targetpos)
     rospy.Subscriber("obs_heightmap", HeightmapSensor, callback_heightmap)
