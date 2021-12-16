@@ -24,6 +24,7 @@ class ForwardTask(object):
         self.current_foot_contacts = np.zeros(num_legs)
         self.last_foot_contacts = np.zeros(num_legs)
         self.feet_air_time = np.zeros(num_legs)
+        self.feet_contact_forces = np.zeros(num_legs)
 
         self._target_pos = [0, 0]
 
@@ -49,6 +50,7 @@ class ForwardTask(object):
         self.last_foot_contacts = env.robot.GetFootContacts()
         self.current_foot_contacts = self.last_foot_contacts
         self.feet_air_time = env.robot._feet_air_time
+        self.feet_contact_forces = env.robot._feet_contact_forces
 
         self.motor_inertia = [i[0] for i in env.robot._motor_inertia]
 
@@ -69,6 +71,7 @@ class ForwardTask(object):
         self.last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
         self.feet_air_time = env.robot._feet_air_time
+        self.feet_contact_forces = env.robot._feet_contact_forces
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
@@ -124,6 +127,12 @@ class ForwardTask(object):
         # Reward for feet air time
         airtime_reward = np.sum(self.feet_air_time - (0.5 * self._env._env_time_step))
 
+        # Penalize for excessive contact force above certain threshold
+        contact_force_threshold = 100  # newtons
+        contact_force_reward = (
+            -np.sum(np.maximum(self.feet_contact_forces - contact_force_threshold, 0)) * self._env._env_time_step
+        )
+
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
@@ -131,6 +140,7 @@ class ForwardTask(object):
             "distance": distance_reward * 0.03,
             "shake": shake_reward * 0.001,
             "energy": energy_reward * 0.0005,
+            "contact_force": contact_force_reward * 1.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])

@@ -439,6 +439,7 @@ class Minitaur(object):
         self._is_safe = True
         self._last_action = None
         self._feet_air_time = np.zeros(self.num_legs)
+        self._feet_contact_forces = np.zeros(self.num_legs)
         self._SettleDownForReset(default_motor_angles, reset_time)
         if self._enable_action_filter:
             self._ResetActionFilter()
