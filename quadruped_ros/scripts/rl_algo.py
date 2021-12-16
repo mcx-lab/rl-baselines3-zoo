@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
 import rospy
-from std_msgs.msg import String
 import argparse
 import os
 import sys
-import numpy as np
-import yaml
 from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
