@@ -376,6 +376,27 @@ class A1(minitaur.Minitaur):
 
         return contacts
 
+    def GetFootContactForces(self):
+        """Get minitaur's foot contact forces with the ground.
+
+        Returns:
+            A 4-dimensional array containing magnitude of force on each leg
+        """
+        all_contacts = self._pybullet_client.getContactPoints(bodyA=self.quadruped)
+
+        forces = [0, 0, 0, 0]
+        for contact in all_contacts:
+            # Ignore self contacts
+            if contact[_BODY_B_FIELD_NUMBER] == self.quadruped:
+                continue
+            try:
+                toe_link_index = self._foot_link_ids.index(contact[_LINK_A_FIELD_NUMBER])
+                forces[toe_link_index] = contact[9]
+            except ValueError:
+                continue
+
+        return forces
+
     def GetFootForces(self):
         all_contacts = self._pybullet_client.getContactPoints(bodyA=self.quadruped)
 
