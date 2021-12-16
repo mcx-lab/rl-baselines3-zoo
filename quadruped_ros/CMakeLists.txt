@@ -51,7 +51,16 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Observation.msg
-  Action.msg
+  QuadrupedLegPos.msg
+  QuadrupedJointPos.msg
+  QuadrupedJointInfoPos.msg
+  QuadrupedLeg.msg
+  QuadrupedJoint.msg
+  QuadrupedJointInfo.msg
+  IMUSensor.msg
+  BaseVelocitySensor.msg
+  TargetPositionSensor.msg
+  HeightmapSensor.msg
 )
 
 ## Generate services in the 'srv' folder

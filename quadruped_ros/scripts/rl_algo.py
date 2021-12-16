@@ -10,86 +10,128 @@ import yaml
 from stable_baselines3 import PPO
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-# import utils.import_envs  # noqa: F401 pylint: disable=unused-import
-# from utils import create_test_env, get_saved_hyperparams
-from quadruped_ros.msg import Observation, Action
+from quadruped_ros.msg import (
+    Observation,
+    QuadrupedLegPos,
+    QuadrupedLeg,
+    IMUSensor,
+    BaseVelocitySensor,
+    TargetPositionSensor,
+    HeightmapSensor,
+)
 
 
-cb_obs = Observation()
-cb_obs.data = [[0.0] * 92]
+_obs_basevelocity = [0.0] * 2
+_obs_imu = [0.0] * 6
+_obs_motors = [0.0] * 24
+_obs_lastaction = [0.0] * 12
+_obs_targetpos = [0.0] * 2
+_obs_heightmap = [0.0] * 10
 
 
-def callback_rlalgo(obs):
-    global cb_obs
-    cb_obs = obs
-    rospy.loginfo(rospy.get_caller_id() + "I heard smth!")
+def callback_basevelocity(obs):
+    global _obs_basevelocity
+    _obs_basevelocity[0] = obs.vx
+    _obs_basevelocity[1] = obs.vy
+
+
+def callback_imu(obs):
+    global _obs_imu
+    _obs_imu[0] = obs.roll
+    _obs_imu[1] = obs.pitch
+    _obs_imu[2] = obs.yaw
+
+    _obs_imu[3] = obs.droll
+    _obs_imu[4] = obs.dpitch
+    _obs_imu[5] = obs.dyaw
+
+
+def callback_motors(obs):
+    global _obs_motors
+    _obs_motors[0] = obs.fr.hip.q
+    _obs_motors[1] = obs.fr.upper.q
+    _obs_motors[2] = obs.fr.lower.q
+    _obs_motors[3] = obs.fl.hip.q
+    _obs_motors[4] = obs.fl.upper.q
+    _obs_motors[5] = obs.fl.lower.q
+    _obs_motors[6] = obs.br.hip.q
+    _obs_motors[7] = obs.br.upper.q
+    _obs_motors[8] = obs.br.lower.q
+    _obs_motors[9] = obs.bl.hip.q
+    _obs_motors[10] = obs.bl.upper.q
+    _obs_motors[11] = obs.bl.lower.q
+
+    _obs_motors[12] = obs.fr.hip.dq
+    _obs_motors[13] = obs.fr.upper.dq
+    _obs_motors[14] = obs.fr.lower.dq
+    _obs_motors[15] = obs.fl.hip.dq
+    _obs_motors[16] = obs.fl.upper.dq
+    _obs_motors[17] = obs.fl.lower.dq
+    _obs_motors[18] = obs.br.hip.dq
+    _obs_motors[19] = obs.br.upper.dq
+    _obs_motors[20] = obs.br.lower.dq
+    _obs_motors[21] = obs.bl.hip.dq
+    _obs_motors[22] = obs.bl.upper.dq
+    _obs_motors[23] = obs.bl.lower.dq
+
+
+def callback_targetpos(obs):
+    global _obs_targetpos
+    _obs_targetpos[0] = obs.dx
+    _obs_targetpos[1] = obs.dy
+
+
+def callback_heightmap(obs):
+    global _obs_heightmap
+    _obs_heightmap = obs.data
 
 
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--log-path", help="Path to folder containing pre-trained model", type=str, default="./")
-    # parser.add_argument("--seed", help="Random generator seed", type=int, default=0)
     args = parser.parse_args()
 
     env_id = "A1GymEnv-v0"
     log_path = args.log_path
 
-    # # ######################### Create environment ######################### #
-
-    # stats_path = os.path.join(log_path, env_id)
-    # hyperparams, stats_path = get_saved_hyperparams(stats_path, norm_reward=False, test_mode=True)
-
-    # # load env_kwargs if existing
-    # env_kwargs = {}
-    # args_path = os.path.join(log_path, env_id, "args.yml")
-    # if os.path.isfile(args_path):
-    #     with open(args_path, "r") as f:
-    #         loaded_args = yaml.load(f, Loader=yaml.UnsafeLoader)  # pytype: disable=module-attr
-    #         if loaded_args["env_kwargs"] is not None:
-    #             env_kwargs = loaded_args["env_kwargs"]
-
-    # env = create_test_env(
-    #     env_id,
-    #     n_envs=1,
-    #     stats_path=stats_path,
-    #     seed=args.seed,
-    #     log_dir=None,
-    #     should_render=False,
-    #     hyperparams=hyperparams,
-    #     env_kwargs=env_kwargs,
-    # )
-    # obs = env.reset()
-
     # ######################### Load model ######################### #
 
-    # Check if we are running python 3.8+
-    # we need to patch saved model under python 3.6/3.7 to load them
-    newer_python_version = sys.version_info.major == 3 and sys.version_info.minor >= 8
-    custom_objects = {}
-    if newer_python_version:
-        custom_objects = {
-            "learning_rate": 0.0,
-            "lr_schedule": lambda _: 0.0,
-            "clip_range": lambda _: 0.0,
-        }
-
     model_path = os.path.join(log_path, f"{env_id}.zip")
-    model = PPO.load(model_path, custom_objects=custom_objects, deterministic=True)
+    model = PPO.load(model_path, deterministic=True)
     print(f"Loaded model from {model_path}")
 
     # ######################### ROS node ######################### #
 
+    global _obs_lastaction
+
     rospy.init_node("rl_algo", anonymous=True)
-    rospy.Subscriber("observations", Observation, callback_rlalgo)
-    pub_action = rospy.Publisher("actions", Action, queue_size=10)
+    rospy.Subscriber("obs_basevelocity", BaseVelocitySensor, callback_basevelocity)
+    rospy.Subscriber("obs_imu", IMUSensor, callback_imu)
+    rospy.Subscriber("obs_motors", QuadrupedLeg, callback_motors)  # motor angles and velocity
+    rospy.Subscriber("obs_targetpos", TargetPositionSensor, callback_targetpos)
+    rospy.Subscriber("obs_heightmap", HeightmapSensor, callback_heightmap)
+    pub_action = rospy.Publisher("actions", QuadrupedLegPos, queue_size=10)
     rate = rospy.Rate(33)  # hz
     while not rospy.is_shutdown():
-        obs = cb_obs.data
+        obs = _obs_basevelocity + _obs_imu + _obs_motors + _obs_lastaction + _obs_targetpos + _obs_heightmap
         action, _ = model.predict(obs, state=None, deterministic=True)
-        msg_action = Action()
-        msg_action.data = action
+        # publish action
+        msg_action = QuadrupedLegPos()
+        msg_action.fr.hip.pos = action[0]
+        msg_action.fr.upper.pos = action[1]
+        msg_action.fr.lower.pos = action[2]
+        msg_action.fl.hip.pos = action[3]
+        msg_action.fl.upper.pos = action[4]
+        msg_action.fl.lower.pos = action[5]
+        msg_action.br.hip.pos = action[6]
+        msg_action.br.upper.pos = action[7]
+        msg_action.br.lower.pos = action[8]
+        msg_action.bl.hip.pos = action[9]
+        msg_action.bl.upper.pos = action[10]
+        msg_action.bl.lower.pos = action[11]
         pub_action.publish(msg_action)
-        # obs, reward, done, infos = env.step(action)
+        # update stored observation
+        _obs_lastaction = list(action)
         rate.sleep()
 
 
