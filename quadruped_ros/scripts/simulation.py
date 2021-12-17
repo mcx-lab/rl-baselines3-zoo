@@ -2,6 +2,7 @@
 
 import os
 # import tf
+import sys
 import rospy
 import rospkg
 import ctypes
@@ -71,7 +72,7 @@ class WalkingSimulation(object):
     def __init_simulator(self):
         robot_start_pos = [0, 0, 0.42]
         p.connect(p.GUI)  # or p.DIRECT for non-graphical version
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.resetSimulation()
         p.setTimeStep(1.0/self.freq)
         p.setGravity(0, 0, -9.81)
@@ -299,7 +300,7 @@ class WalkingSimulation(object):
             get_matrix[7] * linear_Y + get_matrix[8] * linear_Z
 
         # joint data
-        joint_state = p.getJointStates(boxId, motor_id_list)
+        joint_state = p.getJointStates(self.boxId, self.motor_id_list)
         leg_data[0:12] = [joint_state[0][0], joint_state[1][0], joint_state[2][0],
                           joint_state[3][0], joint_state[4][0], joint_state[5][0],
                           joint_state[6][0], joint_state[7][0], joint_state[8][0],
