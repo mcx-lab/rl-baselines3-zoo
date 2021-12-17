@@ -20,6 +20,7 @@ target_positions.csv
 *.mp4
 *.json
 *.npy
+A1GymEnv-v0_model
 
 # Distribution / packaging
 .Python
