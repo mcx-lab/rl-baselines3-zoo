@@ -5,6 +5,8 @@ import argparse
 import os
 import sys
 from stable_baselines3 import PPO
+from sensor_msgs.msg import Imu, JointState
+from nav_msgs.msg import Odometry
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from quadruped_ros.msg import (
@@ -15,8 +17,6 @@ from quadruped_ros.msg import (
     TargetPositionSensor,
     HeightmapSensor,
 )
-from sensor_msgs.msg import Imu, JointState
-from nav_msgs.msg import Odometry
 
 
 _obs_basevelocity = [0.0] * 2

@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
 
 import os
-import tf
+# import tf
 import rospy
 import rospkg
 import ctypes
 import threading
 import pybullet as p
+import pybullet_data
 from sensor_msgs.msg import Imu, JointState
 from nav_msgs.msg import Odometry
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from quadruped_ros.msg import (
+    QuadrupedLegPos,
+    QuadrupedLeg,
+    IMUSensor,
+    BaseVelocitySensor,
+    TargetPositionSensor,
+    HeightmapSensor,
+)
+
+
+_ctrl_actions = [0.0] * 12
 
 
 class StructPointer(ctypes.Structure):
@@ -49,18 +63,10 @@ class WalkingSimulation(object):
         rospy.loginfo(" freq = " + str(self.freq) + " PID = " +
                       str([self.stand_kp, self.stand_kd, self.joint_kp, self.joint_kd]))
 
-        self.robot_tf = tf.TransformBroadcaster()
+        # self.robot_tf = tf.TransformBroadcaster()
 
     def __load_controller(self):
-        self.path = rospkg.RosPack().get_path('quadruped_ros') #TODO
-        so_file = self.path.replace('src/quadruped_ros', 'devel/lib/libquadruped_ros.so')
-        if(not os.path.exists(so_file)):
-            so_file = self.path.replace('src/quadruped_ros', 'build/lib/libquadruped_ros.so')
-        if(not os.path.exists(so_file)):
-            rospy.logerr("cannot find cpp.so file")
-        self.cpp_gait_ctrller = ctypes.cdll.LoadLibrary(so_file)
-        self.cpp_gait_ctrller.torque_calculator.restype = ctypes.POINTER(StructPointer)
-        rospy.loginfo("find so file = " + so_file)
+        return
 
     def __init_simulator(self):
         robot_start_pos = [0, 0, 0.42]
@@ -70,8 +76,6 @@ class WalkingSimulation(object):
         p.setTimeStep(1.0/self.freq)
         p.setGravity(0, 0, -9.81)
         self.reset = p.addUserDebugParameter("reset", 1, 0, 0)
-        self.low_energy_mode = p.addUserDebugParameter("low_energy_mode", 1, 0, 0)
-        self.high_performance_mode = p.addUserDebugParameter("high_performance_mode", 1, 0, 0)
         p.resetDebugVisualizerCamera(0.2, 45, -30, [1, -1, 1])
 
         heightPerturbationRange = 0.06
@@ -99,24 +103,13 @@ class WalkingSimulation(object):
         for j in range(12):
             p.resetJointState(
                 self.boxId, self.motor_id_list[j], self.init_new_pos[j], self.init_new_pos[j+12])
-        self.cpp_gait_ctrller.init_controller(
-            self.__convert_type(self.freq),
-            self.__convert_type([self.stand_kp, self.stand_kd, self.joint_kp, self.joint_kd]))
 
         for _ in range(10):
             p.stepSimulation()
             imu_data, leg_data, _ = self.__get_data_from_sim()
-            self.cpp_gait_ctrller.pre_work(self.__convert_type(
-                imu_data), self.__convert_type(leg_data["state"]))
 
         for j in range(16):
             p.setJointMotorControl2(self.boxId, j, p.VELOCITY_CONTROL, force=0)
-
-        self.cpp_gait_ctrller.set_robot_mode(self.__convert_type(1))
-        for _ in range(200):
-            self.run()
-            p.stepSimulation
-        self.cpp_gait_ctrller.set_robot_mode(self.__convert_type(0))
 
     def __thread_job(self):
         rospy.spin()
@@ -156,11 +149,11 @@ class WalkingSimulation(object):
             q = pyquaternion.Quaternion(matrix=T3)
             cameraQuat = [q[1], q[2], q[3], q[0]]
 
-            self.robot_tf.sendTransform(self.__fill_tf_message("world", "robot", cubePos, cubeOrn))
-            self.robot_tf.sendTransform(
-                self.__fill_tf_message("world", "cam", cameraEyePosition, cameraQuat))
-            self.robot_tf.sendTransform(
-                self.__fill_tf_message("world", "tar", cameraTargetPosition, cubeOrn))
+            # self.robot_tf.sendTransform(self.__fill_tf_message("world", "robot", cubePos, cubeOrn))
+            # self.robot_tf.sendTransform(
+            #     self.__fill_tf_message("world", "cam", cameraEyePosition, cameraQuat))
+            # self.robot_tf.sendTransform(
+            #     self.__fill_tf_message("world", "tar", cameraTargetPosition, cubeOrn))
 
             cameraUpVector = [0, 0, 1]
             viewMatrix = p.computeViewMatrix(
@@ -236,22 +229,12 @@ class WalkingSimulation(object):
     def run(self):
         rate = rospy.Rate(self.freq)  # Hz
         reset_flag = p.readUserDebugParameter(self.reset)
-        low_energy_flag = p.readUserDebugParameter(self.low_energy_mode)
-        high_performance_flag = p.readUserDebugParameter(self.high_performance_mode)
         while not rospy.is_shutdown():
             # check reset button state
             if(reset_flag < p.readUserDebugParameter(self.reset)):
                 reset_flag = p.readUserDebugParameter(self.reset)
                 rospy.logwarn("reset the robot")
                 self.__reset_robot()
-            if(low_energy_flag < p.readUserDebugParameter(self.low_energy_mode)):
-                low_energy_flag = p.readUserDebugParameter(self.low_energy_mode)
-                rospy.logwarn("set robot to low energy mode")
-                self.cpp_gait_ctrller.set_robot_mode(self.__convert_type(1))
-            if(high_performance_flag < p.readUserDebugParameter(self.high_performance_mode)):
-                high_performance_flag = p.readUserDebugParameter(self.high_performance_mode)
-                rospy.logwarn("set robot to high performance mode")
-                self.cpp_gait_ctrller.set_robot_mode(self.__convert_type(0))
 
             self.__simulation_step()
 
@@ -266,42 +249,15 @@ class WalkingSimulation(object):
         self.__pub_imu_msg(imu_data)
         self.__pub_joint_states(leg_data)
 
-        # call cpp function to calculate mpc tau
-        tau = self.cpp_gait_ctrller.torque_calculator(self.__convert_type(
-            imu_data), self.__convert_type(leg_data["state"]))
-
-        # set tau to simulator
+        global _ctrl_actions
+        tau = _ctrl_actions
+        # TODO: nn is using position control
         p.setJointMotorControlArray(bodyUniqueId=self.boxId,
                                     jointIndices=self.motor_id_list,
                                     controlMode=p.TORQUE_CONTROL,
-                                    forces=tau.contents.eff)
+                                    forces=tau)
 
         p.stepSimulation()
-
-    def __convert_type(self, input):
-        ctypes_map = {
-            int: ctypes.c_int,
-            float: ctypes.c_double,
-            str: ctypes.c_char_p,
-        }
-        input_type = type(input)
-        if input_type is list:
-            length = len(input)
-            if length == 0:
-                rospy.logerr("convert type failed...input is " + input)
-                return 0
-            else:
-                arr = (ctypes_map[type(input[0])] * length)()
-                for i in range(length):
-                    arr[i] = bytes(
-                        input[i], encoding="utf-8") if (type(input[0]) is str) else input[i]
-                return arr
-        else:
-            if input_type in ctypes_map:
-                return ctypes_map[input_type](bytes(input, encoding="utf-8") if type(input) is str else input)
-            else:
-                rospy.logerr("convert type failed...input is "+input)
-                return 0
 
     def __get_data_from_sim(self):
         get_matrix = []
@@ -407,7 +363,24 @@ class WalkingSimulation(object):
         pub_js.publish(js_msg)
 
 
+def callback_action(obs):
+    global _ctrl_actions
+    _ctrl_actions[0] = obs.fr.hip.pos
+    _ctrl_actions[1] = obs.fr.upper.pos
+    _ctrl_actions[2] = obs.fr.lower.pos
+    _ctrl_actions[3] = obs.fl.hip.pos
+    _ctrl_actions[4] = obs.fl.upper.pos
+    _ctrl_actions[5] = obs.fl.lower.pos
+    _ctrl_actions[6] = obs.br.hip.pos
+    _ctrl_actions[7] = obs.br.upper.pos
+    _ctrl_actions[8] = obs.br.lower.pos
+    _ctrl_actions[9] = obs.bl.hip.pos
+    _ctrl_actions[10] = obs.bl.upper.pos
+    _ctrl_actions[11] = obs.bl.lower.pos
+
+
 if __name__ == '__main__':
     rospy.init_node('quadruped_simulator', anonymous=True)
+    rospy.Subscriber("actions", QuadrupedLegPos, callback_action)
     walking_simulation = WalkingSimulation()
     walking_simulation.run()
