@@ -55,14 +55,9 @@ class WalkingSimulation(object):
         self.lateralFriction = rospy.get_param('/simulation/lateralFriction')
         self.spinningFriction = rospy.get_param('/simulation/spinningFriction')
         self.freq = rospy.get_param('/simulation/freq')
-        self.stand_kp = rospy.get_param('/simulation/stand_kp')
-        self.stand_kd = rospy.get_param('/simulation/stand_kd')
-        self.joint_kp = rospy.get_param('/simulation/joint_kp')
-        self.joint_kd = rospy.get_param('/simulation/joint_kd')
         rospy.loginfo("lateralFriction = " + str(self.lateralFriction) +
                       " spinningFriction = " + str(self.spinningFriction))
-        rospy.loginfo(" freq = " + str(self.freq) + " PID = " +
-                      str([self.stand_kp, self.stand_kd, self.joint_kp, self.joint_kd]))
+        rospy.loginfo(" freq = " + str(self.freq))
 
         # self.robot_tf = tf.TransformBroadcaster()
 
@@ -70,7 +65,7 @@ class WalkingSimulation(object):
         return
 
     def __init_simulator(self):
-        robot_start_pos = [0, 0, 0.42]
+        robot_start_pos = [0, 0, 0.32]
         p.connect(p.GUI)  # or p.DIRECT for non-graphical version
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.resetSimulation()
@@ -82,7 +77,7 @@ class WalkingSimulation(object):
         heightPerturbationRange = 0.06
         numHeightfieldRows = 256
         numHeightfieldColumns = 256
-        if self.terrain == "plane":
+        if self.terrain == "plain":
             planeShape = p.createCollisionShape(shapeType=p.GEOM_PLANE)
             ground_id = p.createMultiBody(0, planeShape)
             p.resetBasePositionAndOrientation(ground_id, [0, 0, 0], [0, 0, 0, 1])
@@ -98,17 +93,10 @@ class WalkingSimulation(object):
 
     def __reset_robot(self):
         robot_z = self.robot_height
-        p.resetBasePositionAndOrientation(
-            self.boxId, [0, 0, robot_z], [0, 0, 0, 1])
+        p.resetBasePositionAndOrientation(self.boxId, [0, 0, robot_z], [0, 0, 0, 1])
         p.resetBaseVelocity(self.boxId, [0, 0, 0], [0, 0, 0])
         for j in range(12):
-            p.resetJointState(
-                self.boxId, self.motor_id_list[j], self.init_new_pos[j], self.init_new_pos[j+12])
-
-        for _ in range(10):
-            p.stepSimulation()
-            imu_data, leg_data, _ = self.__get_data_from_sim()
-
+            p.resetJointState(self.boxId, self.motor_id_list[j], self.init_new_pos[j], self.init_new_pos[j+12])
         for j in range(16):
             p.setJointMotorControl2(self.boxId, j, p.VELOCITY_CONTROL, force=0)
 
@@ -251,12 +239,12 @@ class WalkingSimulation(object):
         self.__pub_joint_states(leg_data)
 
         global _ctrl_actions
-        tau = _ctrl_actions
-        # TODO: nn is using position control
         p.setJointMotorControlArray(bodyUniqueId=self.boxId,
                                     jointIndices=self.motor_id_list,
-                                    controlMode=p.TORQUE_CONTROL,
-                                    forces=tau)
+                                    controlMode=p.POSITION_CONTROL,
+                                    targetPositions=_ctrl_actions,
+                                    positionGains=[100.0] * len(self.motor_id_list),
+                                    velocityGains=[1.0] * len(self.motor_id_list))
 
         p.stepSimulation()
 

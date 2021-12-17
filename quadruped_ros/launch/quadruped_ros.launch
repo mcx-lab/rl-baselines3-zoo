@@ -1,8 +1,8 @@
 <launch>
 
-  <rosparam command="load" file="$(find quadruped_ros)/config/quadruped_ctrl_config.yaml"/>
+  <rosparam command="load" file="$(find quadruped_ros)/config/quadruped_ctrl_config.yaml" />
 
   <node pkg="quadruped_ros" name="simuation" type="simulation.py" />
-  <node pkg="quadruped_ros" name="rl_algo" type="rl_algo.py" args="-i ../A1GymEnv-v0_92/" />
+  <node pkg="quadruped_ros" name="rl_algo" type="rl_algo.py" args="-i ../A1GymEnv-v0_model/" />
 
 </launch>

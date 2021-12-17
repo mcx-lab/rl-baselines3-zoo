@@ -1,16 +1,8 @@
 simulation:
   terrain: "plain"
   camera: False
-  lateralFriction: 1.0
-  spinningFriction: 0.0065
+  lateralFriction: 0.5
+  spinningFriction: 0.0
   freq: 500.0
-  stand_kp: 100.0
-  stand_kd: 1.0
-  joint_kp: 0.0
-  joint_kd: 0.05
 robot:
   freq: 500.0
-  stand_kp: 100.0
-  stand_kd: 1.0
-  joint_kp: 10.0
-  joint_kd: 0.2

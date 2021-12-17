@@ -87,7 +87,7 @@ def callback_heightmap(obs):
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--log-path", help="Path to folder containing pre-trained model", type=str, default="./")
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     env_id = "A1GymEnv-v0"
     log_path = args.log_path
