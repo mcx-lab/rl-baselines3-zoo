@@ -300,20 +300,26 @@ class WalkingSimulation(object):
             get_matrix[7] * linear_Y + get_matrix[8] * linear_Z
 
         # joint data
-        joint_state = p.getJointStates(self.boxId, self.motor_id_list)
-        leg_data[0:12] = [joint_state[0][0], joint_state[1][0], joint_state[2][0],
-                          joint_state[3][0], joint_state[4][0], joint_state[5][0],
-                          joint_state[6][0], joint_state[7][0], joint_state[8][0],
-                          joint_state[9][0], joint_state[10][0], joint_state[11][0]]
-        leg_data[12:24] = [joint_state[0][1], joint_state[1][1], joint_state[2][1],
-                           joint_state[3][1], joint_state[4][1], joint_state[5][1],
-                           joint_state[6][1], joint_state[7][1], joint_state[8][1],
-                           joint_state[9][1], joint_state[10][1], joint_state[11][1]]
+        joint_positions, joint_velocities, _, joint_names = self.__get_motor_joint_states(self.boxId)
+        leg_data["state"][0:12] = joint_positions
+        leg_data["state"][12:24] = joint_velocities
+        leg_data["name"] = joint_names
 
         # CoM velocity
         self.get_last_vel = [get_velocity[0][0], get_velocity[0][1], get_velocity[0][2]]
 
         return imu_data, leg_data, pose_orn[0]
+
+    def __get_motor_joint_states(self, robot):
+        joint_number_range = range(p.getNumJoints(robot))
+        joint_states = p.getJointStates(robot, joint_number_range)
+        joint_infos = [p.getJointInfo(robot, i) for i in joint_number_range]
+        joint_states, joint_name = \
+            zip(*[(j, i[1]) for j, i in zip(joint_states, joint_infos) if i[2] != p.JOINT_FIXED])
+        joint_positions = [state[0] for state in joint_states]
+        joint_velocities = [state[1] for state in joint_states]
+        joint_torques = [state[3] for state in joint_states]
+        return joint_positions, joint_velocities, joint_torques, joint_name
 
     def __pub_nav_msg(self, base_pos, imu_data):
         pub_odom = rospy.Publisher("obs_odometry", Odometry, queue_size=30)
