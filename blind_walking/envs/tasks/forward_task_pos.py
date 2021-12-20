@@ -103,12 +103,6 @@ class ForwardTask(object):
             distance_reward = min(distance_towards / distance_target, 1)
         else:
             distance_reward = -np.linalg.norm(dxy_local)
-        # Reward closeness to target position.
-        dxy_err = np.linalg.norm(self._target_pos - dxy_local, 2)
-        dxy_var = 1.0 * self._env._env_time_step
-        dxy_reward = math.exp(math.log(alpha) * (dxy_err / dxy_var) ** 2)
-        # Penalty for upward translation.
-        dz_reward = -abs(dz)
 
         # Penalty for sideways rotation of the body.
         orientation = self.current_base_orientation
@@ -117,15 +111,6 @@ class ForwardTask(object):
         shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec)))
         # Penalty for energy usage.
         energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
-        energy_rot_reward = (
-            -np.dot(self.motor_inertia, np.square(self.current_motor_velocities)) * self._env._env_time_step * 0.5
-        )
-
-        # Penalty for lost of more than two foot contacts
-        contact_reward = min(sum(self.current_foot_contacts), 2) - 2
-
-        # Reward for feet air time
-        airtime_reward = np.sum(self.feet_air_time - (0.5 * self._env._env_time_step))
 
         # Penalize for excessive contact force above certain threshold
         contact_force_threshold = 100  # newtons
@@ -140,7 +125,6 @@ class ForwardTask(object):
             "distance": distance_reward * 0.03,
             "shake": shake_reward * 0.001,
             "energy": energy_reward * 0.0005,
-            "contact_force": contact_force_reward * 1.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
