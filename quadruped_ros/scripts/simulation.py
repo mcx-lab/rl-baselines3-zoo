@@ -5,7 +5,6 @@ import os
 import sys
 import rospy
 import rospkg
-import ctypes
 import threading
 import pybullet as p
 import pybullet_data
@@ -25,10 +24,6 @@ from quadruped_ros.msg import (
 
 
 _ctrl_actions = [0.0] * 12
-
-
-class StructPointer(ctypes.Structure):
-    _fields_ = [("eff", ctypes.c_double * 12)]
 
 
 class WalkingSimulation(object):
