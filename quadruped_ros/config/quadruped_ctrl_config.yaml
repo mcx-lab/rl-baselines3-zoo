@@ -4,5 +4,3 @@ simulation:
   lateralFriction: 0.5
   spinningFriction: 0.0
   freq: 500.0
-robot:
-  freq: 500.0

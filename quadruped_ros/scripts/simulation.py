@@ -9,6 +9,7 @@ import ctypes
 import threading
 import pybullet as p
 import pybullet_data
+import numpy as np
 from sensor_msgs.msg import Imu, JointState
 from nav_msgs.msg import Odometry
 
@@ -231,14 +232,17 @@ class WalkingSimulation(object):
 
     def __simulation_step(self):
         # get data from simulator
-        imu_data, leg_data, base_pos = self.__get_data_from_sim()
+        observations = self.__get_data_from_sim()
 
         # pub msg
-        self.__pub_nav_msg(base_pos, imu_data)
-        self.__pub_imu_msg(imu_data)
-        self.__pub_joint_states(leg_data)
+        self.__pub_base_velocity_msg(observations["base_velocity"])
+        self.__pub_imu_msg(observations["imu"])
+        self.__pub_joint_states(observations["joint_states"])
+        self.__pub_target_position(observations["target_position"])
+        self.__pub_heightmap(observations["heightmap"])
 
         global _ctrl_actions
+        # TODO set Kp and Kd accordingly
         p.setJointMotorControlArray(bodyUniqueId=self.boxId,
                                     jointIndices=self.motor_id_list,
                                     controlMode=p.POSITION_CONTROL,
@@ -252,16 +256,18 @@ class WalkingSimulation(object):
         get_matrix = []
         get_velocity = []
         get_invert = []
+
+        pose_orn = p.getBasePositionAndOrientation(self.boxId)
+        get_velocity = p.getBaseVelocity(self.boxId)
+        get_invert = p.invertTransform(pose_orn[0], pose_orn[1])
+        get_matrix = p.getMatrixFromQuaternion(get_invert[1])
+
+        observations = {}
+
         imu_data = [0] * 10
         leg_data = {}
         leg_data["state"] = [0] * 24
         leg_data["name"] = [""] * 12
-
-        pose_orn = p.getBasePositionAndOrientation(self.boxId)
-
-        get_velocity = p.getBaseVelocity(self.boxId)
-        get_invert = p.invertTransform(pose_orn[0], pose_orn[1])
-        get_matrix = p.getMatrixFromQuaternion(get_invert[1])
 
         # IMU data
         imu_data[3] = pose_orn[1][0]
@@ -275,7 +281,6 @@ class WalkingSimulation(object):
             get_velocity[1][1] + get_matrix[5] * get_velocity[1][2]
         imu_data[9] = get_matrix[6] * get_velocity[1][0] + get_matrix[7] * \
             get_velocity[1][1] + get_matrix[8] * get_velocity[1][2]
-
         # calculate the acceleration of the robot
         linear_X = (get_velocity[0][0] - self.get_last_vel[0]) * self.freq
         linear_Y = (get_velocity[0][1] - self.get_last_vel[1]) * self.freq
@@ -286,17 +291,35 @@ class WalkingSimulation(object):
             get_matrix[4] * linear_Y + get_matrix[5] * linear_Z
         imu_data[2] = get_matrix[6] * linear_X + \
             get_matrix[7] * linear_Y + get_matrix[8] * linear_Z
+        observations["imu"] = imu_data
 
-        # joint data
+        # joint motors data
         joint_positions, joint_velocities, _, joint_names = self.__get_motor_joint_states(self.boxId)
         leg_data["state"][0:12] = joint_positions
         leg_data["state"][12:24] = joint_velocities
         leg_data["name"] = joint_names
+        observations["joint_states"] = leg_data
+
+        # target position data
+        max_distance = 0.02
+        dy_target = 0 - pose_orn[0][1]
+        dy_target = max(min(dy_target, max_distance / 2), -max_distance / 2)
+        dx_target = np.sqrt(pow(max_distance, 2) - pow(dy_target, 2))
+        def to_local_frame(dx, dy, yaw):
+            dx_local = np.cos(yaw) * dx + np.sin(yaw) * dy
+            dy_local = -np.sin(yaw) * dx + np.cos(yaw) * dy
+            return dx_local, dy_local
+        dx_target_local, dy_target_local = to_local_frame(dx_target, dy_target, pose_orn[1][2])
+        observations["target_position"] = [dx_target_local, dy_target_local]
 
         # CoM velocity
         self.get_last_vel = [get_velocity[0][0], get_velocity[0][1], get_velocity[0][2]]
+        observations["base_velocity"] = self.get_last_vel
 
-        return imu_data, leg_data, pose_orn[0]
+        # heightmap data
+        observations["heightmap"] = [0] * 10
+
+        return observations
 
     def __get_motor_joint_states(self, robot):
         joint_number_range = range(p.getNumJoints(robot))
@@ -309,20 +332,15 @@ class WalkingSimulation(object):
         joint_torques = [state[3] for state in joint_states]
         return joint_positions, joint_velocities, joint_torques, joint_name
 
-    def __pub_nav_msg(self, base_pos, imu_data):
-        pub_odom = rospy.Publisher("obs_odometry", Odometry, queue_size=30)
-        odom = Odometry()
-        odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world"
-        odom.child_frame_id = "body"
-        odom.pose.pose.position.x = base_pos[0]
-        odom.pose.pose.position.y = base_pos[1]
-        odom.pose.pose.position.z = base_pos[2]
-        odom.pose.pose.orientation.x = imu_data[3]
-        odom.pose.pose.orientation.y = imu_data[4]
-        odom.pose.pose.orientation.z = imu_data[5]
-        odom.pose.pose.orientation.w = imu_data[6]
-        pub_odom.publish(odom)
+    def __pub_base_velocity_msg(self, bv_data):
+        pub_bv = rospy.Publisher("obs_basevelocity", BaseVelocitySensor, queue_size=30)
+        bv_msg = BaseVelocitySensor()
+        bv_msg.vx = bv_data[0]
+        bv_msg.vy = bv_data[1]
+        bv_msg.vz = bv_data[2]
+        bv_msg.header.stamp = rospy.Time.now()
+        bv_msg.header.frame_id = "body"
+        pub_bv.publish(bv_msg)
 
     def __pub_imu_msg(self, imu_data):
         pub_imu = rospy.Publisher("obs_imu", Imu, queue_size=30)
@@ -356,6 +374,23 @@ class WalkingSimulation(object):
         js_msg.header.stamp = rospy.Time.now()
         js_msg.header.frame_id = "body"
         pub_js.publish(js_msg)
+
+    def __pub_target_position(self, tp_data):
+        pub_tp = rospy.Publisher("obs_targetpos", TargetPositionSensor, queue_size=30)
+        tp_msg = TargetPositionSensor()
+        tp_msg.dx = tp_data[0]
+        tp_msg.dy = tp_data[1]
+        tp_msg.header.stamp = rospy.Time.now()
+        tp_msg.header.frame_id = "body"
+        pub_tp.publish(tp_msg)
+
+    def __pub_heightmap(self, hm_data):
+        pub_hm = rospy.Publisher("obs_heightmap", HeightmapSensor, queue_size=30)
+        hm_msg = HeightmapSensor()
+        hm_msg.data = hm_data
+        hm_msg.header.stamp = rospy.Time.now()
+        hm_msg.header.frame_id = "body"
+        pub_hm.publish(hm_msg)
 
 
 def callback_action(obs):

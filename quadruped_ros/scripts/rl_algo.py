@@ -46,31 +46,9 @@ def callback_imu(obs):
 
 def callback_motors(obs):
     global _obs_motors
-    _obs_motors[0] = obs.fr.hip.q
-    _obs_motors[1] = obs.fr.upper.q
-    _obs_motors[2] = obs.fr.lower.q
-    _obs_motors[3] = obs.fl.hip.q
-    _obs_motors[4] = obs.fl.upper.q
-    _obs_motors[5] = obs.fl.lower.q
-    _obs_motors[6] = obs.br.hip.q
-    _obs_motors[7] = obs.br.upper.q
-    _obs_motors[8] = obs.br.lower.q
-    _obs_motors[9] = obs.bl.hip.q
-    _obs_motors[10] = obs.bl.upper.q
-    _obs_motors[11] = obs.bl.lower.q
-
-    _obs_motors[12] = obs.fr.hip.dq
-    _obs_motors[13] = obs.fr.upper.dq
-    _obs_motors[14] = obs.fr.lower.dq
-    _obs_motors[15] = obs.fl.hip.dq
-    _obs_motors[16] = obs.fl.upper.dq
-    _obs_motors[17] = obs.fl.lower.dq
-    _obs_motors[18] = obs.br.hip.dq
-    _obs_motors[19] = obs.br.upper.dq
-    _obs_motors[20] = obs.br.lower.dq
-    _obs_motors[21] = obs.bl.hip.dq
-    _obs_motors[22] = obs.bl.upper.dq
-    _obs_motors[23] = obs.bl.lower.dq
+    # TODO: ensure sequence is correct
+    _obs_motors[:12] = obs.position
+    _obs_motors[12:] = obs.velocity
 
 
 def callback_targetpos(obs):
@@ -81,7 +59,7 @@ def callback_targetpos(obs):
 
 def callback_heightmap(obs):
     global _obs_heightmap
-    _obs_heightmap = obs.data
+    _obs_heightmap = list(obs.data)
 
 
 def main():  # noqa: C901
@@ -105,7 +83,7 @@ def main():  # noqa: C901
     rospy.init_node("rl_algo", anonymous=True)
     rospy.Subscriber("obs_basevelocity", BaseVelocitySensor, callback_basevelocity)
     rospy.Subscriber("obs_imu", Imu, callback_imu)
-    rospy.Subscriber("obs_motors", QuadrupedLeg, callback_motors)  # motor angles and velocity
+    rospy.Subscriber("obs_motors", JointState, callback_motors)  # motor angles and velocity
     rospy.Subscriber("obs_targetpos", TargetPositionSensor, callback_targetpos)
     rospy.Subscriber("obs_heightmap", HeightmapSensor, callback_heightmap)
     pub_action = rospy.Publisher("actions", QuadrupedLegPos, queue_size=10)
