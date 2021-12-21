@@ -62,8 +62,6 @@ def main():  # noqa: C901
         msg_action.bl.upper.pos = action[10]
         msg_action.bl.lower.pos = action[11]
         pub_action.publish(msg_action)
-        # update stored observation
-        _obs_lastaction = list(action)
         rate.sleep()
 
 

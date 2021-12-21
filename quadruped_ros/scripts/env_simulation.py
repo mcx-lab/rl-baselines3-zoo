@@ -78,8 +78,8 @@ if __name__ == '__main__':
     rospy.init_node('quadruped_simulator', anonymous=True)
     rospy.Subscriber("actions", QuadrupedLegPos, callback_action)
     pub_obs = rospy.Publisher("observations", Observation, queue_size=10)
-    
-    rate = rospy.Rate(1000)  # Hz
+
+    rate = rospy.Rate(33)  # Hz
     while not rospy.is_shutdown():
         # simulation step
         obs, reward, done, infos = env.step(_ctrl_actions)

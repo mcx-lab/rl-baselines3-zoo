@@ -24,7 +24,7 @@ _obs_imu = [0.0] * 6
 _obs_motors = [0.0] * 24
 _obs_lastaction = [0.0] * 12
 _obs_targetpos = [0.0] * 2
-_obs_heightmap = [0.0] * 10
+_obs_heightmap = [0.0] * 46
 
 
 def callback_basevelocity(obs):

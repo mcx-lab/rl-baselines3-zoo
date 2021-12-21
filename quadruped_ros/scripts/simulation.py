@@ -26,6 +26,7 @@ from quadruped_ros.msg import (
 _ctrl_actions = [0.0] * 12
 
 MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
+ACTION_REPEAT = 30
 
 
 class WalkingSimulation(object):
@@ -239,38 +240,35 @@ class WalkingSimulation(object):
         self.__pub_heightmap(observations["heightmap"])
 
         global _ctrl_actions
-        # filter actions
-        # TODO
         for i in range(ACTION_REPEAT):
-            # process actions - NA
             # clip actions
             clipped_actions = self._clip_actions(_ctrl_actions)
             # apply actions
             self._apply_actions(clipped_actions)
-
-        # TODO set Kp and Kd accordingly
-        p.setJointMotorControlArray(bodyUniqueId=self.boxId,
-                                    jointIndices=self.motor_id_list,
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPositions=_ctrl_actions,
-                                    positionGains=[100.0] * len(self.motor_id_list),
-                                    velocityGains=[1.0] * len(self.motor_id_list))
-
-        p.stepSimulation()
+            # step simulation
+            p.stepSimulation()
 
     def _clip_actions(self, motor_commands):
         max_angle_change = MAX_MOTOR_ANGLE_CHANGE_PER_STEP
-        current_motor_angles = self.GetMotorAngles()
+        current_motor_angles, _, _, _ = self.__get_motor_joint_states(self.boxId)
         motor_commands = np.clip(
             motor_commands,
-            current_motor_angles - max_angle_change,
-            current_motor_angles + max_angle_change,
+            np.array(current_motor_angles) - max_angle_change,
+            np.array(current_motor_angles) + max_angle_change,
         )
         return motor_commands
 
     def _apply_actions(self, motor_commands):
-        # TODO
-        return
+        kp = np.array([100.0] * 12)
+        kd = np.array([1.0, 2.0, 2.0] * 4)
+        motor_angles, motor_vels, _, _ = self.__get_motor_joint_states(self.boxId)
+        motor_torques = kp * (motor_commands - motor_angles) - kd * motor_vels
+        p.setJointMotorControlArray(
+            bodyIndex=self.boxId,
+            jointIndices=self.motor_id_list,
+            controlMode=p.TORQUE_CONTROL,
+            forces=motor_torques,
+        )
 
     def __get_data_from_sim(self):
         get_matrix = []
@@ -337,7 +335,7 @@ class WalkingSimulation(object):
         observations["base_velocity"] = self.get_last_vel
 
         # heightmap data
-        observations["heightmap"] = [0] * 10
+        observations["heightmap"] = [0] * 46
 
         return observations
 
