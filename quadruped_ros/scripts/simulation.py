@@ -25,6 +25,8 @@ from quadruped_ros.msg import (
 
 _ctrl_actions = [0.0] * 12
 
+MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
+
 
 class WalkingSimulation(object):
     def __init__(self):
@@ -237,6 +239,15 @@ class WalkingSimulation(object):
         self.__pub_heightmap(observations["heightmap"])
 
         global _ctrl_actions
+        # filter actions
+        # TODO
+        for i in range(ACTION_REPEAT):
+            # process actions - NA
+            # clip actions
+            clipped_actions = self._clip_actions(_ctrl_actions)
+            # apply actions
+            self._apply_actions(clipped_actions)
+
         # TODO set Kp and Kd accordingly
         p.setJointMotorControlArray(bodyUniqueId=self.boxId,
                                     jointIndices=self.motor_id_list,
@@ -246,6 +257,20 @@ class WalkingSimulation(object):
                                     velocityGains=[1.0] * len(self.motor_id_list))
 
         p.stepSimulation()
+
+    def _clip_actions(self, motor_commands):
+        max_angle_change = MAX_MOTOR_ANGLE_CHANGE_PER_STEP
+        current_motor_angles = self.GetMotorAngles()
+        motor_commands = np.clip(
+            motor_commands,
+            current_motor_angles - max_angle_change,
+            current_motor_angles + max_angle_change,
+        )
+        return motor_commands
+
+    def _apply_actions(self, motor_commands):
+        # TODO
+        return
 
     def __get_data_from_sim(self):
         get_matrix = []

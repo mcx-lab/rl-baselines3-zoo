@@ -62,6 +62,7 @@ add_message_files(
   BaseVelocitySensor.msg
   TargetPositionSensor.msg
   HeightmapSensor.msg
+  Observation.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -173,6 +174,8 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/simulation.py
   scripts/rl_algo.py
+  scripts/env_simulation.py
+  scripts/env_rl_algo.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
