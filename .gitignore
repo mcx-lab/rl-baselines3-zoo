@@ -20,6 +20,7 @@ target_positions.csv
 *.mp4
 *.json
 *.npy
+build/
 
 # Distribution / packaging
 .Python
