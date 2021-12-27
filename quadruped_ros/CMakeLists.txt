@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1)
+# cmake_minimum_required(VERSION 3.0.2)
 project(quadruped_ros)
+set(CMAKE_CXX_STANDARD 14)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,6 +9,7 @@ project(quadruped_ros)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
@@ -137,6 +140,12 @@ include_directories(
 #   src/${PROJECT_NAME}/quadruped_ros.cpp
 # )
 
+find_library(UNITREE_LEGGED_LIB libunitree_legged_sdk_amd64.so ${CMAKE_CURRENT_SOURCE_DIR}/lib/)
+
+add_library(quadruped_ros SHARED src/hardware_interface.cpp)
+target_include_directories(quadruped_ros PUBLIC "include")
+target_link_libraries(quadruped_ros PUBLIC ${UNITREE_LEGGED_LIB} lcm -pthread)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -161,6 +170,9 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(rl_controller src/rl_controller.cpp)
+target_link_libraries(rl_controller quadruped_ros)
 
 #############
 ## Install ##
