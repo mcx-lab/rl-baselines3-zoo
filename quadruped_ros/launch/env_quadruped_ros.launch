@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="quadruped_ros" name="simuation" type="env_simulation.py" args="-i $(find quadruped_ros)/A1GymEnv-v0_model/" />
-  <node pkg="quadruped_ros" name="rl_algo" type="env_rl_algo.py" args="-i $(find quadruped_ros)/A1GymEnv-v0_model/" />
+  <node pkg="quadruped_ros" name="simuation" type="env_simulation.py" args="-i $(find quadruped_ros)/A1GymEnv-v0_62/" />
+  <node pkg="quadruped_ros" name="rl_algo" type="env_rl_algo.py" args="-i $(find quadruped_ros)/A1GymEnv-v0_62/" />
 
 </launch>

@@ -3,4 +3,4 @@ simulation:
   camera: False
   lateralFriction: 0.5
   spinningFriction: 0.0
-  freq: 500.0
+  freq: 1000.0

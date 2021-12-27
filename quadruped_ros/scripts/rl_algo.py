@@ -4,6 +4,7 @@ import rospy
 import argparse
 import os
 import sys
+import pickle
 from stable_baselines3 import PPO
 from sensor_msgs.msg import Imu, JointState
 from nav_msgs.msg import Odometry
@@ -24,7 +25,7 @@ _obs_imu = [0.0] * 6
 _obs_motors = [0.0] * 24
 _obs_lastaction = [0.0] * 12
 _obs_targetpos = [0.0] * 2
-_obs_heightmap = [0.0] * 46
+_obs_heightmap = [0.0] * 10
 
 
 def callback_basevelocity(obs):
@@ -76,6 +77,10 @@ def main():  # noqa: C901
     model = PPO.load(model_path, deterministic=True)
     print(f"Loaded model from {model_path}")
 
+    vecnorm_path = os.path.join(log_path, env_id, "vecnormalize.pkl")
+    with open(vecnorm_path, "rb") as f:
+        vecnorm = pickle.load(f)
+
     # ######################### ROS node ######################### #
 
     global _obs_lastaction
@@ -87,10 +92,13 @@ def main():  # noqa: C901
     rospy.Subscriber("obs_targetpos", TargetPositionSensor, callback_targetpos)
     rospy.Subscriber("obs_heightmap", HeightmapSensor, callback_heightmap)
     pub_action = rospy.Publisher("actions", QuadrupedLegPos, queue_size=10)
-    rate = rospy.Rate(33)  # hz
+    rate = rospy.Rate(1000)  # hz
     while not rospy.is_shutdown():
         obs = _obs_basevelocity + _obs_imu + _obs_motors + _obs_lastaction + _obs_targetpos + _obs_heightmap
-        action, _ = model.predict(obs, state=None, deterministic=True)
+        # normalise observation
+        norm_obs = vecnorm.normalize_obs(obs)
+        # predict action
+        action, _ = model.predict(norm_obs, state=None, deterministic=True)
         # publish action
         msg_action = QuadrupedLegPos()
         msg_action.fr.hip.pos = action[0]

@@ -8,6 +8,7 @@ import rospkg
 import threading
 import pybullet as p
 import pybullet_data
+import pyquaternion
 import numpy as np
 from sensor_msgs.msg import Imu, JointState
 from nav_msgs.msg import Odometry
@@ -112,27 +113,27 @@ class WalkingSimulation(object):
         cameraEyePosition = [0.3, 0, 0.26436384367425125]
         cameraTargetPosition = [1.0, 0, 0]
         cameraUpVector = [45, 45, 0]
-        self.pointcloud_publisher = rospy.Publisher("/generated_pc", PointCloud2, queue_size=10)
-        self.image_publisher = rospy.Publisher("/cam0/image_raw", Image, queue_size=10)
+        # self.pointcloud_publisher = rospy.Publisher("/generated_pc", PointCloud2, queue_size=10)
+        # self.image_publisher = rospy.Publisher("/cam0/image_raw", Image, queue_size=10)
 
         while not rospy.is_shutdown():
             cubePos, cubeOrn = p.getBasePositionAndOrientation(self.boxId)
             get_matrix = p.getMatrixFromQuaternion(cubeOrn)
 
-            T1 = numpy.mat([[0, -1.0/2.0, numpy.sqrt(3.0)/2.0, 0.25], [-1, 0, 0, 0],
-                            [0, -numpy.sqrt(3.0)/2.0, -1.0/2.0, 0], [0, 0, 0, 1]])
+            T1 = np.mat([[0, -1.0/2.0, np.sqrt(3.0)/2.0, 0.25], [-1, 0, 0, 0],
+                            [0, -np.sqrt(3.0)/2.0, -1.0/2.0, 0], [0, 0, 0, 1]])
 
-            T2 = numpy.mat([[get_matrix[0], get_matrix[1], get_matrix[2], cubePos[0]],
+            T2 = np.mat([[get_matrix[0], get_matrix[1], get_matrix[2], cubePos[0]],
                             [get_matrix[3], get_matrix[4], get_matrix[5], cubePos[1]],
                             [get_matrix[6], get_matrix[7], get_matrix[8], cubePos[2]],
                             [0, 0, 0, 1]])
 
-            T3 = numpy.array(T2*T1)
+            T3 = np.array(T2*T1)
 
             cameraEyePosition[0] = T3[0][3]
             cameraEyePosition[1] = T3[1][3]
             cameraEyePosition[2] = T3[2][3]
-            cameraTargetPosition = (numpy.mat(T3)*numpy.array([[0],[0],[1],[1]]))[0:3]
+            cameraTargetPosition = (np.mat(T3)*np.array([[0],[0],[1],[1]]))[0:3]
 
             q = pyquaternion.Quaternion(matrix=T3)
             cameraQuat = [q[1], q[2], q[3], q[0]]
@@ -165,7 +166,7 @@ class WalkingSimulation(object):
             cx = (1-projectionMatrix[2]) * pixelWidth / 2.0
             cy = (1+projectionMatrix[6]) * pixelHeight / 2.0
             cloud_point = [0] * pixelWidth * pixelHeight * 3
-            depthBuffer = numpy.reshape(depthImg, [pixelHeight, pixelWidth])
+            depthBuffer = np.reshape(depthImg, [pixelHeight, pixelWidth])
             depth = depthBuffer
             for h in range(0, pixelHeight):
                 for w in range(0, pixelWidth):
@@ -176,8 +177,8 @@ class WalkingSimulation(object):
                         continue
                     X = (w - cx) * Z / fx
                     Y = (h - cy) * Z / fy
-                    XYZ_ = numpy.mat([[X], [Y], [Z], [1]])
-                    XYZ = numpy.array(T3*XYZ_)
+                    XYZ_ = np.mat([[X], [Y], [Z], [1]])
+                    XYZ = np.array(T3*XYZ_)
                     X = float(XYZ[0])
                     Y = float(XYZ[1])
                     Z = float(XYZ[2])
@@ -197,7 +198,7 @@ class WalkingSimulation(object):
                 PointField('x', 0, PointField.FLOAT32, 1),
                 PointField('y', 4, PointField.FLOAT32, 1),
                 PointField('z', 8, PointField.FLOAT32, 1)]
-            pub_pointcloud.data = numpy.asarray(pc_list, numpy.float32).tostring()
+            pub_pointcloud.data = np.asarray(pc_list, np.float32).tostring()
             self.pointcloud_publisher.publish(pub_pointcloud)
 
             # grey image
@@ -209,7 +210,7 @@ class WalkingSimulation(object):
             pub_image.encoding = "mono8"
             pub_image.step = width
             grey = pil.fromarray(rgbImg)
-            pub_image.data = numpy.asarray(grey.convert('L')).reshape([1,-1]).tolist()[0]
+            pub_image.data = np.asarray(grey.convert('L')).reshape([1,-1]).tolist()[0]
             self.image_publisher.publish(pub_image)
 
             rate_1.sleep()
@@ -263,12 +264,19 @@ class WalkingSimulation(object):
         kd = np.array([1.0, 2.0, 2.0] * 4)
         motor_angles, motor_vels, _, _ = self.__get_motor_joint_states(self.boxId)
         motor_torques = kp * (motor_commands - motor_angles) - kd * motor_vels
+        motor_torques = [0.0] * 12
         p.setJointMotorControlArray(
             bodyIndex=self.boxId,
             jointIndices=self.motor_id_list,
             controlMode=p.TORQUE_CONTROL,
             forces=motor_torques,
         )
+        # p.setJointMotorControlArray(
+        #     bodyIndex=self.boxId,
+        #     jointIndices=self.motor_id_list,
+        #     controlMode=p.POSITION_CONTROL,
+        #     forces=motor_commands,
+        # )
 
     def __get_data_from_sim(self):
         get_matrix = []
@@ -335,7 +343,7 @@ class WalkingSimulation(object):
         observations["base_velocity"] = self.get_last_vel
 
         # heightmap data
-        observations["heightmap"] = [0] * 46
+        observations["heightmap"] = [0.4] * 10
 
         return observations
 
