@@ -74,7 +74,7 @@ def main():  # noqa: C901
     # ######################### Load model ######################### #
 
     model_path = os.path.join(log_path, f"{env_id}.zip")
-    model = PPO.load(model_path, deterministic=True)
+    model = PPO.load(model_path) #, deterministic=True)
     print(f"Loaded model from {model_path}")
 
     vecnorm_path = os.path.join(log_path, env_id, "vecnormalize.pkl")
