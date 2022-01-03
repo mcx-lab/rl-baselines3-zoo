@@ -260,23 +260,23 @@ class WalkingSimulation(object):
         return motor_commands
 
     def _apply_actions(self, motor_commands):
-        kp = np.array([100.0] * 12)
-        kd = np.array([1.0, 2.0, 2.0] * 4)
-        motor_angles, motor_vels, _, _ = self.__get_motor_joint_states(self.boxId)
-        motor_torques = kp * (motor_commands - motor_angles) - kd * motor_vels
-        motor_torques = [0.0] * 12
-        p.setJointMotorControlArray(
-            bodyIndex=self.boxId,
-            jointIndices=self.motor_id_list,
-            controlMode=p.TORQUE_CONTROL,
-            forces=motor_torques,
-        )
+        # kp = np.array([100.0] * 12)
+        # kd = np.array([1.0, 2.0, 2.0] * 4)
+        # motor_angles, motor_vels, _, _ = self.__get_motor_joint_states(self.boxId)
+        # motor_torques = kp * (motor_commands - motor_angles) - kd * motor_vels
+        # motor_torques = [0.0] * 12
         # p.setJointMotorControlArray(
         #     bodyIndex=self.boxId,
         #     jointIndices=self.motor_id_list,
-        #     controlMode=p.POSITION_CONTROL,
-        #     forces=motor_commands,
+        #     controlMode=p.TORQUE_CONTROL,
+        #     forces=motor_torques,
         # )
+        p.setJointMotorControlArray(
+            bodyIndex=self.boxId,
+            jointIndices=self.motor_id_list,
+            controlMode=p.POSITION_CONTROL,
+            forces=motor_commands,
+        )
 
     def __get_data_from_sim(self):
         get_matrix = []
@@ -343,7 +343,10 @@ class WalkingSimulation(object):
         observations["base_velocity"] = self.get_last_vel
 
         # heightmap data
-        observations["heightmap"] = [0.4] * 10
+        observations["heightmap"] = [
+            0.31659717, 0.32434894, 0.33932163, 0.36061692, 0.38719301,
+            0.41804396, 0.45229587, 0.48923492, 0.52829777, 0.56904721
+        ]
 
         return observations
 

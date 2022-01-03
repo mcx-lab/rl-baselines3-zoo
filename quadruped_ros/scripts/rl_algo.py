@@ -47,7 +47,10 @@ def callback_imu(obs):
 
 def callback_motors(obs):
     global _obs_motors
-    # TODO: ensure sequence is correct
+    # ['FR_hip_joint', 'FR_upper_joint', 'FR_lower_joint',
+    # 'FL_hip_joint', 'FL_upper_joint', 'FL_lower_joint', 
+    # 'RR_hip_joint', 'RR_upper_joint', 'RR_lower_joint', 
+    # 'RL_hip_joint', 'RL_upper_joint', 'RL_lower_joint'] 
     _obs_motors[:12] = obs.position
     _obs_motors[12:] = obs.velocity
 
