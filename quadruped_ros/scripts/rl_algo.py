@@ -3,6 +3,7 @@
 import rospy
 import argparse
 import os
+import numpy as np
 import sys
 import pickle
 from stable_baselines3 import PPO
@@ -18,7 +19,7 @@ from quadruped_ros.msg import (
     TargetPositionSensor,
     HeightmapSensor,
 )
-
+from blind_walking.robots.action_filter import ActionFilterButter
 
 _obs_basevelocity = [0.0] * 2
 _obs_imu = [0.0] * 6
@@ -65,6 +66,43 @@ def callback_heightmap(obs):
     global _obs_heightmap
     _obs_heightmap = list(obs.data)
 
+LAIKAGO_DEFAULT_ABDUCTION_ANGLE = 0
+LAIKAGO_DEFAULT_HIP_ANGLE = 0.67
+LAIKAGO_DEFAULT_KNEE_ANGLE = -1.25
+LAIKAGO_DEFAULT_POSE = np.array([
+    LAIKAGO_DEFAULT_ABDUCTION_ANGLE,
+    LAIKAGO_DEFAULT_HIP_ANGLE,
+    LAIKAGO_DEFAULT_KNEE_ANGLE,
+] * 4)
+
+def nn_action_to_motor_angle(action: np.ndarray) -> np.ndarray:
+    """ Converts NN action to a motor angle in radians. 
+
+    Adapted from blind_walking.env_wrappers.simple_openloop.LaikagoPoseOffsetGenerator
+    """
+    assert action.shape == LAIKAGO_DEFAULT_POSE.shape
+    return LAIKAGO_DEFAULT_POSE + action
+
+def build_action_filter():
+    """ Constructs action filter used in simulation. 
+    
+    Adapted from minitaur.Minitaur._BuildActionFilter
+    """
+    sampling_rate = 1 / (0.001 * 30)
+    num_joints = 12
+    a_filter = ActionFilterButter(sampling_rate=sampling_rate, num_joints=num_joints)
+    default_action = LAIKAGO_DEFAULT_POSE
+    a_filter.init_history(default_action)
+
+    return a_filter
+
+def filter_action(action_filter: ActionFilterButter, robot_action: np.ndarray):
+    """ Applies action filter used in simulation. 
+    
+    Adapted from minitaur.Minitaur._FilterAction
+    """
+    filtered_action = action_filter.filter(robot_action)
+    return filtered_action
 
 def main():  # noqa: C901
     parser = argparse.ArgumentParser()
@@ -88,6 +126,8 @@ def main():  # noqa: C901
 
     global _obs_lastaction
 
+    action_filter = build_action_filter()
+
     rospy.init_node("rl_algo", anonymous=True)
     rospy.Subscriber("obs_basevelocity", BaseVelocitySensor, callback_basevelocity)
     rospy.Subscriber("obs_imu", Imu, callback_imu)
@@ -95,30 +135,33 @@ def main():  # noqa: C901
     rospy.Subscriber("obs_targetpos", TargetPositionSensor, callback_targetpos)
     rospy.Subscriber("obs_heightmap", HeightmapSensor, callback_heightmap)
     pub_action = rospy.Publisher("actions", QuadrupedLegPos, queue_size=10)
-    rate = rospy.Rate(1000)  # hz
+    rate = rospy.Rate(33)  # hz
     while not rospy.is_shutdown():
         obs = _obs_basevelocity + _obs_imu + _obs_motors + _obs_lastaction + _obs_targetpos + _obs_heightmap
         # normalise observation
         norm_obs = vecnorm.normalize_obs(obs)
         # predict action
-        action, _ = model.predict(norm_obs, state=None, deterministic=True)
+        nn_action, _ = model.predict(norm_obs, state=None, deterministic=True)
+        nn_action = np.clip(nn_action, -0.5, 0.5)
+        robot_action = nn_action_to_motor_angle(nn_action) 
+        robot_action = filter_action(action_filter, robot_action)
         # publish action
         msg_action = QuadrupedLegPos()
-        msg_action.fr.hip.pos = action[0]
-        msg_action.fr.upper.pos = action[1]
-        msg_action.fr.lower.pos = action[2]
-        msg_action.fl.hip.pos = action[3]
-        msg_action.fl.upper.pos = action[4]
-        msg_action.fl.lower.pos = action[5]
-        msg_action.br.hip.pos = action[6]
-        msg_action.br.upper.pos = action[7]
-        msg_action.br.lower.pos = action[8]
-        msg_action.bl.hip.pos = action[9]
-        msg_action.bl.upper.pos = action[10]
-        msg_action.bl.lower.pos = action[11]
+        msg_action.fr.hip.pos = robot_action[0]
+        msg_action.fr.upper.pos = robot_action[1]
+        msg_action.fr.lower.pos = robot_action[2]
+        msg_action.fl.hip.pos = robot_action[3]
+        msg_action.fl.upper.pos = robot_action[4]
+        msg_action.fl.lower.pos = robot_action[5]
+        msg_action.br.hip.pos = robot_action[6]
+        msg_action.br.upper.pos = robot_action[7]
+        msg_action.br.lower.pos = robot_action[8]
+        msg_action.bl.hip.pos = robot_action[9]
+        msg_action.bl.upper.pos = robot_action[10]
+        msg_action.bl.lower.pos = robot_action[11]
         pub_action.publish(msg_action)
         # update stored observation
-        _obs_lastaction = list(action)
+        _obs_lastaction = list(robot_action)
         rate.sleep()
 
 
