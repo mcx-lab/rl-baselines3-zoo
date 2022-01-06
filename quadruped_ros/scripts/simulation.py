@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+
 # import tf
 import sys
 import rospy
@@ -35,8 +36,32 @@ class WalkingSimulation(object):
         self.get_last_vel = [0] * 3
         self.robot_height = 0.30
         self.motor_id_list = [2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15, 16]
-        self.init_new_pos = [0.0, -0.8, 1.6, 0.0, -0.8, 1.6, 0.0, -0.8, 1.6, 0.0, -0.8, 1.6,
-                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.init_new_pos = [
+            0.0,
+            -0.8,
+            1.6,
+            0.0,
+            -0.8,
+            1.6,
+            0.0,
+            -0.8,
+            1.6,
+            0.0,
+            -0.8,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
 
         self.__init_ros()
         self.__load_controller()
@@ -50,13 +75,12 @@ class WalkingSimulation(object):
             add_thread_1.start()
 
     def __init_ros(self):
-        self.terrain = rospy.get_param('/simulation/terrain')
-        self.camera = rospy.get_param('/simulation/camera')
-        self.lateralFriction = rospy.get_param('/simulation/lateralFriction')
-        self.spinningFriction = rospy.get_param('/simulation/spinningFriction')
-        self.freq = rospy.get_param('/simulation/freq')
-        rospy.loginfo("lateralFriction = " + str(self.lateralFriction) +
-                      " spinningFriction = " + str(self.spinningFriction))
+        self.terrain = rospy.get_param("/simulation/terrain")
+        self.camera = rospy.get_param("/simulation/camera")
+        self.lateralFriction = rospy.get_param("/simulation/lateralFriction")
+        self.spinningFriction = rospy.get_param("/simulation/spinningFriction")
+        self.freq = rospy.get_param("/simulation/freq")
+        rospy.loginfo("lateralFriction = " + str(self.lateralFriction) + " spinningFriction = " + str(self.spinningFriction))
         rospy.loginfo(" freq = " + str(self.freq))
 
         # self.robot_tf = tf.TransformBroadcaster()
@@ -69,7 +93,7 @@ class WalkingSimulation(object):
         p.connect(p.GUI)  # or p.DIRECT for non-graphical version
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.resetSimulation()
-        p.setTimeStep(1.0/self.freq)
+        p.setTimeStep(1.0 / self.freq)
         p.setGravity(0, 0, -9.81)
         self.reset = p.addUserDebugParameter("reset", 1, 0, 0)
         p.resetDebugVisualizerCamera(0.2, 45, -30, [1, -1, 1])
@@ -83,7 +107,9 @@ class WalkingSimulation(object):
             p.resetBasePositionAndOrientation(ground_id, [0, 0, 0], [0, 0, 0, 1])
             p.changeDynamics(ground_id, -1, lateralFriction=self.lateralFriction)
 
-        self.boxId = p.loadURDF("a1/a1.urdf", robot_start_pos, [0, 0, 0, 1], flags=p.URDF_USE_SELF_COLLISION, useFixedBase=False)
+        self.boxId = p.loadURDF(
+            "a1/a1.urdf", robot_start_pos, [0, 0, 0, 1], flags=p.URDF_USE_SELF_COLLISION, useFixedBase=False
+        )
         p.changeDynamics(self.boxId, 5, spinningFriction=self.spinningFriction)
         p.changeDynamics(self.boxId, 10, spinningFriction=self.spinningFriction)
         p.changeDynamics(self.boxId, 15, spinningFriction=self.spinningFriction)
@@ -96,7 +122,7 @@ class WalkingSimulation(object):
         p.resetBasePositionAndOrientation(self.boxId, [0, 0, robot_z], [0, 0, 0, 1])
         p.resetBaseVelocity(self.boxId, [0, 0, 0], [0, 0, 0])
         for j in range(12):
-            p.resetJointState(self.boxId, self.motor_id_list[j], self.init_new_pos[j], self.init_new_pos[j+12])
+            p.resetJointState(self.boxId, self.motor_id_list[j], self.init_new_pos[j], self.init_new_pos[j + 12])
         for j in range(16):
             p.setJointMotorControl2(self.boxId, j, p.VELOCITY_CONTROL, force=0)
 
@@ -120,20 +146,30 @@ class WalkingSimulation(object):
             cubePos, cubeOrn = p.getBasePositionAndOrientation(self.boxId)
             get_matrix = p.getMatrixFromQuaternion(cubeOrn)
 
-            T1 = np.mat([[0, -1.0/2.0, np.sqrt(3.0)/2.0, 0.25], [-1, 0, 0, 0],
-                            [0, -np.sqrt(3.0)/2.0, -1.0/2.0, 0], [0, 0, 0, 1]])
+            T1 = np.mat(
+                [
+                    [0, -1.0 / 2.0, np.sqrt(3.0) / 2.0, 0.25],
+                    [-1, 0, 0, 0],
+                    [0, -np.sqrt(3.0) / 2.0, -1.0 / 2.0, 0],
+                    [0, 0, 0, 1],
+                ]
+            )
 
-            T2 = np.mat([[get_matrix[0], get_matrix[1], get_matrix[2], cubePos[0]],
-                            [get_matrix[3], get_matrix[4], get_matrix[5], cubePos[1]],
-                            [get_matrix[6], get_matrix[7], get_matrix[8], cubePos[2]],
-                            [0, 0, 0, 1]])
+            T2 = np.mat(
+                [
+                    [get_matrix[0], get_matrix[1], get_matrix[2], cubePos[0]],
+                    [get_matrix[3], get_matrix[4], get_matrix[5], cubePos[1]],
+                    [get_matrix[6], get_matrix[7], get_matrix[8], cubePos[2]],
+                    [0, 0, 0, 1],
+                ]
+            )
 
-            T3 = np.array(T2*T1)
+            T3 = np.array(T2 * T1)
 
             cameraEyePosition[0] = T3[0][3]
             cameraEyePosition[1] = T3[1][3]
             cameraEyePosition[2] = T3[2][3]
-            cameraTargetPosition = (np.mat(T3)*np.array([[0],[0],[1],[1]]))[0:3]
+            cameraTargetPosition = (np.mat(T3) * np.array([[0], [0], [1], [1]]))[0:3]
 
             q = pyquaternion.Quaternion(matrix=T3)
             cameraQuat = [q[1], q[2], q[3], q[0]]
@@ -145,26 +181,26 @@ class WalkingSimulation(object):
             #     self.__fill_tf_message("world", "tar", cameraTargetPosition, cubeOrn))
 
             cameraUpVector = [0, 0, 1]
-            viewMatrix = p.computeViewMatrix(
-                cameraEyePosition, cameraTargetPosition, cameraUpVector)
+            viewMatrix = p.computeViewMatrix(cameraEyePosition, cameraTargetPosition, cameraUpVector)
             aspect = float(pixelWidth) / float(pixelHeight)
             projectionMatrix = p.computeProjectionMatrixFOV(60, aspect, near, far)
             width, height, rgbImg, depthImg, _ = p.getCameraImage(
-                    pixelWidth,
-                    pixelHeight,
-                    viewMatrix=viewMatrix,
-                    projectionMatrix=projectionMatrix,
-                    shadow=1,
-                    lightDirection=[1, 1, 1],
-                    renderer=p.ER_BULLET_HARDWARE_OPENGL)
+                pixelWidth,
+                pixelHeight,
+                viewMatrix=viewMatrix,
+                projectionMatrix=projectionMatrix,
+                shadow=1,
+                lightDirection=[1, 1, 1],
+                renderer=p.ER_BULLET_HARDWARE_OPENGL,
+            )
 
             # point cloud mehted
             pc_list = []
             pcl_data = pcl.PointCloud()
-            fx = (pixelWidth*projectionMatrix[0]) / 2.0
-            fy = (pixelHeight*projectionMatrix[5]) / 2.0
-            cx = (1-projectionMatrix[2]) * pixelWidth / 2.0
-            cy = (1+projectionMatrix[6]) * pixelHeight / 2.0
+            fx = (pixelWidth * projectionMatrix[0]) / 2.0
+            fy = (pixelHeight * projectionMatrix[5]) / 2.0
+            cx = (1 - projectionMatrix[2]) * pixelWidth / 2.0
+            cy = (1 + projectionMatrix[6]) * pixelHeight / 2.0
             cloud_point = [0] * pixelWidth * pixelHeight * 3
             depthBuffer = np.reshape(depthImg, [pixelHeight, pixelWidth])
             depth = depthBuffer
@@ -173,12 +209,12 @@ class WalkingSimulation(object):
                     depth[h][w] = float(depthBuffer[h, w])
                     depth[h][w] = far * near / (far - (far - near) * depthBuffer[h][w])
                     Z = float(depth[h][w])
-                    if (Z > 4 or Z < 0.01):
+                    if Z > 4 or Z < 0.01:
                         continue
                     X = (w - cx) * Z / fx
                     Y = (h - cy) * Z / fy
                     XYZ_ = np.mat([[X], [Y], [Z], [1]])
-                    XYZ = np.array(T3*XYZ_)
+                    XYZ = np.array(T3 * XYZ_)
                     X = float(XYZ[0])
                     Y = float(XYZ[1])
                     Z = float(XYZ[2])
@@ -195,9 +231,10 @@ class WalkingSimulation(object):
             pub_pointcloud.width = len(pc_list)
             pub_pointcloud.point_step = 12
             pub_pointcloud.fields = [
-                PointField('x', 0, PointField.FLOAT32, 1),
-                PointField('y', 4, PointField.FLOAT32, 1),
-                PointField('z', 8, PointField.FLOAT32, 1)]
+                PointField("x", 0, PointField.FLOAT32, 1),
+                PointField("y", 4, PointField.FLOAT32, 1),
+                PointField("z", 8, PointField.FLOAT32, 1),
+            ]
             pub_pointcloud.data = np.asarray(pc_list, np.float32).tostring()
             self.pointcloud_publisher.publish(pub_pointcloud)
 
@@ -210,7 +247,7 @@ class WalkingSimulation(object):
             pub_image.encoding = "mono8"
             pub_image.step = width
             grey = pil.fromarray(rgbImg)
-            pub_image.data = np.asarray(grey.convert('L')).reshape([1,-1]).tolist()[0]
+            pub_image.data = np.asarray(grey.convert("L")).reshape([1, -1]).tolist()[0]
             self.image_publisher.publish(pub_image)
 
             rate_1.sleep()
@@ -220,7 +257,7 @@ class WalkingSimulation(object):
         reset_flag = p.readUserDebugParameter(self.reset)
         while not rospy.is_shutdown():
             # check reset button state
-            if(reset_flag < p.readUserDebugParameter(self.reset)):
+            if reset_flag < p.readUserDebugParameter(self.reset):
                 reset_flag = p.readUserDebugParameter(self.reset)
                 rospy.logwarn("reset the robot")
                 self.__reset_robot()
@@ -275,7 +312,11 @@ class WalkingSimulation(object):
             bodyIndex=self.boxId,
             jointIndices=self.motor_id_list,
             controlMode=p.POSITION_CONTROL,
-            forces=motor_commands,
+            targetPositions=motor_commands,
+            positionGains=np.array([100.0] * 12),
+            velocityGains=np.array([1.0, 2.0, 2.0] * 4),
+            # Manually add max force as a hack because we haven't implemented minitaur.ProcessAction
+            forces = np.array([500] * 12) 
         )
 
     def __get_data_from_sim(self):
@@ -301,22 +342,22 @@ class WalkingSimulation(object):
         imu_data[5] = pose_orn[1][2]
         imu_data[6] = pose_orn[1][3]
 
-        imu_data[7] = get_matrix[0] * get_velocity[1][0] + get_matrix[1] * \
-            get_velocity[1][1] + get_matrix[2] * get_velocity[1][2]
-        imu_data[8] = get_matrix[3] * get_velocity[1][0] + get_matrix[4] * \
-            get_velocity[1][1] + get_matrix[5] * get_velocity[1][2]
-        imu_data[9] = get_matrix[6] * get_velocity[1][0] + get_matrix[7] * \
-            get_velocity[1][1] + get_matrix[8] * get_velocity[1][2]
+        imu_data[7] = (
+            get_matrix[0] * get_velocity[1][0] + get_matrix[1] * get_velocity[1][1] + get_matrix[2] * get_velocity[1][2]
+        )
+        imu_data[8] = (
+            get_matrix[3] * get_velocity[1][0] + get_matrix[4] * get_velocity[1][1] + get_matrix[5] * get_velocity[1][2]
+        )
+        imu_data[9] = (
+            get_matrix[6] * get_velocity[1][0] + get_matrix[7] * get_velocity[1][1] + get_matrix[8] * get_velocity[1][2]
+        )
         # calculate the acceleration of the robot
         linear_X = (get_velocity[0][0] - self.get_last_vel[0]) * self.freq
         linear_Y = (get_velocity[0][1] - self.get_last_vel[1]) * self.freq
         linear_Z = 9.8 + (get_velocity[0][2] - self.get_last_vel[2]) * self.freq
-        imu_data[0] = get_matrix[0] * linear_X + \
-            get_matrix[1] * linear_Y + get_matrix[2] * linear_Z
-        imu_data[1] = get_matrix[3] * linear_X + \
-            get_matrix[4] * linear_Y + get_matrix[5] * linear_Z
-        imu_data[2] = get_matrix[6] * linear_X + \
-            get_matrix[7] * linear_Y + get_matrix[8] * linear_Z
+        imu_data[0] = get_matrix[0] * linear_X + get_matrix[1] * linear_Y + get_matrix[2] * linear_Z
+        imu_data[1] = get_matrix[3] * linear_X + get_matrix[4] * linear_Y + get_matrix[5] * linear_Z
+        imu_data[2] = get_matrix[6] * linear_X + get_matrix[7] * linear_Y + get_matrix[8] * linear_Z
         observations["imu"] = imu_data
 
         # joint motors data
@@ -331,10 +372,12 @@ class WalkingSimulation(object):
         dy_target = 0 - pose_orn[0][1]
         dy_target = max(min(dy_target, max_distance / 2), -max_distance / 2)
         dx_target = np.sqrt(pow(max_distance, 2) - pow(dy_target, 2))
+
         def to_local_frame(dx, dy, yaw):
             dx_local = np.cos(yaw) * dx + np.sin(yaw) * dy
             dy_local = -np.sin(yaw) * dx + np.cos(yaw) * dy
             return dx_local, dy_local
+
         dx_target_local, dy_target_local = to_local_frame(dx_target, dy_target, pose_orn[1][2])
         observations["target_position"] = [dx_target_local, dy_target_local]
 
@@ -344,8 +387,16 @@ class WalkingSimulation(object):
 
         # heightmap data
         observations["heightmap"] = [
-            0.31659717, 0.32434894, 0.33932163, 0.36061692, 0.38719301,
-            0.41804396, 0.45229587, 0.48923492, 0.52829777, 0.56904721
+            0.31659717,
+            0.32434894,
+            0.33932163,
+            0.36061692,
+            0.38719301,
+            0.41804396,
+            0.45229587,
+            0.48923492,
+            0.52829777,
+            0.56904721,
         ]
 
         return observations
@@ -354,8 +405,7 @@ class WalkingSimulation(object):
         joint_number_range = range(p.getNumJoints(robot))
         joint_states = p.getJointStates(robot, joint_number_range)
         joint_infos = [p.getJointInfo(robot, i) for i in joint_number_range]
-        joint_states, joint_name = \
-            zip(*[(j, i[1]) for j, i in zip(joint_states, joint_infos) if i[2] != p.JOINT_FIXED])
+        joint_states, joint_name = zip(*[(j, i[1]) for j, i in zip(joint_states, joint_infos) if i[2] != p.JOINT_FIXED])
         joint_positions = [state[0] for state in joint_states]
         joint_velocities = [state[1] for state in joint_states]
         joint_torques = [state[3] for state in joint_states]
@@ -396,9 +446,9 @@ class WalkingSimulation(object):
         js_msg.velocity = []
         i = 0
         for _ in joint_states["name"]:
-            js_msg.name.append(joint_states["name"][i].decode('utf-8'))
+            js_msg.name.append(joint_states["name"][i].decode("utf-8"))
             js_msg.position.append(joint_states["state"][i])
-            js_msg.velocity.append(joint_states["state"][12+i])
+            js_msg.velocity.append(joint_states["state"][12 + i])
             i += 1
         js_msg.header.stamp = rospy.Time.now()
         js_msg.header.frame_id = "body"
@@ -438,8 +488,8 @@ def callback_action(obs):
     _ctrl_actions[11] = obs.bl.lower.pos
 
 
-if __name__ == '__main__':
-    rospy.init_node('quadruped_simulator', anonymous=True)
+if __name__ == "__main__":
+    rospy.init_node("quadruped_simulator", anonymous=True)
     rospy.Subscriber("actions", QuadrupedLegPos, callback_action)
     walking_simulation = WalkingSimulation()
     walking_simulation.run()
