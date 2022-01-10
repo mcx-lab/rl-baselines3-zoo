@@ -63,10 +63,10 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(10, 1),
+                grid_size=(20, 7),
                 grid_unit=(0.05, 0.05),
-                transform=(0.25, 0),
-                ray_origin="head",
+                transform=(0.3, 0),
+                ray_origin="body",
                 noisy_reading=False,
                 name="depthmiddle",
             ),
