@@ -12,19 +12,15 @@ reqs_dev = parse_requirements_file("requirements/dev.txt")
 with open("README.md", "r") as f:
     long_description = f.read()
 
-
-init_str = Path("blind_walking/__init__.py").read_text()
-version = init_str.split("__version__ = ")[1].rstrip().strip('"')
-
 setup(
     name="quadruped-rl",
-    version=version,
+    version="0.1.0",
     author="Zhang, Jenny and Tan, Daniel",
     description="A PyTorch library for reinforcement learning on quadruped legged robots",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mcx-lab/rl-baselines3-zoo",
-    packages=find_packages(),
+    packages=find_packages(include = ['quadruped-gym/quadruped_gym']),
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
