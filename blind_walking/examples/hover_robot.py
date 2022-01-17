@@ -90,11 +90,11 @@ def main():  # noqa: C901
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_sizes = [(3, 3), (3, 3), (3, 3), (3, 3), (10, 1)]
-    grid_units = [(0.1, 0.1), (0.1, 0.1), (0.1, 0.1), (0.1, 0.1), (0.05, 0.05)]
-    grid_transforms = [(0.25, -0.2), (0.25, 0.2), (-0.25, -0.2), (-0.25, 0.2), (0.25, 0)]
-    ray_origins = ["body", "body", "body", "body", "head"]
-    grid_names = ["depthfr", "depthfl", "depthrr", "depthrl", "depthmiddle"]
+    grid_sizes = [(20, 7)]
+    grid_units = [(0.05, 0.05)]
+    grid_transforms = [(0.3, 0)]
+    ray_origins = ["body"]
+    grid_names = ["depthmiddle"]
     num_timesteps = args.n_timesteps
 
     if not args.no_hover:
