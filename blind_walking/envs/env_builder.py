@@ -85,7 +85,7 @@ def build_regular_env(
 
     if obs_wrapper is None:
         # obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
-        obs_wrapper  = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
+        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,

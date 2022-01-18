@@ -26,48 +26,46 @@ import utils.import_envs  # noqa: F401 pytype: disable=import-error
 class MultipleTerrain(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.hf = HeightField()
-        self.stairs = Stairs()
-
-        self.start_x = 5
         # Stairs parameters
-        self.step_rise = 0.05
+        self.step_rise_levels = [0.02, 0.05, 0.07, 0.1]
         self.num_steps = 10
-        self.stair_gap = 1.5
+        self.stair_gap = 2.0
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
+        self.sec_num_steps = 1
+        self.sec_stair_length = (self.sec_num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
         # Heightfield parameters
         self.hf_length = 18
 
+        self.hf = HeightField()
+        self.stairs = []
+        self.sec_stairs = []
+        for _ in range(len(self.step_rise_levels)):
+            self.stairs.append(Stairs())
+            self.sec_stairs.append(Stairs())
+
     def _generate(self, env):
-        start_x = self.start_x
-        self.stairs._generate(env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise, step_run=self.step_run)
-        start_x += self.stair_length + self.hf_length / 2
+        # Generate stairs
+        start_x = self.stair_gap
+        for i in range(len(self.step_rise_levels)):
+            self.sec_stairs[i]._generate(
+                env, start_x=start_x, num_steps=self.sec_num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
+            )
+            start_x += self.sec_stair_length + self.stair_gap
+            self.stairs[i]._generate(
+                env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
+            )
+            start_x += self.stair_length + self.stair_gap
+        # Generate heightfield
+        start_x += self.hf_length / 2
         self.hf._generate(env, start_x=start_x, heightPerturbationRange=0.08)
 
-    def get_z_position(self, x, y):
+    def get_z_position(self, env, x, y):
         """Get z position for hovering robot at the xy-coord."""
-        """NOTE: Position checking are currently hardcoded"""
-        if x > self.start_x and x < self.start_x + self.stair_length:
-            # On the stairs
-            x_stairs = x - self.start_x
-            if x_stairs < self.step_run * (self.num_steps - 1):
-                # On the ascending stairs
-                step_on = 1 + x_stairs // self.step_run
-            elif x_stairs < self.step_run * (self.num_steps - 1) + boxHalfLength * 2 * 2:
-                # On the top of the stairs
-                step_on = self.num_steps
-            else:
-                # On the descending stairs
-                x_stairs -= self.step_run * (self.num_steps - 1) + boxHalfLength * 2 * 2
-                step_on = self.num_steps - 1 - x_stairs // self.step_run
-            z_pos = step_on * self.step_rise
-        elif x > self.start_x + self.stair_length and x < self.start_x + self.stair_length + self.hf_length:
-            # On uneven terrain
-            z_pos = 0.04
-        else:
-            z_pos = 0
-        return z_pos
+        info = env.pybullet_client.rayTest([x, y, 2.0], [x, y, 0.0])
+        hit_position = info[0][3]
+        z_coordinate = hit_position[2]
+        return z_coordinate
 
 
 def get_video_save_path(env: Monitor):
@@ -145,7 +143,7 @@ def main():  # noqa: C901
             position[0] += dx
             position[1] += dy
             # Calculate z pos 5 timestep faster to avoid legs hitting the stairs
-            z_pos = env_modifier_list[0].get_z_position(position[0] + 5 * dx, position[1] + 5 * dy)
+            z_pos = env_modifier_list[0].get_z_position(env, position[0] + 5 * dx, position[1] + 5 * dy)
             position[2] = default_position[2] + z_pos
             env.pybullet_client.resetBasePositionAndOrientation(env.robot.quadruped, position, default_orientation)
             obs, _, _, _ = env.step(zero_action)
