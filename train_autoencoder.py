@@ -58,7 +58,7 @@ def load_data():
     return (train_dataset, val_dataset, test_dataset), (single_data_size, single_data_shape)
 
 
-def train_model(config, checkpoint_dir=None):
+def train_model(config, checkpoint_dir=None, tune=True):
     # load datasets
     dataset_and_info = load_data()
     train_dataset, val_dataset, _ = dataset_and_info[0]
@@ -93,6 +93,8 @@ def train_model(config, checkpoint_dir=None):
         model.load_state_dict(model_state)
         optimizer.load_state_dict(optimizer_state)
 
+    min_val_loss = 100  # artbitrary high number
+    val_grace = 4  # number of grace times for training to continue
     epochs = 10000
     for epoch in range(epochs):
         train_loss = 0
@@ -114,7 +116,8 @@ def train_model(config, checkpoint_dir=None):
 
         # compute and display the epoch training loss
         train_loss = train_loss / len(train_loader)
-        # print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, train_loss))
+        if not tune and epoch % 100 == 0:
+            print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, train_loss))
 
         # validation
         val_loss = 0
@@ -124,12 +127,28 @@ def train_model(config, checkpoint_dir=None):
                 outputs = model(batch_data)
                 loss = loss_function(outputs, batch_data)
                 val_loss += loss.item()
-        # report to ray tune
-        with tune.checkpoint_dir(epoch) as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "checkpoint")
-            torch.save((model.state_dict(), optimizer.state_dict()), path)
-        tune.report(loss=(val_loss / len(val_loader)))
+        val_loss = val_loss / len(val_loader)
+        # early stopping
+        if epoch % 100 == 0 and val_loss > min_val_loss * 1.1:
+            print(val_loss, min_val_loss)
+            val_grace -= 1
+            if val_grace < 0:
+                break
+        min_val_loss = min(val_loss, min_val_loss)
 
+        # report to ray tune
+        if tune:
+            with tune.checkpoint_dir(epoch) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                torch.save((model.state_dict(), optimizer.state_dict()), path)
+            tune.report(loss=val_loss)
+
+    if not tune:
+        # save pytorch model
+        torch.save(
+            (model.state_dict(), optimizer.state_dict()),
+            f"./autoenc_results/model_bz{config['batch_size']}_cz{config['code_size']}_lr{config['lr']}",
+        )
     print("Finished Training")
 
 
@@ -208,10 +227,36 @@ def hyperparam_search():
     best_checkpoint_dir = best_trial.checkpoint.value
     model_state, optimizer_state = torch.load(os.path.join(best_checkpoint_dir, "checkpoint"))
     best_trained_model.load_state_dict(model_state)
+    best_trained_model.eval()
     # test model
     test_loss = test_model(best_trained_model, device)
     print("test loss = {:.6f}".format(test_loss))
 
 
+def single_train_run():
+    config = {
+        "batch_size": 32,
+        "code_size": 32,
+        "lr": 1e-3,
+    }
+
+    """ Train """
+    train_model(config, tune=False)
+
+    """ Test """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = LinearAE(input_size=np.prod(single_data_shape), code_size=config["code_size"]).to(device)
+    # load trained model
+    model_state, optimizer_state = torch.load(
+        f"./autoenc_results/model_bz{config['batch_size']}_cz{config['code_size']}_lr{config['lr']}"
+    )
+    model.load_state_dict(model_state)
+    model.eval()
+    # test model
+    test_loss = test_model(model, device)
+    print("test loss = {:.6f}".format(test_loss))
+
+
 if __name__ == "__main__":
-    hyperparam_search()
+    # hyperparam_search()
+    single_train_run()
