@@ -166,6 +166,7 @@ A1GymEnv-v0:
                        activation_fn=nn.ReLU,
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
 		       features_extractor_class=LocomotionFeatureEncoder,
+		       features_extractor_kwargs=dict(load_path='./autoenc_results/model_bz32_cz32_lr0.001'),
                        )"
 
 A1BlindWalkingBulletEnv-v0:

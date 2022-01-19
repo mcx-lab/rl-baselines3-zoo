@@ -69,7 +69,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthmiddle",
-                enc_name="mlp",
+                enc_name="enc",
             ),
         ]
 
