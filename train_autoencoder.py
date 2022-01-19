@@ -1,4 +1,5 @@
 from functools import partial
+import argparse
 import numpy as np
 import os
 import torch
@@ -130,7 +131,6 @@ def train_model(config, checkpoint_dir=None, tune=True):
         val_loss = val_loss / len(val_loader)
         # early stopping
         if epoch % 100 == 0 and val_loss > min_val_loss * 1.1:
-            print(val_loss, min_val_loss)
             val_grace -= 1
             if val_grace < 0:
                 break
@@ -258,5 +258,11 @@ def single_train_run():
 
 
 if __name__ == "__main__":
-    # hyperparam_search()
-    single_train_run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--hyper", action="store_true", default=False, help="Hyperparameter search")
+    args = parser.parse_args()
+
+    if args.hyper:
+        hyperparam_search()
+    else:
+        single_train_run()
