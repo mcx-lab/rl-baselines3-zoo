@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import torch as th
+
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
 from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
@@ -22,6 +25,17 @@ from blind_walking.envs.utilities.controllable_env_randomizer_from_config import
 from blind_walking.envs.sensors import environment_sensors, robot_sensors
 from blind_walking.envs.tasks import forward_task, forward_task_pos
 from blind_walking.robots import a1, laikago, robot_config
+from train_autoencoder import LinearAE
+
+
+# Load heightmap encoder
+model = LinearAE(input_size=140, code_size=32)
+model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
+model.load_state_dict(model_state)
+model.eval()
+_hm_encoder = model.encoder
+for param in _hm_encoder.parameters():
+    param.requires_grad = False
 
 
 def build_regular_env(
@@ -69,7 +83,7 @@ def build_regular_env(
                 ray_origin="body",
                 noisy_reading=False,
                 name="depthmiddle",
-                enc_name="enc",
+                encoder=_hm_encoder,
             ),
         ]
 
@@ -84,8 +98,8 @@ def build_regular_env(
         task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
-        # obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
-        obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
+        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
+        # obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,

@@ -147,7 +147,7 @@ def train_model(config, checkpoint_dir=None, tune=True):
         # save pytorch model
         torch.save(
             (model.state_dict(), optimizer.state_dict()),
-            f"./autoenc_results/model_bz{config['batch_size']}_cz{config['code_size']}_lr{config['lr']}",
+            f"./autoenc_results/model_bs{config['batch_size']}_cs{config['code_size']}_lr{config['lr']}",
         )
     print("Finished Training")
 
@@ -248,7 +248,7 @@ def single_train_run():
     model = LinearAE(input_size=np.prod(single_data_shape), code_size=config["code_size"]).to(device)
     # load trained model
     model_state, optimizer_state = torch.load(
-        f"./autoenc_results/model_bz{config['batch_size']}_cz{config['code_size']}_lr{config['lr']}"
+        f"./autoenc_results/model_bs{config['batch_size']}_cs{config['code_size']}_lr{config['lr']}"
     )
     model.load_state_dict(model_state)
     model.eval()
