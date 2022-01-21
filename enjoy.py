@@ -15,7 +15,6 @@ import utils.import_envs  # noqa: F401 pylint: disable=unused-import
 from utils import ALGOS, create_test_env, get_latest_run_id, get_saved_hyperparams
 from utils.exp_manager import ExperimentManager
 from utils.utils import StoreDict
-from blind_walking.net.adapter import Adapter
 
 
 class Logger:
