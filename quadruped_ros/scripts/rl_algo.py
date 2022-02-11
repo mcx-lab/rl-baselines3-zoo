@@ -161,7 +161,7 @@ def main():  # noqa: C901
         nn_action = np.clip(nn_action, -0.5, 0.5)
         motor_angles = nn_action_to_motor_angle(nn_action)
         motor_angles = filter_action(action_filter, motor_angles)
-
+        controller.publish_action(motor_angles)
         rate.sleep()
 
 
