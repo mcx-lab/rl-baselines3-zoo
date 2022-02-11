@@ -2,7 +2,6 @@
 
   <rosparam command="load" file="$(find quadruped_ros)/config/quadruped_ctrl_config.yaml" />
 
-  <node pkg="quadruped_ros" name="simuation" type="simulation.py" />
-  <node pkg="quadruped_ros" name="rl_algo" type="rl_algo.py" args="-i $(find quadruped_ros)/A1GymEnv-v0_model/" />
+  <node pkg="quadruped_ros" name="rl_algo" type="rl_algo.py" args="--log-path $(find quadruped_ros)/A1GymEnv-v0_model/" />
 
 </launch>

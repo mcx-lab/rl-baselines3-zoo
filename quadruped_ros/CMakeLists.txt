@@ -52,17 +52,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  QuadrupedLegPos.msg
-  QuadrupedJointPos.msg
-  QuadrupedJointInfoPos.msg
-  QuadrupedLeg.msg
-  QuadrupedJoint.msg
-  QuadrupedJointInfo.msg
-  IMUSensor.msg
+  MotorCmds.msg
   BaseVelocitySensor.msg
-  TargetPositionSensor.msg
-  HeightmapSensor.msg
-  Observation.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -115,10 +106,8 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
   LIBRARIES quadruped_ros
   CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs nav_msgs message_runtime
-  DEPENDS system_lib
 )
 
 ###########
@@ -128,7 +117,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -172,10 +160,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/simulation.py
   scripts/rl_algo.py
-  scripts/env_simulation.py
-  scripts/env_rl_algo.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

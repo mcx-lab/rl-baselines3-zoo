@@ -123,9 +123,9 @@ class ROSController:
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--log-path", type=str, help="Path to folder containing pre-trained model")
+    parser.add_argument("--log-path", type=str, help="Path to folder containing pre-trained model")
     parser.add_argument("--env-id", type=str, default="A1GymEnv-v0", help="ID of OpenAI gym env to lookup trained model for")
-    return parser.parse_args()
+    return parser.parse_known_args()[0]
 
 
 def main():  # noqa: C901
@@ -157,7 +157,8 @@ def main():  # noqa: C901
     while not rospy.is_shutdown():
         raw_obs = np.concatenate([controller.get_robot_observation(), target_pos])
         norm_obs = vecnorm.normalize_obs(raw_obs)
-        nn_action = model.predict(norm_obs, deterministic=True)
+        nn_action, _ = model.predict(norm_obs, deterministic=True)
+        nn_action = np.clip(nn_action, -0.5, 0.5)
         motor_angles = nn_action_to_motor_angle(nn_action)
         motor_angles = filter_action(action_filter, motor_angles)
 
