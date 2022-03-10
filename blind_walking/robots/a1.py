@@ -466,7 +466,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 40:
+        # if len(self.ball_ids) > 200:
         #     for i in self.ball_ids:
         #         self._pybullet_client.removeBody(i)
         #     self.ball_ids = []

@@ -90,7 +90,7 @@ def main():  # noqa: C901
     dy = 0
     grid_sizes = [(12, 16)]
     grid_units = [(0.04, 0.04)]
-    grid_transforms = [(0, 0)]
+    grid_transforms = [(0.08, 0)]
     ray_origins = ["head"]
     grid_names = ["depth"]
     num_timesteps = args.n_timesteps
@@ -104,7 +104,7 @@ def main():  # noqa: C901
                 grid_unit=grid_units[i],
                 transform=grid_transforms[i],
                 ray_origin=ray_origins[i],
-                noisy_reading=True,
+                noisy_reading=False,
                 name=grid_names[i],
             )
             for i in range(len(grid_sizes))

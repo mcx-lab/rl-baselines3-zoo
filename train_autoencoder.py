@@ -8,7 +8,7 @@ from ray import tune
 
 
 DATA_DIR = os.path.join(os.getcwd(), "./blind_walking/examples/data/heightmap.npy")
-single_data_shape = (12, 16)
+single_data_shape = (16, 12) # x-axis 12, y-axis 16
 
 
 class LinearAE(torch.nn.Module):

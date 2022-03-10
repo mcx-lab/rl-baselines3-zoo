@@ -79,9 +79,9 @@ def build_regular_env(
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.04, 0.04),
-                transform=(0, 0),
+                transform=(0.08, 0),
                 ray_origin="head",
-                noisy_reading=True,
+                noisy_reading=False,
                 name="depthmiddle",
                 encoder=_hm_encoder,
             ),
