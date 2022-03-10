@@ -88,11 +88,11 @@ def main():  # noqa: C901
     # Data parameters
     dx = 0.05
     dy = 0
-    grid_sizes = [(20, 7)]
-    grid_units = [(0.05, 0.05)]
-    grid_transforms = [(0.3, 0)]
-    ray_origins = ["body"]
-    grid_names = ["depthmiddle"]
+    grid_sizes = [(12, 16)]
+    grid_units = [(0.04, 0.04)]
+    grid_transforms = [(0, 0)]
+    ray_origins = ["head"]
+    grid_names = ["depth"]
     num_timesteps = args.n_timesteps
 
     if not args.no_hover:
@@ -104,7 +104,7 @@ def main():  # noqa: C901
                 grid_unit=grid_units[i],
                 transform=grid_transforms[i],
                 ray_origin=ray_origins[i],
-                noisy_reading=False,
+                noisy_reading=True,
                 name=grid_names[i],
             )
             for i in range(len(grid_sizes))

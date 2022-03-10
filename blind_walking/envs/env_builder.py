@@ -29,7 +29,7 @@ from train_autoencoder import LinearAE
 
 
 # Load heightmap encoder
-model = LinearAE(input_size=140, code_size=32)
+model = LinearAE(input_size=12*16, code_size=32)
 model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
 model.load_state_dict(model_state)
 model.eval()
@@ -77,11 +77,11 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(20, 7),
-                grid_unit=(0.05, 0.05),
-                transform=(0.3, 0),
-                ray_origin="body",
-                noisy_reading=False,
+                grid_size=(12, 16),
+                grid_unit=(0.04, 0.04),
+                transform=(0, 0),
+                ray_origin="head",
+                noisy_reading=True,
                 name="depthmiddle",
                 encoder=_hm_encoder,
             ),
