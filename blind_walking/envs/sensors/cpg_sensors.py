@@ -9,9 +9,10 @@ from blind_walking.envs.sensors.environment_sensors import _ARRAY, _FLOAT_OR_ARR
 from blind_walking.envs.utilities.cpg import CPG, CPGParameters, CPGSystem
 
 
-class CPGLegPhaseSensor(sensor.BoxSpaceSensor):
-    """A sensor that reports the phases of each leg.
+class ReferenceGaitSensor(sensor.BoxSpaceSensor):
+    """A sensor that reports whether each foot should be in contact with the ground.
 
+    Reference foot contact states are decoded according to phases.
     Phases are generated internally using a CPG.
     """
 
@@ -19,11 +20,11 @@ class CPGLegPhaseSensor(sensor.BoxSpaceSensor):
         self,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
-        name: typing.Text = "CPGLegPhase",
+        name: typing.Text = "ReferenceGait",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
     ) -> None:
-        """Constructs CPGLegPhaseSensor.
+        """Constructs ReferenceGaitSensor.
         Args:
           lower_bound: the lower bound of the phase
           upper_bound: the upper bound of the phase
@@ -44,6 +45,9 @@ class CPGLegPhaseSensor(sensor.BoxSpaceSensor):
         )
 
         self._walk_offsets = np.array([0, np.pi / 2, np.pi, 3 * np.pi / 2])
+        self._walk_get_foot_contact = lambda phase: 2 * np.logical_and(phase < np.pi / 2, phase > 0).astype(float) - 1
+
+        self._get_foot_contact = self._walk_get_foot_contact
         self.cpg_system = CPGSystem(
             params=params,
             coupling_strength=1,
@@ -51,7 +55,7 @@ class CPGLegPhaseSensor(sensor.BoxSpaceSensor):
             initial_state=CPGSystem.sample_initial_state(self._walk_offsets),
         )
 
-        super(CPGLegPhaseSensor, self).__init__(
+        super(ReferenceGaitSensor, self).__init__(
             name=name,
             shape=(4,),
             enc_name=enc_name,
@@ -78,4 +82,11 @@ class CPGLegPhaseSensor(sensor.BoxSpaceSensor):
         self._current_phase = self.cpg_system.get_phase()
 
     def _get_observation(self) -> _ARRAY:
-        return self._current_phase.copy()
+        """Returns np.ndarray of shape (4,)
+
+        obs[i] = 1 iff foot[i] should be in contact with ground and -1 otherwise"""
+        return self._get_foot_contact(self._current_phase)
+
+
+class ReferenceFootPositionSensor(sensor.BoxSpaceSensor):
+    pass

@@ -85,9 +85,7 @@ class ImitationTask(object):
         If the robot base becomes unstable (based on orientation), the episode
         terminates early.
         """
-        rot_quat = env.robot.GetBaseOrientation()
-        rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
-        return rot_mat[-1] < 0.5
+        return False
 
     def reward(self, env):
         """Get the reward without side effects.
@@ -95,46 +93,4 @@ class ImitationTask(object):
         Also return a dict of reward components"""
         del env
 
-        dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
-        dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
-        dxy_local = np.array([dx_local, dy_local])
-        # Reward distance travelled in target direction.
-        distance_target = np.linalg.norm(self._target_pos)
-        if distance_target:
-            distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
-            distance_reward = min(distance_towards / distance_target, 1)
-        else:
-            distance_reward = -np.linalg.norm(dxy_local)
-        distance_reward = distance_reward * self._env._env_time_step
-
-        # Penalty for sideways rotation of the body.
-        orientation = self.current_base_orientation
-        rot_matrix = self._env.pybullet_client.getMatrixFromQuaternion(orientation)
-        local_up_vec = rot_matrix[6:]
-        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))) * self._env._env_time_step
-        # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
-
-        # Penalty for following the phase of the robot.
-        feet_ground_time = self._env.env_time_step - self.feet_air_time
-        ref_foot_contact_imitation_reward = np.dot(feet_ground_time, self._reference_foot_contacts)
-
-        # Dictionary of:
-        # - {name: reward * weight}
-        # for all reward components
-        weighted_objectives = {
-            "distance": distance_reward * 1.0,
-            "shake": shake_reward * 1.5,
-            "energy": energy_reward * 0.0001,
-            "ref_foot_contact_imit": ref_foot_contact_imitation_reward * 0.5,
-        }
-
-        reward = sum([o for o in weighted_objectives.values()])
-        return reward, weighted_objectives
-
-    @staticmethod
-    def to_local_frame(dx, dy, yaw):
-        # Transform the x and y direction distances to the robot's local frame
-        dx_local = np.cos(yaw) * dx + np.sin(yaw) * dy
-        dy_local = -np.sin(yaw) * dx + np.cos(yaw) * dy
-        return dx_local, dy_local
+        return 0, {}
