@@ -137,11 +137,17 @@ def build_hanging_imitation_env(
 
     if robot_sensor_list is None:
         robot_sensor_list = [
+            robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
+            robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
             robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
             robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
         ]
     if env_sensor_list is None:
-        env_sensor_list = [cpg_sensors.ReferenceGaitSensor()]
+        env_sensor_list = [
+            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            cpg_sensors.ReferenceGaitSensor(),
+        ]
 
     if env_randomizer_list is None:
         # env_randomizer_list = [ControllableEnvRandomizerFromConfig("train_params", step_sample_prob=0.004)]
