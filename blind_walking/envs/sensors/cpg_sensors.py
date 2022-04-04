@@ -37,15 +37,15 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             a=1.0,
             b=50.0,
             mu=1.0,
-            alpha=50.0,
+            alpha=10.0,
             beta=0.75,
             gamma=50.0,
-            period=1.0,  # 1 second to complete a cycle
+            period=0.66,  # 1 second to complete a cycle
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
         )
 
-        self._walk_offsets = np.array([0, np.pi / 2, np.pi, 3 * np.pi / 2])
-        self._walk_get_foot_contact = lambda phase: 2 * np.logical_and(phase < np.pi / 2, phase > 0).astype(float) - 1
+        self._walk_offsets = np.array([3 * np.pi / 2, np.pi / 2, np.pi, 0])
+        self._walk_get_foot_contact = lambda phase: 2 * np.logical_and(phase > np.pi / 2, phase < 0).astype(float) - 1
 
         self._get_foot_contact = self._walk_get_foot_contact
         self.cpg_system = CPGSystem(

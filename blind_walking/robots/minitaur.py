@@ -303,6 +303,14 @@ class Minitaur(object):
             joint_info = self._pybullet_client.getJointInfo(self.quadruped, i)
             self._joint_name_to_id[joint_info[1].decode("UTF-8")] = joint_info[0]
 
+    def GetFootNames(self):
+        foot_names = []
+        for foot_link_id in self._foot_link_ids:
+            for joint_name, joint_id in self._joint_name_to_id.items():
+                if joint_id == foot_link_id:
+                    foot_names.append(joint_name)
+        return foot_names
+
     def _BuildUrdfIds(self):
         """Build the link Ids from its name in the URDF file.
 
