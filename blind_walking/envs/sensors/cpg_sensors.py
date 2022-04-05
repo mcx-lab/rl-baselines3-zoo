@@ -8,6 +8,22 @@ from blind_walking.envs.sensors import sensor
 from blind_walking.envs.sensors.environment_sensors import _ARRAY, _FLOAT_OR_ARRAY
 from blind_walking.envs.utilities.cpg import CPG, CPGParameters, CPGSystem
 
+# Foot order: ['FR', 'FL', 'RR', 'RL']
+
+phase_offsets = {
+    "walk": np.array([3 * np.pi / 2, np.pi / 2, np.pi, 0]),
+    "trot": np.array([np.pi, 0, 0, np.pi]),
+    "pace": np.array([np.pi, 0, np.pi, 0]),
+    "bound": np.array([np.pi, np.pi, 0, 0]),
+}
+
+foot_contact_fn = {
+    "walk": lambda phase: 2 * np.logical_or(phase > np.pi / 2, phase < 0).astype(float) - 1,
+    "trot": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
+    "pace": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
+    "bound": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
+}
+
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     """A sensor that reports whether each foot should be in contact with the ground.
@@ -22,6 +38,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
         enc_name: typing.Text = "flatten",
+        gait_name: str = "walk",
         dtype: typing.Type[typing.Any] = np.float64,
     ) -> None:
         """Constructs ReferenceGaitSensor.
@@ -44,15 +61,15 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
         )
 
-        self._walk_offsets = np.array([3 * np.pi / 2, np.pi / 2, np.pi, 0])
-        self._walk_get_foot_contact = lambda phase: 2 * np.logical_and(phase > np.pi / 2, phase < 0).astype(float) - 1
+        self._gait_name = gait_name
+        self._phase_offset = phase_offsets[gait_name]
+        self._get_foot_contact = foot_contact_fn[gait_name]
 
-        self._get_foot_contact = self._walk_get_foot_contact
         self.cpg_system = CPGSystem(
             params=params,
             coupling_strength=1,
-            desired_phase_offsets=self._walk_offsets,
-            initial_state=CPGSystem.sample_initial_state(self._walk_offsets),
+            desired_phase_offsets=self._phase_offset,
+            initial_state=CPGSystem.sample_initial_state(self._phase_offset),
         )
 
         super(ReferenceGaitSensor, self).__init__(
@@ -78,7 +95,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._env = env
 
         # Reset to a random state
-        self.cpg_system.set_state(CPGSystem.sample_initial_state(self._walk_offsets))
+        self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
     def _get_observation(self) -> _ARRAY:
