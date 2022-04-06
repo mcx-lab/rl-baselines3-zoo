@@ -19,9 +19,9 @@ phase_offsets = {
 
 foot_contact_fn = {
     "walk": lambda phase: 2 * np.logical_or(phase > np.pi / 2, phase < 0).astype(float) - 1,
-    "trot": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
-    "pace": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
-    "bound": lambda phase: 2 * (phase > np.pi / 2).astype(int) - 1,
+    "trot": lambda phase: 2 * (phase > 0).astype(int) - 1,
+    "pace": lambda phase: 2 * (phase > 0).astype(int) - 1,
+    "bound": lambda phase: 2 * (phase > 0).astype(int) - 1,
 }
 
 
@@ -34,11 +34,11 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def __init__(
         self,
+        gait_name: str,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
         enc_name: typing.Text = "flatten",
-        gait_name: str = "walk",
         dtype: typing.Type[typing.Any] = np.float64,
     ) -> None:
         """Constructs ReferenceGaitSensor.
