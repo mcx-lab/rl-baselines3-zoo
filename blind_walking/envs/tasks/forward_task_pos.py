@@ -140,14 +140,8 @@ class ForwardTask(object):
         # for all reward components
         weighted_objectives = {
             "distance": distance_reward * 1.0,
-            "dxy": dxy_reward * 0.0,
-            "dz": dz_reward * 0.0,
             "shake": shake_reward * 1.5,
             "energy": energy_reward * 0.0001,
-            "energy_rot": energy_rot_reward * 0.0,
-            "contact": contact_reward * 0.5,
-            "airtime": airtime_reward * 0.5,
-            "action": action_reward * 0.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])

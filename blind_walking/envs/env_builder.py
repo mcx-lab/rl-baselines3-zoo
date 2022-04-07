@@ -67,7 +67,6 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
-            cpg_sensors.ReferenceGaitSensor("bound"),
         ]
 
     if env_randomizer_list is None:
@@ -78,7 +77,7 @@ def build_regular_env(
         env_modifier_list = []
 
     if task is None:
-        task = imitation_task.ImitationTask()
+        task = forward_task_pos.ForwardTask()
 
     if obs_wrapper is None:
         obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
