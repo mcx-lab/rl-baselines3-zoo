@@ -96,6 +96,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._env = env
 
         # Reset to a random state
+        self.period = np.random.uniform(low=1.0, high=2.0)
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
