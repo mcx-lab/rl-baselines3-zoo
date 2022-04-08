@@ -1,3 +1,5 @@
+stats
+
 __pycache__/
 logs
 .pytest_cache/

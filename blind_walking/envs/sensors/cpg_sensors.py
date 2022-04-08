@@ -35,6 +35,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         gait_name: str,
+        gait_frequency: float = 1.0,  # Hz
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
@@ -57,7 +58,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             alpha=10.0,
             beta=0.75,
             gamma=50.0,
-            period=0.66,  # 1 second to complete a cycle
+            period=1 / gait_frequency,
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
         )
 
@@ -95,6 +96,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._env = env
 
         # Reset to a random state
+        self.period = np.random.uniform(low=1.0, high=2.0)
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
