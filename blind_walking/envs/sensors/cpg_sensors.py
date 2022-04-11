@@ -24,6 +24,8 @@ foot_contact_fn = {
     "bound": lambda phase: 2 * (phase > 0).astype(int) - 1,
 }
 
+DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
+
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     """A sensor that reports whether each foot should be in contact with the ground.
@@ -35,7 +37,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         gait_name: str,
-        gait_frequency: float = 1.0,  # Hz
+        gait_frequency: float = None,  # Hz
+        deterministic: bool = False,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
@@ -50,6 +53,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
           dtype: data type of sensor value
         """
         self._env = None
+        if gait_frequency is None:
+            gait_frequency = DEFAULT_GAIT_FREQUENCY
 
         params = CPGParameters(
             a=1.0,
@@ -65,6 +70,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._gait_name = gait_name
         self._phase_offset = phase_offsets[gait_name]
         self._get_foot_contact = foot_contact_fn[gait_name]
+        self._deterministic = deterministic
 
         self.cpg_system = CPGSystem(
             params=params,
@@ -96,7 +102,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._env = env
 
         # Reset to a random state
-        self.period = np.random.uniform(low=1.0, high=2.0)
+        if not self._deterministic:
+            self.set_period(np.random.uniform(low=1.0, high=2.0))
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
@@ -105,6 +112,12 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
         obs[i] = 1 iff foot[i] should be in contact with ground and -1 otherwise"""
         return self._get_foot_contact(self._current_phase)
+
+    def get_period(self):
+        return self.cpg_system.params.period
+
+    def set_period(self, value):
+        self.cpg_system.params.period = value
 
 
 class ReferenceFootPositionSensor(sensor.BoxSpaceSensor):
