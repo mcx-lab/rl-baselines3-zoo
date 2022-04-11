@@ -151,6 +151,7 @@ def main():  # noqa: C901
     parser.add_argument(
         "--env-kwargs", type=str, nargs="+", action=StoreDict, help="Optional keyword argument to pass to the env constructor"
     )
+    parser.add_argument("--stats-dir", type=str, help="Subdirectory to save stats to", default="stats")
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
@@ -257,7 +258,7 @@ def main():  # noqa: C901
     if args.record:
         video_folder = args.output_folder
         if video_folder is None:
-            video_folder = os.path.join(log_path, "videos")
+            video_folder = os.path.join(log_path, args.stats_dir)
         env = VecVideoRecorder(
             env,
             video_folder,
@@ -287,6 +288,7 @@ def main():  # noqa: C901
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
     obs = env.reset()
+    print(env.env_method("all_sensors")[0][-1].get_period())
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
@@ -299,7 +301,8 @@ def main():  # noqa: C901
     # For HER, monitor success rate
     successes = []
 
-    stats_dir = os.path.join(log_path, "stats")
+    stats_dir = os.path.join(log_path, args.stats_dir)
+    os.makedirs(stats_dir, exist_ok=True)
     callbacks = [
         RobotLoggingCallback(savedir=stats_dir),
         ObservationLoggingCallback(savedir=stats_dir),
