@@ -42,6 +42,7 @@ def build_regular_env(
     env_modifier_list=None,
     task=None,
     obs_wrapper=None,
+    gait_name=None,
     gait_frequency=None,
     deterministic=False,
 ):
@@ -69,7 +70,7 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
-            cpg_sensors.ReferenceGaitSensor("trot", gait_frequency=gait_frequency, deterministic=deterministic),
+            cpg_sensors.ReferenceGaitSensor(gait_name=gait_name, gait_frequency=gait_frequency, deterministic=deterministic),
         ]
 
     if env_randomizer_list is None:
