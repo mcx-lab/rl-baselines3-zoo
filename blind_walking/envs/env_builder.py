@@ -42,10 +42,12 @@ def build_regular_env(
     env_modifier_list=None,
     task=None,
     obs_wrapper=None,
+    # CPG sensor kwargs
     gait_name=None,
     gait_frequency=None,
     duty_factor=None,
-    deterministic=False,
+    randomize_gait_frequency=True,
+    randomize_duty_factor=True,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -72,7 +74,11 @@ def build_regular_env(
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
             cpg_sensors.ReferenceGaitSensor(
-                gait_name=gait_name, gait_frequency=gait_frequency, duty_factor=duty_factor, deterministic=deterministic
+                gait_name=gait_name,
+                gait_frequency=gait_frequency,
+                duty_factor=duty_factor,
+                randomize_duty_factor=randomize_duty_factor,
+                randomize_gait_frequency=randomize_gait_frequency,
             ),
         ]
 

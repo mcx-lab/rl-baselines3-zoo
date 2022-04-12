@@ -40,7 +40,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         gait_name: str,
         gait_frequency: float = None,  # Hz
         duty_factor: float = None,
-        deterministic: bool = False,
+        randomize_gait_frequency: bool = True,
+        randomize_duty_factor: bool = True,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
@@ -74,7 +75,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._gait_name = gait_name
         self._phase_offset = phase_offsets[gait_name]
         self._get_foot_contact = foot_contact_fn[gait_name]
-        self._deterministic = deterministic
+        self._randomize_gait_frequency = randomize_gait_frequency
+        self._randomize_duty_factor = randomize_duty_factor
 
         self.cpg_system = CPGSystem(
             params=params,
@@ -101,8 +103,9 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def _reset(self):
         # Reset to a random state
-        if not self._deterministic:
+        if self._randomize_gait_frequency:
             self.set_period(np.random.uniform(low=0.5, high=1.0))
+        if self._randomize_duty_factor:
             self.set_duty_factor(np.random.uniform(low=0.5, high=0.9))
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
