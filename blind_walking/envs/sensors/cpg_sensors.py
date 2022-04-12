@@ -102,7 +102,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def _reset(self):
         # Reset to a random state
         if not self._deterministic:
-            self.set_period(np.random.uniform(low=1.0, high=2.0))
+            self.set_period(np.random.uniform(low=0.5, high=1.0))
+            self.set_duty_factor(np.random.uniform(low=0.5, high=0.9))
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
@@ -125,6 +126,12 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def set_period(self, value):
         self.cpg_system.params.period = value
+
+    def get_duty_factor(self):
+        return self.cpg_system.params.beta
+
+    def set_duty_factor(self, value):
+        self.cpg_system.params.beta = value
 
 
 class ReferenceFootPositionSensor(sensor.BoxSpaceSensor):
