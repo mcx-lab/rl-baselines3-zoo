@@ -25,6 +25,7 @@ foot_contact_fn = {
 }
 
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
+DEFAULT_DUTY_FACTOR = 0.5
 
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
@@ -38,6 +39,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self,
         gait_name: str,
         gait_frequency: float = None,  # Hz
+        duty_factor: float = None,
         deterministic: bool = False,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
@@ -55,13 +57,15 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._env = None
         if gait_frequency is None:
             gait_frequency = DEFAULT_GAIT_FREQUENCY
+        if duty_factor is None:
+            duty_factor = DEFAULT_DUTY_FACTOR
 
         params = CPGParameters(
             a=1.0,
             b=50.0,
             mu=1.0,
             alpha=10.0,
-            beta=0.75,
+            beta=duty_factor,
             gamma=50.0,
             period=1 / gait_frequency,
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
@@ -87,11 +91,19 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             upper_bound=upper_bound,
             dtype=dtype,
         )
+        self._reset()
 
     def on_step(self, env):
         del env
 
         self.cpg_system.step()
+        self._current_phase = self.cpg_system.get_phase()
+
+    def _reset(self):
+        # Reset to a random state
+        if not self._deterministic:
+            self.set_period(np.random.uniform(low=1.0, high=2.0))
+        self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
     def on_reset(self, env):
@@ -100,12 +112,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
           env: the environment who invokes this callback function.
         """
         self._env = env
-
-        # Reset to a random state
-        if not self._deterministic:
-            self.set_period(np.random.uniform(low=1.0, high=2.0))
-        self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
-        self._current_phase = self.cpg_system.get_phase()
+        self._reset()
 
     def _get_observation(self) -> _ARRAY:
         """Returns np.ndarray of shape (4,)
