@@ -89,12 +89,8 @@ class ImitationTask(object):
         rot_mat = env.pybullet_client.getMatrixFromQuaternion(rot_quat)
         return rot_mat[-1] < 0.5
 
-    def reward(self, env):
-        """Get the reward without side effects.
-
-        Also return a dict of reward components"""
-        del env
-
+    def _calc_distance_reward(self):
+        """Return reward in [0,1] based on distance travelled"""
         dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
         dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
         dxy_local = np.array([dx_local, dy_local])
@@ -106,30 +102,52 @@ class ImitationTask(object):
         else:
             distance_reward = -np.linalg.norm(dxy_local)
         distance_reward = distance_reward * self._env._env_time_step
+        return distance_reward
 
-        # Penalty for sideways rotation of the body.
+    def _calc_imitation_reward(self):
+        """Return reward in [0,1] based on imitation of reference foot contacts"""
+        # Penalty for following the phase of the robot.
+        feet_ground_time_fraction = (self._env.env_time_step - self.feet_air_time) / self._env.env_time_step
+        # Signed fraction is in the range [-1,1]
+        signed_feet_ground_time_fraction = 2 * feet_ground_time_fraction - 1
+        ref_foot_contact_imitation_reward = np.dot(signed_feet_ground_time_fraction, self._reference_foot_contacts)
+
+        # Linearly re-map reward from [-4, 4] to [0,1]
+        ref_foot_contact_imitation_reward += 4
+        ref_foot_contact_imitation_reward /= 8
+        return ref_foot_contact_imitation_reward
+
+    def _calc_shake_reward(self):
+        """Return reward in [0,1] based on the closeness of robot to upright orientation"""
         orientation = self.current_base_orientation
         rot_matrix = self._env.pybullet_client.getMatrixFromQuaternion(orientation)
         local_up_vec = rot_matrix[6:]
-        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))) * self._env._env_time_step
-        # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
+        shake_reward = -np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))
+        # Rescale from [-1,1] to [0,1]
+        shake_reward = (shake_reward + 1) / 2
+        return shake_reward
 
-        # Penalty for following the phase of the robot.
-        feet_ground_time = self._env.env_time_step - self.feet_air_time
-        ref_foot_contact_imitation_reward = np.dot(feet_ground_time, self._reference_foot_contacts)
+    def reward(self, env):
+        """Get the reward without side effects.
+
+        Also return a dict of reward components"""
+        del env
+
+        # Penalty for sideways rotation of the body.
+        # Penalty for energy usage.
 
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": distance_reward * 1.0,
-            "shake": shake_reward * 1.5,
-            "energy": energy_reward * 0.0001,
-            "ref_foot_contact_imit": ref_foot_contact_imitation_reward * 0.5,
+            "distance": self._calc_distance_reward() * 0.2,
+            "shake": self._calc_shake_reward() * 0.4,
+            "imitation": self._calc_imitation_reward() * 0.4,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
+        # Apply env time step normalization
+        reward *= self._env.env_time_step
         return reward, weighted_objectives
 
     @staticmethod
