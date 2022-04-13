@@ -94,6 +94,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             dtype=dtype,
         )
         self._reset()
+        print(f"Init CPG duty_factor={self.get_duty_factor()}, period={self.get_period()}")
 
     def on_step(self, env):
         del env
@@ -106,7 +107,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         if self._randomize_gait_frequency:
             self.set_period(np.random.uniform(low=0.5, high=1.0))
         if self._randomize_duty_factor:
-            self.set_duty_factor(np.random.uniform(low=0.5, high=0.9))
+            self.set_duty_factor(np.random.uniform(low=0.55, high=0.85))
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
