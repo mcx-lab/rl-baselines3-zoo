@@ -140,8 +140,8 @@ class ImitationTask(object):
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": self._calc_distance_reward() * 0.2,
-            "shake": self._calc_shake_reward() * 0.4,
+            "distance": self._calc_distance_reward() * 0.6,
+            # "shake": self._calc_shake_reward() * 0.1,
             "imitation": self._calc_imitation_reward() * 0.4,
         }
 
