@@ -117,7 +117,13 @@ class ImitationTask(object):
 
         # Penalty for following the phase of the robot.
         feet_ground_time = self._env.env_time_step - self.feet_air_time
+        signed_feet_ground_frac = 2 * (feet_ground_time / self._env.env_time_step) - 1
         ref_foot_contact_imitation_reward = np.dot(feet_ground_time, self._reference_foot_contacts)
+        # Rescale from [-4, 4] to [0, 1]
+        ref_foot_contact_imitation_reward += 4
+        ref_foot_contact_imitation_reward /= 8
+        # Scale by time step for consistency
+        ref_foot_contact_imitation_reward *= self._env.env_time_step
 
         # Dictionary of:
         # - {name: reward * weight}
