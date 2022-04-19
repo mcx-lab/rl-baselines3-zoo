@@ -66,15 +66,7 @@ def build_regular_env(
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
-            cpg_sensors.ReferenceGaitSensor(
-                gait_name=gait_name,
-                gait_frequency=gait_frequency,
-                duty_factor=duty_factor,
-                randomize_duty_factor=randomize_duty_factor,
-                randomize_gait_frequency=randomize_gait_frequency,
-            ),
         ]
 
     if env_randomizer_list is None:
