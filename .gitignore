@@ -1,5 +1,6 @@
 stats
 .ipynb_checkpoints
+*_logs
 # wandb log files
 wandb
 
