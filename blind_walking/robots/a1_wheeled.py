@@ -89,7 +89,7 @@ LOWER_NAME_PATTERN = re.compile(r"\w+_lower_\w+")
 TOE_NAME_PATTERN = re.compile(r"\w+_wheel\d*")
 IMU_NAME_PATTERN = re.compile(r"imu\d*")
 
-URDF_FILENAME = "/home/daniel/Documents/github/mcx-lab/rl-baselines3-zoo/data/a1_wheels/a1_wheels.urdf"
+URDF_FILENAME = "a1_wheels/a1_wheels.urdf"
 
 _BODY_B_FIELD_NUMBER = 2
 _LINK_A_FIELD_NUMBER = 3

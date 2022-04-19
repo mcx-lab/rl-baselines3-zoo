@@ -7,18 +7,9 @@ from datetime import datetime
 import numpy as np
 import pybullet  # pytype:disable=import-error
 import pybullet_data
-import scipy.interpolate
 from absl import app, flags, logging
-from blind_walking.agents.whole_body_controller import com_velocity_estimator
-from blind_walking.agents.whole_body_controller import gait_generator as gait_generator_lib
-from blind_walking.agents.whole_body_controller import (
-    locomotion_controller,
-    openloop_gait_generator,
-    raibert_swing_leg_controller,
-    torque_stance_leg_controller,
-)
+from blind_walking.data import utils
 from blind_walking.robots import a1_wheeled, robot_config
-from blind_walking.robots.gamepad import gamepad_reader
 from pybullet_utils import bullet_client
 
 # flake8: noqa
@@ -45,8 +36,9 @@ def main(argv):
     p.setTimeStep(0.001)
     p.setGravity(0, 0, -9.8)
     p.setPhysicsEngineParameter(enableConeFriction=0)
-    p.setAdditionalSearchPath(pybullet_data.getDataPath())
-    p.loadURDF("plane.urdf")
+    p.setAdditionalSearchPath(utils.getDataPath())
+    print(utils.getDataPath())
+    p.loadURDF("terrain/plane.urdf")
 
     # Construct robot class:
     robot = a1_wheeled.A1(
