@@ -215,6 +215,7 @@ if __name__ == "__main__":  # noqa: C901
         default=None,
         help="Override run name in WandB logging",
     )
+    parser.ad_argument("--project-name", type=str, default=None, help="Set the project name in WandB logging")
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory
