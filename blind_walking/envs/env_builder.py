@@ -12,21 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-
-import torch as th
 
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
 from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors
-from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
+from blind_walking.envs.tasks import imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
-from blind_walking.robots import a1, laikago, robot_config
-from train_autoencoder import LinearAE
+from blind_walking.robots import a1, a1_wheeled, laikago, robot_config
 
 
 def build_regular_env(
@@ -113,7 +108,7 @@ def build_regular_env(
                 env,
                 trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
             )
-        elif robot_class == a1.A1:
+        elif robot_class == a1.A1 or robot_class == a1_wheeled.A1:
             env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
                 env,
                 trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
