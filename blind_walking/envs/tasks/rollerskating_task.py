@@ -78,7 +78,6 @@ class RollerskatingTask(object):
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
-        self._reference_foot_contacts = env._observations["ReferenceGait_flatten"]
 
     def done(self, env):
         """Checks if the episode is over.
