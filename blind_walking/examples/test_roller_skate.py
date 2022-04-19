@@ -59,8 +59,12 @@ def main(argv):
     fixed_action = np.array([0, 0.9, -1.8] * 4)
 
     # Apply forward force to robot
+    externalForce = [10000, 0, 0]
+    # externalForce = [0, 10000, 0]
+    # externalForce = [5000, 5000, 0]
+
     robot._pybullet_client.applyExternalForce(
-        robot.quadruped, -1, [10000, 0, 0], [0, 0, 0], flags=robot._pybullet_client.LINK_FRAME
+        robot.quadruped, -1, externalForce, [0, 0, 0], flags=robot._pybullet_client.LINK_FRAME
     )
 
     states, actions = [], []

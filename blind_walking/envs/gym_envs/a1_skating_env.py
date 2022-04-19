@@ -16,7 +16,8 @@ class A1SkatingEnv(a1_gym_env.A1GymEnv):
             enable_rendering=render,
             action_limit=action_limit,
             on_rack=on_rack,
-            task=rollerskating_task.RollerskatingTask() ** kwargs,
+            task=rollerskating_task.RollerskatingTask(),
+            **kwargs,
         )
         self.observation_space = self._env.observation_space
         self.action_space = self._env.action_space

@@ -167,8 +167,10 @@ A1GymEnv-v0:
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
                        )"
 
-A1BlindWalkingBulletEnv-v0:
+A1SkatingGymEnv-v0:
   <<: *pybullet-defaults
+  n_envs: 64
+  batch_size: 1024
   env_wrapper: utils.wrappers.DummyWrapper
   policy_kwargs: "dict(log_std_init=-2,
                        ortho_init=False,

@@ -21,6 +21,7 @@ from typing import Tuple
 import numba
 import numpy as np
 import pybullet as pyb  # pytype: disable=import-error
+from blind_walking.data import utils
 from blind_walking.envs import locomotion_gym_config
 from blind_walking.robots import laikago_constants, laikago_motor, minitaur, robot_config
 
@@ -300,6 +301,8 @@ class A1(minitaur.Minitaur):
             HIP_D_GAIN,
             KNEE_D_GAIN,
         ]
+
+        pybullet_client.setAdditionalSearchPath(utils.getDataPath())
 
         super(A1, self).__init__(
             pybullet_client=pybullet_client,

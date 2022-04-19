@@ -288,9 +288,6 @@ def main():  # noqa: C901
     model = ALGOS[algo].load(model_path, env=env, custom_objects=custom_objects, **kwargs)
 
     obs = env.reset()
-    gait_sensor = env.env_method("all_sensors")[0][-1]
-    print(gait_sensor.get_period())
-    print(gait_sensor.get_duty_factor())
 
     # Deterministic by default except for atari games
     stochastic = args.stochastic or is_atari and not args.deterministic
