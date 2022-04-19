@@ -189,7 +189,7 @@ class ExperimentManager(object):
                 print(f"Logging run to WandB as {self.args.run_name}")
             self.run = wandb.init(
                 name=self.args.run_name,
-                project="terrain-aware-locomotion",
+                project=self.args.project_name,
                 config=saved_hyperparams,
                 entity="mcx-lab",
                 sync_tensorboard=True,
