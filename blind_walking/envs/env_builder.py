@@ -22,8 +22,8 @@ from blind_walking.envs.env_wrappers import observation_dictionary_split_by_enco
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
-from blind_walking.envs.sensors import environment_sensors, robot_sensors
-from blind_walking.envs.tasks import forward_task, forward_task_pos
+from blind_walking.envs.sensors import environment_sensors, robot_sensors, cpg_sensors
+from blind_walking.envs.tasks import forward_task, forward_task_pos, forward_task_imitation
 from blind_walking.robots import a1, laikago, robot_config
 from train_autoencoder import LinearAE
 
@@ -75,7 +75,7 @@ def build_regular_env(
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.01),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.04, 0.04),
@@ -84,6 +84,13 @@ def build_regular_env(
                 noisy_reading=False,
                 name="depthmiddle",
                 encoder=_hm_encoder,
+            ),
+            cpg_sensors.ReferenceGaitSensor(
+                gait_name="trot",
+                gait_frequency=3.0,
+                duty_factor=None,
+                randomize_duty_factor=False,
+                randomize_gait_frequency=False,
             ),
         ]
 
@@ -95,7 +102,7 @@ def build_regular_env(
         env_modifier_list = [train_course.TrainStep()]
 
     if task is None:
-        task = forward_task_pos.ForwardTask()
+        task = forward_task_imitation.ForwardTask()
 
     if obs_wrapper is None:
         obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
