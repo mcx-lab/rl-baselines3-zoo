@@ -78,7 +78,9 @@ class ImitationTask(object):
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
-        self._reference_foot_contacts = env._observations["ReferenceGait_flatten"]
+        # Assume gait sensor is last sensor
+        ref_gait_sensor = env.all_sensors()[-1]
+        self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
 
     def done(self, env):
         """Checks if the episode is over.
