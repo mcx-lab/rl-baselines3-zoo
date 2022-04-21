@@ -16,8 +16,9 @@
 """Simple sensors related to the environment."""
 import csv
 import typing
-import torch
+
 import numpy as np
+import torch
 from blind_walking.envs.sensors import sensor
 from numpy.lib.function_base import _angle_dispatcher
 

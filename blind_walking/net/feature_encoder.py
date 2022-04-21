@@ -1,10 +1,10 @@
 import math
+
 import gym
 import torch as th
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, create_mlp
 from stable_baselines3.common.type_aliases import TensorDict
 from torch import nn
-
 from train_autoencoder import LinearAE
 
 

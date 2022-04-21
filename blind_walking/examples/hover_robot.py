@@ -4,14 +4,12 @@ import argparse
 import glob
 import io
 import os
+
 import cv2
 import gym
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import Parallel, delayed
-from gym.wrappers import Monitor
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 from blind_walking.envs.env_modifiers.heightfield import HeightField
 from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
@@ -19,7 +17,11 @@ from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrap
 from blind_walking.envs.sensors import environment_sensors
 from blind_walking.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
+from gym.wrappers import Monitor
+from joblib import Parallel, delayed
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scripts.plot_stats import Plotter, alphanum_key, stitch_videos
+
 import utils.import_envs  # noqa: F401 pytype: disable=import-error
 
 
