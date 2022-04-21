@@ -106,21 +106,15 @@ class RollerskatingTask(object):
             distance_reward = -np.linalg.norm(dxy_local)
         distance_reward = distance_reward * self._env._env_time_step
 
-        # Penalty for sideways rotation of the body.
-        orientation = self.current_base_orientation
-        rot_matrix = self._env.pybullet_client.getMatrixFromQuaternion(orientation)
-        local_up_vec = rot_matrix[6:]
-        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))) * self._env._env_time_step
-        # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
+        # Reward staying alive at each timestep
+        alive_reward = 0.5 * self._env._env_time_step
 
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
             "distance": distance_reward * 1.0,
-            "shake": shake_reward * 1.5,
-            "energy": energy_reward * 0.0001,
+            "stay_alive": alive_reward * 1.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
