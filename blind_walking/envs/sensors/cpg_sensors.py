@@ -18,7 +18,7 @@ phase_offsets = {
 }
 
 foot_contact_fn = {
-    "walk": lambda phase: 2 * np.logical_or(phase > np.pi / 2, phase < 0).astype(float) - 1,
+    "walk": lambda phase: 2 * (phase > 0).astype(float) - 1,
     "trot": lambda phase: 2 * (phase > 0).astype(int) - 1,
     "pace": lambda phase: 2 * (phase > 0).astype(int) - 1,
     "bound": lambda phase: 2 * (phase > 0).astype(int) - 1,
@@ -94,7 +94,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             dtype=dtype,
         )
         self._reset()
-        print(f"Init CPG duty_factor={self.get_duty_factor()}, period={self.get_period()}")
+        print(f"Init CPG gait={self.get_gait_name()}, duty_factor={self.get_duty_factor()}, period={self.get_period()}")
 
     def on_step(self, env):
         del env
@@ -107,7 +107,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         if self._randomize_gait_frequency:
             self.set_period(np.random.uniform(low=0.5, high=1.0))
         if self._randomize_duty_factor:
-            self.set_duty_factor(np.random.uniform(low=0.55, high=0.85))
+            self.set_duty_factor(np.random.uniform(low=0.25, high=0.85))
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
@@ -136,6 +136,14 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def set_duty_factor(self, value):
         self.cpg_system.params.beta = value
+
+    def get_gait_name(self):
+        return self._gait_name
+
+    def set_gait_name(self, value):
+        self._gait_name = value
+        self._get_foot_contact = foot_contact_fn[value]
+        # Note: this currently does not account for smooth transitions
 
 
 class ReferenceFootPositionSensor(sensor.BoxSpaceSensor):
