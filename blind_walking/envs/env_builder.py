@@ -28,14 +28,17 @@ from blind_walking.envs.utilities.controllable_env_randomizer_from_config import
 from blind_walking.robots import a1, laikago, robot_config
 from train_autoencoder import LinearAE
 
+
 # Load heightmap encoder
-model = LinearAE(input_size=12 * 16, code_size=32)
-model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
-model.load_state_dict(model_state)
-model.eval()
-_hm_encoder = model.encoder
-for param in _hm_encoder.parameters():
-    param.requires_grad = False
+def load_encoder():
+    model = LinearAE(input_size=12 * 16, code_size=32)
+    model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
+    model.load_state_dict(model_state)
+    model.eval()
+    _hm_encoder = model.encoder
+    for param in _hm_encoder.parameters():
+        param.requires_grad = False
+    return _hm_encoder
 
 
 def build_regular_env(
@@ -76,15 +79,15 @@ def build_regular_env(
         env_sensor_list = [
             environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
             environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(12, 16),
-                grid_unit=(0.04, 0.04),
-                transform=(0.08, 0),
-                ray_origin="head",
-                noisy_reading=False,
-                name="depthmiddle",
-                encoder=_hm_encoder,
-            ),
+            # environment_sensors.LocalTerrainDepthSensor(
+            #    grid_size=(12, 16),
+            #    grid_unit=(0.04, 0.04),
+            #    transform=(0.08, 0),
+            #    ray_origin="head",
+            #    noisy_reading=False,
+            #    name="depthmiddle",
+            #    encoder=load_encoder(),
+            # ),
         ]
 
     if env_randomizer_list is None:
@@ -92,7 +95,8 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainStep()]
+        # env_modifier_list = [train_course.TrainStep()]
+        env_modifier_list = []
 
     if task is None:
         task = forward_task_pos.ForwardTask()
