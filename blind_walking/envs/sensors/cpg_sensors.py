@@ -38,10 +38,10 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         gait_name: str,
-        gait_frequency: float = None,  # Hz
-        duty_factor: float = None,
-        randomize_gait_frequency: bool = True,
-        randomize_duty_factor: bool = True,
+        gait_frequency_lower: float = DEFAULT_GAIT_FREQUENCY,
+        gait_frequency_upper: float = DEFAULT_GAIT_FREQUENCY,
+        duty_factor_lower: float = DEFAULT_DUTY_FACTOR,
+        duty_factor_upper: float = DEFAULT_DUTY_FACTOR,
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
@@ -56,27 +56,23 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
           dtype: data type of sensor value
         """
         self._env = None
-        if gait_frequency is None:
-            gait_frequency = DEFAULT_GAIT_FREQUENCY
-        if duty_factor is None:
-            duty_factor = DEFAULT_DUTY_FACTOR
 
         params = CPGParameters(
             a=1.0,
             b=50.0,
             mu=1.0,
             alpha=10.0,
-            beta=duty_factor,
+            beta=DEFAULT_DUTY_FACTOR,
             gamma=50.0,
-            period=1 / gait_frequency,
+            period=1 / DEFAULT_GAIT_FREQUENCY,
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
         )
 
         self._gait_name = gait_name
         self._phase_offset = phase_offsets[gait_name]
         self._get_foot_contact = foot_contact_fn[gait_name]
-        self._randomize_gait_frequency = randomize_gait_frequency
-        self._randomize_duty_factor = randomize_duty_factor
+        self._gait_frequency_range = (gait_frequency_lower, gait_frequency_upper)
+        self._duty_factor_range = (duty_factor_lower, duty_factor_upper)
 
         self.cpg_system = CPGSystem(
             params=params,
@@ -104,10 +100,10 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def _reset(self):
         # Reset to a random state
-        if self._randomize_gait_frequency:
-            self.set_period(np.random.uniform(low=0.5, high=1.0))
-        if self._randomize_duty_factor:
-            self.set_duty_factor(np.random.uniform(low=0.25, high=0.85))
+        gait_frequency = np.random.uniform(self._gait_frequency_range[0], self._gait_frequency_range[1])
+        self.set_period(1 / gait_frequency)
+        duty_factor = np.random.uniform(self._duty_factor_range[0], self._duty_factor_range[1])
+        self.set_duty_factor(duty_factor)
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
