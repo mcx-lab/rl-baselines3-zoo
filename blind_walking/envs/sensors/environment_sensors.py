@@ -18,6 +18,7 @@ import csv
 import typing
 
 import numpy as np
+import torch
 from blind_walking.envs.sensors import sensor
 from numpy.lib.function_base import _angle_dispatcher
 
@@ -543,6 +544,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         name: typing.Text = "LocalTerrainDepth",
         enc_name: typing.Text = "flatten",
         dtype: typing.Type[typing.Any] = np.float64,
+        encoder: typing.Type[typing.Any] = None,
     ) -> None:
         """Constructs LocalTerrainDepthSensor.
 
@@ -553,6 +555,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
           upper_bound: the upper bound of the terrain view.
           name: the name of the sensor.
           dtype: data type of sensor value.
+          encoder: pretrained encoder which the raw observations pass through.
         """
         self._env = None
         self._noisy_reading = noisy_reading
@@ -560,8 +563,9 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         self.grid_size = grid_size
         self.transform = transform
         self.ray_origin = ray_origin
+        self.encoder = encoder
 
-        shape = (1, grid_size[0], grid_size[1])
+        shape = (1, grid_size[0], grid_size[1]) if not encoder else (1, 32)
         super(LocalTerrainDepthSensor, self).__init__(
             name=name,
             shape=shape,
@@ -591,6 +595,10 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
         # Clip readings
         heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
+        # Encode raw observations
+        if self.encoder:
+            heightmap = heightmap.reshape(-1, np.prod(self.grid_size))
+            return self.encoder(torch.Tensor(heightmap)).detach().numpy()
         return heightmap
 
 

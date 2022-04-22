@@ -62,6 +62,7 @@ from utils.utils import (
 )
 
 # For A1GymEnv custom feature extractor and wrapper
+from blind_walking.net.feature_encoder import LocomotionFeatureEncoder
 from blind_walking.net.visual_encoder import LocomotionVisualEncoder
 
 

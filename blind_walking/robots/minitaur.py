@@ -250,11 +250,16 @@ class Minitaur(object):
             action = self._FilterAction(action)
 
         self._feet_air_time = np.zeros(self.num_legs)
+        self._feet_contact_lost = 0
+
         for i in range(self._action_repeat):
             proc_action = self.ProcessAction(action, i)
             self._StepInternal(proc_action, motor_control_mode)
             self._step_counter += 1
-            self._feet_air_time += (1 - np.array(self.GetFootContacts())) * self.time_step
+
+            foot_contacts = self.GetFootContacts()
+            self._feet_air_time += (1 - np.array(foot_contacts)) * self.time_step
+            self._feet_contact_lost += (2 - min(sum(foot_contacts), 2)) * self.time_step
 
         self._last_action = action
 
@@ -432,6 +437,7 @@ class Minitaur(object):
         self._is_safe = True
         self._last_action = None
         self._feet_air_time = np.zeros(self.num_legs)
+        self._feet_contact_lost = 0
         self._SettleDownForReset(default_motor_angles, reset_time)
         if self._enable_action_filter:
             self._ResetActionFilter()

@@ -50,7 +50,7 @@ DOFS_PER_LEG = 3
 JOINT_OFFSETS = np.array([HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4)
 PI = math.pi
 
-MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
+MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.15
 _DEFAULT_HIP_POSITIONS = (
     (0.17, -0.135, 0),
     (0.17, 0.13, 0),
@@ -466,7 +466,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 40:
+        # if len(self.ball_ids) > 200:
         #     for i in self.ball_ids:
         #         self._pybullet_client.removeBody(i)
         #     self.ball_ids = []
