@@ -261,7 +261,6 @@ class LocomotionGymEnv(gym.Env):
             reload_urdf=False,
             default_motor_angles=initial_motor_angles,
             reset_time=reset_duration,
-            adjust_position=adjust_position,
         )
 
         self._pybullet_client.setPhysicsEngineParameter(enableConeFriction=0)

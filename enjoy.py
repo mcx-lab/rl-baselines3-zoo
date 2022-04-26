@@ -341,7 +341,9 @@ def main():  # noqa: C901
                     observation_logger.update(obs)
                 obs, reward, done, infos = env.step(clipped_action)
             else:
+                print(obs, state)
                 action, state = model.predict(obs, state=state, deterministic=deterministic)
+                print(action)
                 if args.save_observation:
                     observation_logger.update(obs)
                 obs, reward, done, infos = env.step(action)

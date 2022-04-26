@@ -42,4 +42,4 @@ class DummyTask(object):
     def reward(self, env):
         """Get the reward without side effects."""
         del env
-        return 1
+        return 1, {}

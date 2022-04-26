@@ -15,6 +15,7 @@
 import os
 
 import torch as th
+from blind_walking.envs.tasks.dummy_task import DummyTask
 
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
@@ -25,7 +26,7 @@ from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generato
 from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors
 from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
-from blind_walking.robots import a1, laikago, robot_config
+from blind_walking.robots import a1, a1_robot, laikago, robot_config
 from train_autoencoder import LinearAE
 
 
@@ -80,7 +81,10 @@ def build_regular_env(
         env_modifier_list = []
 
     if task is None:
-        task = imitation_task.ImitationTask()
+        if robot_class == a1_robot.A1Robot:
+            task = DummyTask()
+        else:
+            task = imitation_task.ImitationTask()
 
     if obs_wrapper is None:
         obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
@@ -98,14 +102,8 @@ def build_regular_env(
 
     env = obs_wrapper(env)
     if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
-        if robot_class == laikago.Laikago:
-            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-                env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
-            )
-        elif robot_class == a1.A1:
-            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-                env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
-            )
+        env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
+            env,
+            trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
+        )
     return env
