@@ -314,9 +314,10 @@ def main():  # noqa: C901
     try:
         for _ in range(args.n_timesteps):
             action, state = model.predict(obs, state=state, deterministic=deterministic)
+            prev_obs = obs
             obs, reward, done, infos = env.step(action)
             for callback in callbacks:
-                callback.on_step(infos=infos, observations=obs, actions=action, robot=env.get_attr("robot")[0])
+                callback.on_step(infos=infos, observations=prev_obs, actions=action, robot=env.get_attr("robot")[0])
             if not args.no_render:
                 env.render("human")
 
