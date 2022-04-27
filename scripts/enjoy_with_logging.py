@@ -35,7 +35,16 @@ class Logger:
 
 class RobotLoggingCallback:
 
-    log_names = ("motor_position", "motor_velocity", "motor_torque", "feet_air_time", "time")
+    log_names = (
+        "motor_position",
+        "motor_velocity",
+        "motor_torque",
+        "base_rpy",
+        "base_rpy_rate",
+        "base_vel",
+        "feet_air_time",
+        "time",
+    )
 
     def __init__(self, savedir: str):
         self.loggers = {ln: Logger(ln) for ln in self.log_names}
@@ -46,6 +55,9 @@ class RobotLoggingCallback:
         self.loggers["motor_velocity"].update(robot.GetTrueMotorVelocities())
         self.loggers["motor_torque"].update(robot.GetTrueMotorTorques())
         self.loggers["feet_air_time"].update(robot._feet_air_time)
+        self.loggers["base_rpy"].update(robot.GetTrueBaseRollPitchYaw())
+        self.loggers["base_rpy_rate"].update(robot.GetTrueBaseRollPitchYawRate())
+        self.loggers["base_vel"].update(robot.GetBaseVelocity())
         self.loggers["time"].update(robot.GetTimeSinceReset())
 
     def on_episode_end(self, **kwargs):
@@ -65,6 +77,19 @@ class ObservationLoggingCallback:
     def on_episode_end(self, **kwargs):
         self.observation_logger.save(str(self.savedir))
         self.observation_logger.clear()
+
+
+class TaskLoggingCallback:
+    def __init__(self, savedir: str):
+        self.logger = Logger("reference_foot_contact")
+        self.savedir = savedir
+
+    def on_step(self, task=None, **kwargs):
+        self.logger.update(task._reference_foot_contacts)
+
+    def on_episode_end(self, **kwargs):
+        self.logger.save(str(self.savedir))
+        self.logger.clear()
 
 
 class ActionLoggingCallback:
@@ -310,6 +335,7 @@ def main():  # noqa: C901
         ObservationLoggingCallback(savedir=stats_dir),
         ActionLoggingCallback(savedir=stats_dir),
         RewardLoggingCallback(savedir=stats_dir),
+        TaskLoggingCallback(savedir=stats_dir),
     ]
     try:
         for _ in range(args.n_timesteps):
@@ -317,7 +343,13 @@ def main():  # noqa: C901
             prev_obs = obs
             obs, reward, done, infos = env.step(action)
             for callback in callbacks:
-                callback.on_step(infos=infos, observations=prev_obs, actions=action, robot=env.get_attr("robot")[0])
+                callback.on_step(
+                    infos=infos,
+                    observations=prev_obs,
+                    actions=action,
+                    robot=env.get_attr("robot")[0],
+                    task=env.get_attr("task")[0],
+                )
             if not args.no_render:
                 env.render("human")
 
