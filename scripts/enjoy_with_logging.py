@@ -335,7 +335,7 @@ def main():  # noqa: C901
         ObservationLoggingCallback(savedir=stats_dir),
         ActionLoggingCallback(savedir=stats_dir),
         RewardLoggingCallback(savedir=stats_dir),
-        TaskLoggingCallback(savedir=stats_dir),
+        # TaskLoggingCallback(savedir=stats_dir),
     ]
     try:
         for _ in range(args.n_timesteps):
