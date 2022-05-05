@@ -160,6 +160,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def set_gait_name(self, value):
         self._gait_name = value
         self._get_foot_contact = foot_contact_fn[value]
+        self._phase_offset = phase_offsets[value]
+        self.cpg_system.desired_phase_offsets = self._phase_offset
         # Note: this currently does not account for smooth transitions
 
 
