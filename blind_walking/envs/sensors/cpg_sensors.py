@@ -15,6 +15,7 @@ phase_offsets = {
     "trot": np.array([np.pi, 0, 0, np.pi]),
     "pace": np.array([np.pi, 0, np.pi, 0]),
     "bound": np.array([np.pi, np.pi, 0, 0]),
+    "canter": np.array([np.pi * 4 / 3, np.pi * 2 / 3, np.pi * 2 / 3, 0]),
 }
 
 foot_contact_fn = {
@@ -22,6 +23,7 @@ foot_contact_fn = {
     "trot": lambda phase: 2 * (phase > 0).astype(int) - 1,
     "pace": lambda phase: 2 * (phase > 0).astype(int) - 1,
     "bound": lambda phase: 2 * (phase > 0).astype(int) - 1,
+    "canter": lambda phase: 2 * (phase > 0).astype(int) - 1,
 }
 
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
