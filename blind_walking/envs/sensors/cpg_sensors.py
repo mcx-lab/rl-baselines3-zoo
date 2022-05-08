@@ -1,9 +1,7 @@
 """ Sensors related to CPG """
-import csv
 import typing
 
 import numpy as np
-import torch
 from blind_walking.envs.sensors import sensor
 from blind_walking.envs.sensors.environment_sensors import _ARRAY, _FLOAT_OR_ARRAY
 from blind_walking.envs.utilities.cpg import CPG, CPGParameters, CPGSystem
@@ -26,6 +24,7 @@ foot_contact_fn = {
     "canter": lambda phase: 2 * (phase > 0).astype(int) - 1,
 }
 
+DEFAULT_PHASE_OFFSETS = phase_offsets["walk"]
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
 DEFAULT_DUTY_FACTOR = 0.5
 
@@ -39,7 +38,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def __init__(
         self,
-        gait_name: str,
+        gait_names: typing.List[str],
         gait_frequency_lower: float = DEFAULT_GAIT_FREQUENCY,
         gait_frequency_upper: float = DEFAULT_GAIT_FREQUENCY,
         duty_factor_lower: float = DEFAULT_DUTY_FACTOR,
@@ -71,9 +70,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             dt=0.030,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
         )
 
-        self._gait_name = gait_name
-        self._phase_offset = phase_offsets[gait_name]
-        self._get_foot_contact = foot_contact_fn[gait_name]
+        self._gait_names = gait_names
+        self._phase_offset = DEFAULT_PHASE_OFFSETS
         self._gait_frequency_range = (gait_frequency_lower, gait_frequency_upper)
         self._duty_factor_range = (duty_factor_lower, duty_factor_upper)
         self._obs_steps_ahead = obs_steps_ahead
@@ -108,11 +106,16 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def _reset(self):
         # Clear the history buffer
         self._obs_history_buffer = []
-        # Reset CPG to a random state
+
+        # Randomize CPG settings
+        gait_name = np.random.choice(self._gait_names)
+        self.set_gait_name(gait_name)
         gait_frequency = np.random.uniform(self._gait_frequency_range[0], self._gait_frequency_range[1])
         self.set_period(1 / gait_frequency)
         duty_factor = np.random.uniform(self._duty_factor_range[0], self._duty_factor_range[1])
         self.set_duty_factor(duty_factor)
+
+        # Reset CPG to a random state
         self.cpg_system.set_state(CPGSystem.sample_initial_state(self._phase_offset))
         self._current_phase = self.cpg_system.get_phase()
 
