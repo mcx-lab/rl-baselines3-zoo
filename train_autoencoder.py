@@ -34,6 +34,49 @@ class LinearAE(torch.nn.Module):
         return decoded
 
 
+class ConvAE(torch.nn.Module):
+    def __init__(self, code_size=32):
+        super().__init__()
+        # encoder
+        self.encoder = torch.nn.Sequential(
+            torch.nn.Conv2d(1, 8, 3, stride=2 ,padding=1),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(8, 16, 3, stride=1, padding=0),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(16, 32, 3, stride=1, padding=0),
+            torch.nn.ReLU(),
+
+            torch.nn.Flatten(start_dim=1),
+
+            torch.nn.Linear(2 * 4 * 32, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, code_size),
+        )
+        # decoder
+        self.decoder = torch.nn.Sequential(
+            torch.nn.Linear(code_size, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, 2 * 4 * 32),
+            torch.nn.ReLU(),
+
+            torch.nn.Unflatten(dim=1, unflattened_size=(32, 4, 2)),
+
+            torch.nn.ConvTranspose2d(32, 16, 3, stride=1, output_padding=0),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(16, 8, 3, stride=1, output_padding=0),
+            torch.nn.BatchNorm2d(8),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(8, 1, 3, stride=2, padding=1, output_padding=1),
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+
+
 def load_data():
     # load dataset
     dataset_np = np.load(DATA_DIR)
@@ -51,15 +94,20 @@ def load_data():
     val_dataset_np = dataset_np[train_size : train_size + val_size, :]
     test_dataset_np = dataset_np[train_size + val_size :, :]
 
+    # add noise to dataset
+    train_dataset_noisy_np = train_dataset_np + np.random.normal(0, 0.01, train_dataset_np.shape)
+    val_dataset_noisy_np = val_dataset_np + np.random.normal(0, 0.01, val_dataset_np.shape)
+    test_dataset_noisy_np = test_dataset_np + np.random.normal(0, 0.01, test_dataset_np.shape)
+
     # make tensor dataset
-    train_dataset = torch.utils.data.TensorDataset(torch.Tensor(train_dataset_np))
-    val_dataset = torch.utils.data.TensorDataset(torch.Tensor(val_dataset_np))
-    test_dataset = torch.utils.data.TensorDataset(torch.Tensor(test_dataset_np))
+    train_dataset = torch.utils.data.TensorDataset(torch.Tensor(train_dataset_np), torch.Tensor(train_dataset_noisy_np))
+    val_dataset = torch.utils.data.TensorDataset(torch.Tensor(val_dataset_np), torch.Tensor(val_dataset_noisy_np))
+    test_dataset = torch.utils.data.TensorDataset(torch.Tensor(test_dataset_np), torch.Tensor(test_dataset_noisy_np))
 
     return (train_dataset, val_dataset, test_dataset), (single_data_size, single_data_shape)
 
 
-def train_model(config, checkpoint_dir=None, tune=True):
+def train_model(config, checkpoint_dir=None, tune=True, model_type="linear"):
     # load datasets
     dataset_and_info = load_data()
     train_dataset, val_dataset, _ = dataset_and_info[0]
@@ -77,7 +125,10 @@ def train_model(config, checkpoint_dir=None, tune=True):
     )
 
     # model initialisation
-    model = LinearAE(input_size=single_data_size, code_size=config["code_size"])
+    if model_type == "linear":
+        model = LinearAE(input_size=single_data_size, code_size=config["code_size"])
+    elif model_type == "conv":
+        model = ConvAE(code_size=config["code_size"])
     # use gpu if available
     device = "cpu"
     if torch.cuda.is_available():
@@ -99,15 +150,20 @@ def train_model(config, checkpoint_dir=None, tune=True):
     epochs = 10000
     for epoch in range(epochs):
         train_loss = 0
-        for batch_data in train_loader:
+        for (batch_data_truth, batch_data) in train_loader:
             # load mini-batch data to the active device
-            batch_data = batch_data[0].view(-1, single_data_size).to(device)
+            if model_type == "linear":
+                batch_data = batch_data.view(-1, single_data_size).to(device)
+                batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+            elif model_type == "conv":
+                batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
             # reset the gradients back to zero
             optimizer.zero_grad()
             # compute reconstructions
             outputs = model(batch_data)
             # compute loss
-            loss = loss_function(outputs, batch_data)
+            loss = loss_function(outputs, batch_data_truth)
             # compute accumulated gradients
             loss.backward()
             # perform parameter update based on current gradients
@@ -118,15 +174,20 @@ def train_model(config, checkpoint_dir=None, tune=True):
         # compute and display the epoch training loss
         train_loss = train_loss / len(train_loader)
         if not tune and epoch % 100 == 0:
-            print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, train_loss))
+            print("epoch : {}/{}, loss = {:.6f}, min val loss = {:.6f}".format(epoch + 1, epochs, train_loss, min_val_loss))
 
         # validation
         val_loss = 0
-        for batch_data in val_loader:
+        for (batch_data_truth, batch_data) in val_loader:
             with torch.no_grad():
-                batch_data = batch_data[0].view(-1, single_data_size).to(device)
+                if model_type == "linear":
+                    batch_data = batch_data.view(-1, single_data_size).to(device)
+                    batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+                elif model_type == "conv":
+                    batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                    batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
                 outputs = model(batch_data)
-                loss = loss_function(outputs, batch_data)
+                loss = loss_function(outputs, batch_data_truth)
                 val_loss += loss.item()
         val_loss = val_loss / len(val_loader)
         # early stopping
@@ -152,7 +213,7 @@ def train_model(config, checkpoint_dir=None, tune=True):
     print("Finished Training")
 
 
-def test_model(model, device="cpu"):
+def test_model(model, device="cpu", model_type="linear"):
     # load datasets
     dataset_and_info = load_data()
     _, _, test_dataset = dataset_and_info[0]
@@ -167,21 +228,32 @@ def test_model(model, device="cpu"):
     loss_function = torch.nn.MSELoss()
     # test
     test_loss = 0
-    for batch_data in test_loader:
+    for (batch_data_truth, batch_data) in test_loader:
         with torch.no_grad():
-            batch_data = batch_data[0].view(-1, single_data_size).to(device)
+            if model_type == "linear":
+                batch_data = batch_data.view(-1, single_data_size).to(device)
+                batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+            elif model_type == "conv":
+                batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
             outputs = model(batch_data)
-            loss = loss_function(outputs, batch_data)
+            loss = loss_function(outputs, batch_data_truth)
             test_loss += loss.item()
     # render some test images
     n_test_render = 5
-    test_images = test_dataset[:n_test_render][0]
-    recon_images = model(test_images.reshape(-1, single_data_size).to(device))
+    test_images_truth, test_images = test_dataset.tensors[:]
+    test_images_truth = test_images_truth[:n_test_render]
+    test_images = test_images[:n_test_render]
+    if model_type == "linear":
+        recon_images = model(test_images.reshape(-1, single_data_size).to(device))
+    elif model_type == "conv":
+        recon_images = model(test_images.reshape(-1, 1, *single_data_shape).to(device))
     recon_images = recon_images.detach().cpu().numpy()
-    fig, axes = plt.subplots(n_test_render, 2, figsize=(6, 6))
+    fig, axes = plt.subplots(n_test_render, 3, figsize=(6, 6))
     for i, test_image in enumerate(test_images):
-        axes[i, 0].imshow(test_image.reshape(*single_data_shape))
-        axes[i, 1].imshow(recon_images[i].reshape(*single_data_shape))
+        axes[i, 0].imshow(test_images_truth[i].reshape(*single_data_shape))
+        axes[i, 1].imshow(test_image.reshape(*single_data_shape))
+        axes[i, 2].imshow(recon_images[i].reshape(*single_data_shape))
     plt.savefig("./autoenc_results/test_images.png")
     plt.close()
     # return loss
@@ -241,11 +313,11 @@ def single_train_run():
     }
 
     """ Train """
-    train_model(config, tune=False)
+    train_model(config, tune=False, model_type="linear")
 
     """ Test """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = LinearAE(input_size=np.prod(single_data_shape), code_size=config["code_size"]).to(device)
+    model = LinearAE(code_size=config["code_size"], input_size=np.prod(single_data_shape)).to(device)
     # load trained model
     model_state, optimizer_state = torch.load(
         f"./autoenc_results/model_bs{config['batch_size']}_cs{config['code_size']}_lr{config['lr']}"
@@ -253,7 +325,7 @@ def single_train_run():
     model.load_state_dict(model_state)
     model.eval()
     # test model
-    test_loss = test_model(model, device)
+    test_loss = test_model(model, device, model_type="linear")
     print("test loss = {:.6f}".format(test_loss))
 
 
