@@ -318,3 +318,24 @@ class TrainMultiple(EnvModifier):
             and base_pos[1] > -boxHalfWidth
             and base_pos[1] < boxHalfWidth
         )
+
+
+class TrippySteps(EnvModifier):
+    def __init__(self):
+        super().__init__()
+        self.step_rise = 0.05
+        self.stair_gaps = [0.8, 0.5, 0.8, 0.2, 0.8, 0.4, 0.8, 0.3, 0.8, 0.2, 0.7, 0.5, 0.7, 0.3]
+        # Note: need to change boxHalfLength=0.03 in stairs class
+        # Note: change colours of steps for better visualisation
+
+        self.stairs = []
+        for _ in range(len(self.stair_gaps)):
+            self.stairs.append(Stairs())
+
+    def _generate(self, env):
+        start_x = 0
+        for i, gap in enumerate(self.stair_gaps):
+            start_x += self.stair_gaps[i]
+            self.stairs[i]._generate(
+                env, start_x=start_x, num_steps=1, step_rise=self.step_rise,
+            )
