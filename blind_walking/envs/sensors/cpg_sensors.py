@@ -28,6 +28,8 @@ DEFAULT_PHASE_OFFSETS = phase_offsets["walk"]
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
 DEFAULT_DUTY_FACTOR = 0.5
 
+# gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
+
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     """A sensor that reports whether each foot should be in contact with the ground.
@@ -95,8 +97,11 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         print(f"Init CPG gait={self.get_gait_name()}, duty_factor={self.get_duty_factor()}, period={self.get_period()}")
 
     def on_step(self, env):
+        t = env.env_step_counter
         del env
 
+        # Update gait according to schedule
+        # self.set_gait_name(gait_name_schedule(t))
         self.cpg_system.step()
         self._current_phase = self.cpg_system.get_phase()
         obs = self._get_foot_contact(self._current_phase)
@@ -166,7 +171,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._gait_name = value
         self._get_foot_contact = foot_contact_fn[value]
         self._phase_offset = phase_offsets[value]
-        self.cpg_system.desired_phase_offsets = self._phase_offset
+        self.cpg_system.set_phase_offsets(self._phase_offset)
         # Note: this currently does not account for smooth transitions
 
 
