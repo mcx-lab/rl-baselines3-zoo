@@ -25,7 +25,6 @@ class ImitationTask(object):
         self.last_foot_contacts = np.zeros(num_legs)
         self.feet_air_time = np.zeros(num_legs)
         self.feet_contact_lost = np.zeros(num_legs)
-        self.last_action = np.zeros(num_motors)
 
         self._target_pos = [0, 0]
 
@@ -52,9 +51,6 @@ class ImitationTask(object):
         self.current_foot_contacts = self.last_foot_contacts
         self.feet_air_time = env.robot._feet_air_time
         self.feet_contact_lost = env.robot._feet_contact_lost
-        self.last_action = env.robot._last_action
-
-        self.motor_inertia = [i[0] for i in env.robot._motor_inertia]
 
     def update(self, env):
         """Updates the internal state of the task."""
@@ -73,8 +69,6 @@ class ImitationTask(object):
         self.last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
         self.feet_air_time = env.robot._feet_air_time
-        self.feet_contact_lost = env.robot._feet_contactForwardTask_lost
-        self.last_action = env.robot._last_action
 
         # Update relative target position
         self._target_pos = env._observations["TargetPosition_flatten"]
@@ -102,11 +96,8 @@ class ImitationTask(object):
         dxy_local = np.array([dx_local, dy_local])
         # Reward distance travelled in target direction.
         distance_target = np.linalg.norm(self._target_pos)
-        if distance_target:
-            distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
-            distance_reward = min(distance_towards / distance_target, 1)
-        else:
-            distance_reward = -np.linalg.norm(dxy_local)
+        distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
+        distance_reward = min(distance_towards / distance_target, 1)
         distance_reward = distance_reward * self._env._env_time_step
 
         # Penalty for sideways rotation of the body.
