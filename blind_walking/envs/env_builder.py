@@ -47,8 +47,8 @@ def build_regular_env(
     sim_params.reset_time = 2
     sim_params.num_action_repeat = 10
     sim_params.enable_action_interpolation = False
-    sim_params.enable_action_filter = True
-    sim_params.enable_clip_motor_commands = True
+    sim_params.enable_action_filter = False
+    sim_params.enable_clip_motor_commands = False
     sim_params.robot_on_rack = on_rack
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)

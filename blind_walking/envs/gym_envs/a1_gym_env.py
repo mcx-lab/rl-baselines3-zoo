@@ -8,7 +8,7 @@ from blind_walking.robots import a1, robot_config
 class A1GymEnv(gym.Env):
     """A1 environment that supports the gym interface."""
 
-    metadata = {"render.modes": ["rgb_array"]}
+    metadata = {"render.modes": ["rgb_array"], "render_fps": 100}
 
     def __init__(self, action_limit=(0.5, 0.5, 0.5), render=False, on_rack=False, **kwargs):
         self._env = env_builder.build_regular_env(
