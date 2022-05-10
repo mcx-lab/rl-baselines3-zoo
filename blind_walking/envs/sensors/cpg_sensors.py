@@ -27,7 +27,7 @@ foot_contact_fn = {
 DEFAULT_GAIT_NAMES = ["walk"]
 DEFAULT_PHASE_OFFSETS = phase_offsets["walk"]
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
-DEFAULT_DUTY_FACTOR = 0.5
+DEFAULT_DUTY_FACTOR = 0.75
 
 # gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
 
