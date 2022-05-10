@@ -73,7 +73,7 @@ class ImitationTask(object):
         self.last_foot_contacts = self.current_foot_contacts
         self.current_foot_contacts = env.robot.GetFootContacts()
         self.feet_air_time = env.robot._feet_air_time
-        self.feet_contact_lost = env.robot._feet_contact_lost
+        self.feet_contact_lost = env.robot._feet_contactForwardTask_lost
         self.last_action = env.robot._last_action
 
         # Update relative target position
