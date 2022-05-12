@@ -17,15 +17,15 @@ import os
 import torch as th
 
 """Utilities for building environments."""
-from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
-from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
-from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
-from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
-from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors, sensor_wrappers
-from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
-from blind_walking.envs.utilities import controllable_env_randomizer_from_config
-from blind_walking.robots import a1, laikago, robot_config
+from gait_imitation.envs import locomotion_gym_config, locomotion_gym_env
+from gait_imitation.envs.env_modifiers import heightfield, stairs, train_course
+from gait_imitation.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
+from gait_imitation.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
+from gait_imitation.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
+from gait_imitation.envs.sensors import cpg_sensors, environment_sensors, robot_sensors, sensor_wrappers
+from gait_imitation.envs.tasks import forward_task, forward_task_pos, imitation_task
+from gait_imitation.envs.utilities import controllable_env_randomizer_from_config
+from gait_imitation.robots import a1, laikago, robot_config
 
 
 def build_regular_env(
@@ -59,7 +59,7 @@ def build_regular_env(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            environment_sensors.TargetPositionSensor(target_velocity=0.5),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
 

@@ -93,12 +93,14 @@ class ImitationTask(object):
 
         dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
         dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
-        dxy_local = np.array([dx_local, dy_local])
+
+        dpos_robot = np.array([dx_local, dy_local])
+        dpos_ref = self._target_pos
+        dpos_diff = dpos_robot - dpos_ref
+        dpos_err = dpos_diff.dot(dpos_diff)
+
         # Reward distance travelled in target direction.
-        distance_target = np.linalg.norm(self._target_pos)
-        distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
-        distance_reward = min(distance_towards / distance_target, 1)
-        distance_reward = distance_reward * self._env._env_time_step
+        distance_reward = 100 * np.exp(-10.0 * dpos_err) * self._env._env_time_step
 
         # Penalty for sideways rotation of the body.
         orientation = self.current_base_orientation
@@ -118,7 +120,6 @@ class ImitationTask(object):
         weighted_objectives = {
             "distance": distance_reward * 1.0,
             "shake": shake_reward * 1.5,
-            "energy": energy_reward * 0.0001,
             "ref_foot_contact_imit": ref_foot_contact_imitation_reward * 0.5,
         }
 
