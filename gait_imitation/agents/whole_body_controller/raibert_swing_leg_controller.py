@@ -7,8 +7,8 @@ import math
 from typing import Any, Mapping, Sequence, Tuple
 
 import numpy as np
-from blind_walking.agents.whole_body_controller import gait_generator as gait_generator_lib
-from blind_walking.agents.whole_body_controller import leg_controller
+from gait_imitation.agents.whole_body_controller import gait_generator as gait_generator_lib
+from gait_imitation.agents.whole_body_controller import leg_controller
 
 # The position correction coefficients in Raibert's formula.
 _KP = np.array([0.01, 0.01, 0.01]) * 3

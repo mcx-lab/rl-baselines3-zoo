@@ -1,8 +1,8 @@
 """Wrapper to make the a1 environment suitable for OpenAI gym."""
 import gym
-from blind_walking.envs import env_builder
-from blind_walking.envs.env_wrappers.observation_dictionary_to_array_wrapper import ObservationDictionaryToArrayWrapper
-from blind_walking.robots import a1, robot_config
+from gait_imitation.envs import env_builder
+from gait_imitation.envs.env_wrappers.observation_dictionary_to_array_wrapper import ObservationDictionaryToArrayWrapper
+from gait_imitation.robots import a1, robot_config
 
 
 class A1GymEnv(gym.Env):

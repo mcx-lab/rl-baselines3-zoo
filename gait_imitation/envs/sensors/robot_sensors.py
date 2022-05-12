@@ -17,8 +17,8 @@
 import typing
 
 import numpy as np
-from blind_walking.envs.sensors import sensor
-from blind_walking.robots import minitaur_pose_utils
+from gait_imitation.envs.sensors import sensor
+from gait_imitation.robots import minitaur_pose_utils
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint: disable=invalid-name

@@ -22,8 +22,8 @@ import numpy as np
 import pybullet  # pytype: disable=import-error
 import pybullet_data as pd
 import pybullet_utils.bullet_client as bullet_client
-from blind_walking.envs.sensors import sensor, space_utils
-from blind_walking.robots import robot_config
+from gait_imitation.envs.sensors import sensor, space_utils
+from gait_imitation.robots import robot_config
 from gym import spaces
 from gym.utils import seeding
 

@@ -3,8 +3,8 @@
 import numpy as np
 import pybullet as p  # pytype: disable=import-error
 from absl import app, flags
-from blind_walking.envs import env_builder
-from blind_walking.robots import a1, laikago, robot_config
+from gait_imitation.envs import env_builder
+from gait_imitation.robots import a1, laikago, robot_config
 from tqdm import tqdm
 
 FLAGS = flags.FLAGS

@@ -15,7 +15,7 @@
 """Simple openloop trajectory generators."""
 import attr
 import numpy as np
-from blind_walking.robots import laikago_pose_utils, minitaur_pose_utils
+from gait_imitation.robots import laikago_pose_utils, minitaur_pose_utils
 from gym import spaces
 
 

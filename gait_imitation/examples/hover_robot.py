@@ -12,12 +12,12 @@ import numpy as np
 from joblib import Parallel, delayed
 from gym.wrappers import Monitor
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.heightfield import HeightField
-from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
-from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
-from blind_walking.envs.sensors import environment_sensors
-from blind_walking.envs.tasks.forward_task import ForwardTask
+from gait_imitation.envs.env_modifiers.env_modifier import EnvModifier
+from gait_imitation.envs.env_modifiers.heightfield import HeightField
+from gait_imitation.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
+from gait_imitation.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
+from gait_imitation.envs.sensors import environment_sensors
+from gait_imitation.envs.tasks.forward_task import ForwardTask
 from enjoy import Logger
 from scripts.plot_stats import Plotter, alphanum_key, stitch_videos
 import utils.import_envs  # noqa: F401 pytype: disable=import-error

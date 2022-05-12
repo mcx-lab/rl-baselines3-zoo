@@ -18,7 +18,7 @@ import functools
 
 import numpy as np
 from absl import logging
-from blind_walking.envs.utilities import controllable_env_randomizer_base, minitaur_env_randomizer_config
+from gait_imitation.envs.utilities import controllable_env_randomizer_base, minitaur_env_randomizer_config
 
 SIMULATION_TIME_STEP = 0.001
 NUM_LEGS = 4

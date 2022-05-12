@@ -2,9 +2,9 @@
 import typing
 
 import numpy as np
-from blind_walking.envs.sensors import sensor
-from blind_walking.envs.sensors.environment_sensors import _ARRAY, _FLOAT_OR_ARRAY
-from blind_walking.envs.utilities.cpg import CPG, CPGParameters, CPGSystem
+from gait_imitation.envs.sensors import sensor
+from gait_imitation.envs.sensors.environment_sensors import _ARRAY, _FLOAT_OR_ARRAY
+from gait_imitation.envs.utilities.cpg import CPG, CPGParameters, CPGSystem
 
 # Foot order: ['FR', 'FL', 'RR', 'RL']
 

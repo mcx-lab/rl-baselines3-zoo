@@ -15,7 +15,7 @@
 """This file implements an accurate motor model."""
 
 import numpy as np
-from blind_walking.robots import robot_config
+from gait_imitation.robots import robot_config
 
 VOLTAGE_CLIPPING = 50
 OBSERVED_TORQUE_LIMIT = 5.7

@@ -1,7 +1,7 @@
 import numpy as np
-from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
-from blind_walking.envs.env_modifiers.heightfield import HeightField
-from blind_walking.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
+from gait_imitation.envs.env_modifiers.env_modifier import EnvModifier
+from gait_imitation.envs.env_modifiers.heightfield import HeightField
+from gait_imitation.envs.env_modifiers.stairs import Stairs, boxHalfLength, boxHalfWidth
 
 """ Train robot to walk up stairs curriculum.
 

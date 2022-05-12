@@ -24,7 +24,7 @@ import random
 import numpy as np
 import six
 from absl import logging
-from blind_walking.envs.utilities import env_randomizer_base, minitaur_env_randomizer_config
+from gait_imitation.envs.utilities import env_randomizer_base, minitaur_env_randomizer_config
 
 SIMULATION_TIME_STEP = 0.001
 

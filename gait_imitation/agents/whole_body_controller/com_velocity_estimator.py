@@ -3,7 +3,7 @@
 from typing import Any, Sequence
 
 import numpy as np
-from blind_walking.utilities.moving_window_filter import MovingWindowFilter
+from gait_imitation.utilities.moving_window_filter import MovingWindowFilter
 
 _DEFAULT_WINDOW_SIZE = 20
 

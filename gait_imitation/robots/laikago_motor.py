@@ -17,7 +17,7 @@
 import collections
 
 import numpy as np
-from blind_walking.robots import robot_config
+from gait_imitation.robots import robot_config
 
 NUM_MOTORS = 12
 

@@ -17,7 +17,7 @@
 import collections
 
 import gym
-from blind_walking.envs.utilities import env_utils
+from gait_imitation.envs.utilities import env_utils
 from gym import spaces
 
 

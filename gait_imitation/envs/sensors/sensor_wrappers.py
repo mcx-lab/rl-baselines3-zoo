@@ -17,7 +17,7 @@ import collections
 import typing
 
 import numpy as np
-from blind_walking.envs.sensors import sensor
+from gait_imitation.envs.sensors import sensor
 
 _ARRAY = typing.Iterable[float]  # pylint: disable=invalid-name
 

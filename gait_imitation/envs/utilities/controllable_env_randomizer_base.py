@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base class for controllable environment randomizer."""
-from blind_walking.envs.utilities import env_randomizer_base
+from gait_imitation.envs.utilities import env_randomizer_base
 
 
 class ControllableEnvRandomizerBase(env_randomizer_base.EnvRandomizerBase):

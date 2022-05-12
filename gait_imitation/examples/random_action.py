@@ -1,8 +1,8 @@
 """Simple script for executing random actions on A1 robot."""
 
 from absl import app, flags
-from blind_walking.envs import env_builder
-from blind_walking.robots import a1, laikago, robot_config
+from gait_imitation.envs import env_builder
+from gait_imitation.robots import a1, laikago, robot_config
 from tqdm import tqdm
 
 FLAGS = flags.FLAGS

@@ -19,7 +19,7 @@ import math
 
 import attr
 import numpy as np
-from blind_walking.robots import laikago, laikago_pose_utils
+from gait_imitation.robots import laikago, laikago_pose_utils
 
 _ABDUCTION_ACTION_INDEXES = [0, 3, 6, 9]
 

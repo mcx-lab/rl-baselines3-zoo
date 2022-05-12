@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 from typing import Any, Sequence, Tuple
 
 import numpy as np
-from blind_walking.agents.whole_body_controller import gait_generator as gait_generator_lib
-from blind_walking.agents.whole_body_controller import leg_controller, qp_torque_optimizer
+from gait_imitation.agents.whole_body_controller import gait_generator as gait_generator_lib
+from gait_imitation.agents.whole_body_controller import leg_controller, qp_torque_optimizer
 
 # import time
 

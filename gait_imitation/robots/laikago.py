@@ -26,8 +26,8 @@ import re
 
 import numpy as np
 import pybullet as pyb  # pytype: disable=import-error
-from blind_walking.envs import locomotion_gym_config
-from blind_walking.robots import laikago_constants, laikago_motor, laikago_pose_utils, minitaur, robot_config
+from gait_imitation.envs import locomotion_gym_config
+from gait_imitation.robots import laikago_constants, laikago_motor, laikago_pose_utils, minitaur, robot_config
 
 NUM_MOTORS = 12
 NUM_LEGS = 4

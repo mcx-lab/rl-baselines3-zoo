@@ -1,5 +1,5 @@
 import pybullet as p
-from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
+from gait_imitation.envs.env_modifiers.env_modifier import EnvModifier
 
 boxHalfLength = 0.5
 boxHalfWidth = 10

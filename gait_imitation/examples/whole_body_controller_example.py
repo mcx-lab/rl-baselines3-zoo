@@ -9,16 +9,16 @@ import pybullet  # pytype:disable=import-error
 import pybullet_data
 import scipy.interpolate
 from absl import app, flags, logging
-from blind_walking.agents.whole_body_controller import com_velocity_estimator
-from blind_walking.agents.whole_body_controller import gait_generator as gait_generator_lib
-from blind_walking.agents.whole_body_controller import (
+from gait_imitation.agents.whole_body_controller import com_velocity_estimator
+from gait_imitation.agents.whole_body_controller import gait_generator as gait_generator_lib
+from gait_imitation.agents.whole_body_controller import (
     locomotion_controller,
     openloop_gait_generator,
     raibert_swing_leg_controller,
     torque_stance_leg_controller,
 )
-from blind_walking.robots import a1, a1_robot, robot_config
-from blind_walking.robots.gamepad import gamepad_reader
+from gait_imitation.robots import a1, a1_robot, robot_config
+from gait_imitation.robots.gamepad import gamepad_reader
 from pybullet_utils import bullet_client
 
 # flake8: noqa

@@ -20,7 +20,7 @@ import pybullet_data as pd
 
 random.seed(10)
 
-from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
+from gait_imitation.envs.env_modifiers.env_modifier import EnvModifier
 
 textureId = -1
 

@@ -21,8 +21,8 @@ import time
 
 import numpy as np
 from absl import logging
-from blind_walking.envs import locomotion_gym_config
-from blind_walking.robots import a1, a1_robot_velocity_estimator, laikago_pose_utils, minitaur, robot_config
+from gait_imitation.envs import locomotion_gym_config
+from gait_imitation.robots import a1, a1_robot_velocity_estimator, laikago_pose_utils, minitaur, robot_config
 from robot_interface import RobotInterface  # pytype: disable=import-error
 
 NUM_MOTORS = 12

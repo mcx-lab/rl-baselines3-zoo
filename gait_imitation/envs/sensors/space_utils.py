@@ -17,7 +17,7 @@ import typing
 
 import gym
 import numpy as np
-from blind_walking.envs.sensors import sensor
+from gait_imitation.envs.sensors import sensor
 from gym import spaces
 
 

@@ -19,7 +19,7 @@ This should be identical to locomotion_gym_config.proto.
 import typing
 
 import attr
-from blind_walking.robots import robot_config
+from gait_imitation.robots import robot_config
 
 
 @attr.s

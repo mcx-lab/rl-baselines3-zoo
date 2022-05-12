@@ -14,7 +14,7 @@
 # limitations under the License.
 """An env wrapper that flattens the observation dictionary to an array."""
 import gym
-from blind_walking.envs.utilities import env_utils
+from gait_imitation.envs.utilities import env_utils
 
 
 class ObservationDictionaryToArrayWrapper(gym.Env):

@@ -2,7 +2,7 @@ import math
 
 import gym
 import torch as th
-from blind_walking.net.utilities import conv_output_shape
+from gait_imitation.net.utilities import conv_output_shape
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.type_aliases import TensorDict
 from torch import nn

@@ -21,7 +21,7 @@ import math
 import re
 
 import numpy as np
-from blind_walking.robots import action_filter, kinematics, minitaur_constants, minitaur_motor, robot_config
+from gait_imitation.robots import action_filter, kinematics, minitaur_constants, minitaur_motor, robot_config
 
 INIT_POSITION = [0, 0, 0.2]
 INIT_RACK_POSITION = [0, 0, 1]

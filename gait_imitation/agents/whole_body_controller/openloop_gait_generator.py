@@ -11,7 +11,7 @@ import sys
 from typing import Any, Sequence
 
 import numpy as np
-from blind_walking.agents.whole_body_controller import gait_generator
+from gait_imitation.agents.whole_body_controller import gait_generator
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(os.path.dirname(currentdir))
