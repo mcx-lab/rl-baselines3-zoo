@@ -337,5 +337,5 @@ class TrippySteps(EnvModifier):
         for i, gap in enumerate(self.stair_gaps):
             start_x += self.stair_gaps[i]
             self.stairs[i]._generate(
-                env, start_x=start_x, num_steps=1, step_rise=self.step_rise,
+                env, start_x=start_x, num_steps=1, step_rise=self.step_rise, boxHalfLength=0.03,
             )

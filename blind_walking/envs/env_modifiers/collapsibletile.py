@@ -49,7 +49,7 @@ class CollapsibleTile(EnvModifier):
             "sDampingStiff": [],
             "collapsibility": [],
         }
-        super().__init__(adjust_position=(0, 0, 0.5), deformable=True)
+        super().__init__(adjust_position=(0, 0, 0.5), deformable=True, hardreset=True)
 
     def _reset(self, env):
         for index, blockId in enumerate(self.damping_platform):
@@ -66,7 +66,7 @@ class CollapsibleTile(EnvModifier):
                 env.pybullet_client.changeDynamics(blockId, -1, mass=0.07)
         for index, blockId in enumerate(self.collapsible_platform):
             print(f"{index}, {blockId}")
-            env.pybullet_client.removeBody(blockId)
+            env.pybullet_client.removeBody(int(blockId))
             del self.collapsible_platform[index]
             regenerated_body = env.pybullet_client.loadSoftBody(
                 "cube.obj",
