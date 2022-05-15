@@ -41,6 +41,7 @@ class RobotLoggingCallback:
         "motor_torque",
         "base_rpy",
         "base_rpy_rate",
+        "base_pos",
         "base_vel",
         "feet_air_time",
         "time",
@@ -57,6 +58,7 @@ class RobotLoggingCallback:
         self.loggers["feet_air_time"].update(robot._feet_air_time)
         self.loggers["base_rpy"].update(robot.GetTrueBaseRollPitchYaw())
         self.loggers["base_rpy_rate"].update(robot.GetTrueBaseRollPitchYawRate())
+        self.loggers["base_pos"].update(robot.GetBasePosition())
         self.loggers["base_vel"].update(robot.GetBaseVelocity())
         self.loggers["time"].update(robot.GetTimeSinceReset())
 
