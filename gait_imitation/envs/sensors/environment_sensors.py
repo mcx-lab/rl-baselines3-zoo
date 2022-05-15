@@ -70,6 +70,8 @@ class TargetPositionSensor(sensor.BoxSpaceSensor):
         """
         self._env = env
 
+        # Randomize target velocity
+        self._target_velocity = np.random.uniform(0.5, 1.0)
         self.on_step(env)
 
     def _calc_direction_unit_vector(self):
