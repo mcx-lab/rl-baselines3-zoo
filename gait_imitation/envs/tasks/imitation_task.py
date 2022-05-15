@@ -91,37 +91,33 @@ class ImitationTask(object):
         Also return a dict of reward components"""
         del env
 
+        # Reward for following the target position.
         dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
         dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
-
         dpos_robot = np.array([dx_local, dy_local])
         dpos_ref = self._target_pos
+
         dpos_diff = dpos_robot - dpos_ref
         dpos_err = dpos_diff.dot(dpos_diff)
 
-        # Reward distance travelled in target direction.
-        distance_reward = 100 * np.exp(-10.0 * dpos_err) * self._env._env_time_step
-
-        # Penalty for sideways rotation of the body.
-        orientation = self.current_base_orientation
-        rot_matrix = self._env.pybullet_client.getMatrixFromQuaternion(orientation)
-        local_up_vec = rot_matrix[6:]
-        shake_reward = -abs(np.dot(np.asarray([1, 1, 0]), np.asarray(local_up_vec))) * self._env._env_time_step
-        # Penalty for energy usage.
-        energy_reward = -np.abs(np.dot(self.current_motor_torques, self.current_motor_velocities)) * self._env._env_time_step
+        distance_reward = 100 * np.exp(-10000.0 * dpos_err) * self._env._env_time_step
 
         # Penalty for following the phase of the robot.
-        feet_ground_time = self._env.env_time_step - self.feet_air_time
-        ref_foot_contact_imitation_reward = np.dot(feet_ground_time, self._reference_foot_contacts)
+        feet_ground_time_robot = self._env.env_time_step - self.feet_air_time
+        feet_ground_time_ref = self._reference_foot_contacts
+        feet_ground_time_diff = feet_ground_time_robot - feet_ground_time_ref
+        feet_ground_time_err = feet_ground_time_diff.dot(feet_ground_time_diff)
+
+        ref_foot_contact_imitation_reward = 100 * np.exp(-1.0 * feet_ground_time_err) * self._env._env_time_step
 
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
             "distance": distance_reward * 1.0,
-            "shake": shake_reward * 1.5,
-            "ref_foot_contact_imit": ref_foot_contact_imitation_reward * 0.5,
+            "ref_foot_contact_imit": ref_foot_contact_imitation_reward * 1.0,
         }
+        print(weighted_objectives)  
 
         reward = sum([o for o in weighted_objectives.values()])
         return reward, weighted_objectives

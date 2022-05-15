@@ -16,13 +16,7 @@ phase_offsets = {
     "canter": np.array([np.pi * 4 / 3, np.pi * 2 / 3, np.pi * 2 / 3, 0]),
 }
 
-foot_contact_fn = {
-    "walk": lambda phase: 2 * (phase > 0).astype(float) - 1,
-    "trot": lambda phase: 2 * (phase > 0).astype(int) - 1,
-    "pace": lambda phase: 2 * (phase > 0).astype(int) - 1,
-    "bound": lambda phase: 2 * (phase > 0).astype(int) - 1,
-    "canter": lambda phase: 2 * (phase > 0).astype(int) - 1,
-}
+foot_contact_fn = lambda phase: (phase > 0).astype(int)
 
 DEFAULT_GAIT_NAMES = ["walk"]
 DEFAULT_PHASE_OFFSETS = phase_offsets["walk"]
@@ -144,7 +138,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
     def _get_observation(self) -> _ARRAY:
         """Returns np.ndarray of shape (4,)
 
-        obs[i] = 1 iff foot[i] should be in contact with ground and -1 otherwise"""
+        obs[i] = 1 iff foot[i] should be in contact with ground and 0 otherwise"""
         obses = [self._obs_history_buffer[obs_idx] for obs_idx in self._obs_steps_ahead]
         return np.concatenate(obses)
 
@@ -171,7 +165,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
     def set_gait_name(self, value):
         self._gait_name = value
-        self._get_foot_contact = foot_contact_fn[value]
+        self._get_foot_contact = foot_contact_fn
         self._phase_offset = phase_offsets[value]
         self.cpg_system.set_phase_offsets(self._phase_offset)
         # Note: this currently does not account for smooth transitions
