@@ -49,7 +49,7 @@ class CollapsibleTile(EnvModifier):
             "sDampingStiff": [],
             "collapsibility": [],
         }
-        super().__init__(adjust_position=(0, 0, 0.5), deformable=True, hardreset=True)
+        super().__init__(adjust_position=(-0.5, 0, 0.5), deformable=True, hardreset=True)
 
     def _reset(self, env):
         for index, blockId in enumerate(self.damping_platform):
@@ -295,6 +295,56 @@ class CollapsibleTile(EnvModifier):
                 )
             )
 
+            # additional platform
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, 0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, 0, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, -0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, 0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, 0, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, -0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+
             # Damping Platform
             damping_platform.append(
                 env.pybullet_client.loadURDF(
@@ -494,6 +544,56 @@ class CollapsibleTile(EnvModifier):
                     "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
                     [0.625, -0.375, 0.375],
                     globalScaling=0.25,
+                    useMaximalCoordinates=True,
+                )
+            )
+
+            # additional platform
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, 0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, 0, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.25, -0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, 0.5, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, 0, 0.25],
+                    globalScaling=0.5,
+                    useMaximalCoordinates=True,
+                )
+            )
+            platform.append(
+                env.pybullet_client.loadURDF(
+                    "blind_walking/envs/env_modifiers/collapsible_platform/cube_platform.urdf",
+                    [1.5, -0.5, 0.25],
+                    globalScaling=0.5,
                     useMaximalCoordinates=True,
                 )
             )

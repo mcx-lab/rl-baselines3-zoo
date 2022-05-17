@@ -29,25 +29,35 @@ class MultipleTerrain(EnvModifier):
         # Stairs parameters
         self.step_rise_levels = [0.02, 0.05, 0.07, 0.1]
         self.num_steps = 10
-        self.stair_gap = 2.0
+        self.stair_gap = 1.5
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
         self.sec_num_steps = 1
         self.sec_stair_length = (self.sec_num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
+        self.sec_trip_half_run = 0.03
+        self.sec_trip_num_steps = 1
+        self.sec_trip_stair_length = (self.sec_trip_num_steps - 1) * self.sec_trip_half_run * 2 * 2 * 2 + self.sec_trip_half_run * 2 * 2
         # Heightfield parameters
         self.hf_length = 18
 
         self.hf = HeightField()
         self.stairs = []
         self.sec_stairs = []
+        self.sec_trip_stairs = []
         for _ in range(len(self.step_rise_levels)):
             self.stairs.append(Stairs())
             self.sec_stairs.append(Stairs())
+            self.sec_trip_stairs.append(Stairs())
 
     def _generate(self, env):
         # Generate stairs
         start_x = self.stair_gap
         for i in range(len(self.step_rise_levels)):
+            self.sec_trip_stairs[i]._generate(
+                env, start_x=start_x, num_steps=self.sec_trip_num_steps, step_rise=self.step_rise_levels[i],
+                boxHalfLength=self.sec_trip_half_run,
+            )
+            start_x += self.sec_trip_stair_length + self.stair_gap
             self.sec_stairs[i]._generate(
                 env, start_x=start_x, num_steps=self.sec_num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
             )
@@ -138,7 +148,7 @@ def main():  # noqa: C901
         default_position = env.robot._GetDefaultInitPosition()
         zero_action = np.zeros(12)
         position = default_position.copy()
-        for _ in range(num_timesteps):
+        for i in range(num_timesteps):
             # Update position
             position[0] += dx
             position[1] += dy
@@ -149,6 +159,8 @@ def main():  # noqa: C901
             obs, _, _, _ = env.step(zero_action)
             # Record heightmap data
             hm_logger.update([obs])
+            if i % 100 == 0:
+                print(f"timesteps {i}")
 
         # Close environment and save data
         env.close()
