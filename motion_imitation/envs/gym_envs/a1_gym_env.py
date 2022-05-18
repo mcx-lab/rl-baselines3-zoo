@@ -14,7 +14,7 @@ class A1GymEnv(gym.Env):
         self,
         imit_mode="full",
         motion_files=[str(motion_data_dir / "dog_pace.txt")],
-        tar_frame_steps=[1, 2, 10, 20],
+        tar_frame_steps=[1, 2, 10, 30],
         enable_randomizer=False,
     ):
         self._env = env_builder.build_imitation_env(

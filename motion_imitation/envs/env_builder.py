@@ -52,7 +52,7 @@ def build_imitation_env(imit_mode, motion_files, tar_frame_steps, enable_randomi
         imit_mode=imit_mode,
         ref_motion_filenames=motion_files,
         enable_cycle_sync=True,
-        tar_frame_steps=[1, 2, 10, 30],
+        tar_frame_steps=tar_frame_steps,
         ref_state_init_prob=0.9,
         warmup_time=0.25,
     )
