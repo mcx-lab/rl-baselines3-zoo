@@ -3,7 +3,7 @@ import unittest
 import gym
 import numpy as np
 import torch
-from blind_walking.envs.gym_envs.a1_gym_env import A1GymEnv
+from motion_imitation.envs.gym_envs.a1_gym_env import A1GymEnv
 
 
 class TestA1GymEnv(unittest.TestCase):
@@ -38,18 +38,6 @@ class TestA1GymEnv(unittest.TestCase):
         # We set the Kp to a dummy value we don't care about
         self.robot.SetMotorGains(23.23290, constant)
         assert np.all(self.robot.GetMotorVelocityGains() == constant)
-
-    def test_motor_strength_getter_setter(self):
-        self.env.reset()
-        constant = 0.42069
-        self.robot.SetMotorStrengthRatios(constant)
-        assert np.all(self.robot.GetMotorStrengthRatios() == constant)
-
-    def test_foot_friction_getter_setter(self):
-        self.env.reset()
-        constant = 69.420
-        self.robot.SetFootFriction(constant)
-        assert np.all(self.robot.GetFootFriction() == constant)
 
     def test_unique_sensor_names(self):
         """Ensure all sensor names are unique
