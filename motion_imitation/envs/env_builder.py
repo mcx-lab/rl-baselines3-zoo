@@ -35,6 +35,7 @@ def build_imitation_env(imit_mode, motion_files, tar_frame_steps, enable_randomi
 
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
+    sim_params.num_action_repeat = 10
     sim_params.allow_knee_contact = True
     sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
 
