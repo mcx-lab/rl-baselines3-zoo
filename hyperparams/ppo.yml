@@ -158,24 +158,14 @@ HalfCheetahBulletEnv-v0: &pybullet-defaults
 
 A1GymEnv-v0:
   <<: *pybullet-defaults
-  n_envs: 64
-  batch_size: 1024
+  n_envs: 256
+  batch_size: 16384
   env_wrapper: utils.wrappers.DummyWrapper
   policy_kwargs: "dict(log_std_init=-2,
                        ortho_init=False,
                        activation_fn=nn.ReLU,
                        net_arch=[dict(pi=[256, 256], vf=[256, 256])],
                        )"
-
-A1BlindWalkingBulletEnv-v0:
-  <<: *pybullet-defaults
-  env_wrapper: utils.wrappers.DummyWrapper
-  policy_kwargs: "dict(log_std_init=-2,
-                       ortho_init=False,
-                       activation_fn=nn.ReLU,
-                       net_arch=[dict(pi=[256, 256], vf=[256, 256])],
-                       )"
-
 
 # Tuned
 AntBulletEnv-v0:

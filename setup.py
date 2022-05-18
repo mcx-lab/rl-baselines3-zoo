@@ -12,13 +12,9 @@ reqs_dev = parse_requirements_file("requirements/dev.txt")
 with open("README.md", "r") as f:
     long_description = f.read()
 
-
-init_str = Path("blind_walking/__init__.py").read_text()
-version = init_str.split("__version__ = ")[1].rstrip().strip('"')
-
 setup(
     name="quadruped-rl",
-    version=version,
+    version="0.1.0",
     author="Zhang, Jenny and Tan, Daniel",
     description="A PyTorch library for reinforcement learning on quadruped legged robots",
     long_description=long_description,
