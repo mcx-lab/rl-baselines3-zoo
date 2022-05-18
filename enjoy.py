@@ -68,6 +68,7 @@ def parse_args():
     )
     parser.add_argument("--save-encoder-output", action="store_true", default=False, help="Log the encoder output to a file")
     parser.add_argument("--save-observation", action="store_true", default=False, help="Save the observations into a file")
+    parser.add_argument("--save-action", action="store_true", default=False, help="Save the actions into a file")
     parser.add_argument(
         "--adapter",
         action="store_true",
@@ -276,6 +277,8 @@ def main():  # noqa: C901
 
     if args.save_observation:
         observation_logger = Logger(name="observations")
+    if args.save_action:
+        action_logger = Logger(name="actions")
 
     # Get actor-critic policy which contains the feature extractor and ppo
     is_a1_gym_env = args.save_encoder_output or args.adapter
@@ -339,11 +342,15 @@ def main():  # noqa: C901
                     clipped_action = np.clip(clipped_action, model.action_space.low, model.action_space.high)
                 if args.save_observation:
                     observation_logger.update(obs)
+                if args.save_action:
+                    action_logger.update(clipped_action)
                 obs, reward, done, infos = env.step(clipped_action)
             else:
                 action, state = model.predict(obs, state=state, deterministic=deterministic)
                 if args.save_observation:
                     observation_logger.update(obs)
+                if args.save_action:
+                    action_logger.update(action)
                 obs, reward, done, infos = env.step(action)
 
             if not args.no_render:
@@ -385,7 +392,7 @@ def main():  # noqa: C901
 
     # ######################### Print stats ######################### #
 
-    if args.save_encoder_output or args.save_observation:
+    if args.save_encoder_output or args.save_observation or args.save_action:
         output_dir = os.path.join(log_path, "stats")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -396,6 +403,8 @@ def main():  # noqa: C901
                 predicted_extrinsics_logger.save(output_dir)
         if args.save_observation:
             observation_logger.save(output_dir)
+        if args.save_action:
+            action_logger.save(output_dir)
 
     if args.verbose > 0 and len(successes) > 0:
         print(f"Success rate: {100 * np.mean(successes):.2f}%")
