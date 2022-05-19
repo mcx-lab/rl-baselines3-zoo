@@ -27,7 +27,7 @@ class MultipleTerrain(EnvModifier):
     def __init__(self):
         super().__init__()
         # Stairs parameters
-        self.step_rise_levels = [0.02, 0.05, 0.07, 0.1]
+        self.step_rise_levels = [0.02, 0.05, 0.07, 0.09, 0.11]
         self.num_steps = 10
         self.stair_gap = 1.5
         self.step_run = 0.3
@@ -49,6 +49,29 @@ class MultipleTerrain(EnvModifier):
             self.sec_stairs.append(Stairs())
             self.sec_trip_stairs.append(Stairs())
 
+        # Random boxes
+        self.boxes_rise_levels = [0.03, 0.05, 0.07, 0.09, 0.10]
+        self.boxes_pos_y = [
+            -0.08, -0.14, 0.04, 0.14, 0.08,
+            0.10, 0.06, 0.0, -0.06, -0.10,
+            -0.04, -0.08, 0.08, 0.0, 0.04,
+            0.12, 0.06, -0.18, -0.06, -0.12,
+        ]
+        self.boxes_half_width = [
+            0.03, 0.04, 0.05, 0.06, 0.07,
+            0.04, 0.05, 0.06, 0.07, 0.03,
+            0.05, 0.06, 0.07, 0.03, 0.04,
+            0.06, 0.07, 0.03, 0.04, 0.05,
+        ]
+        self.boxes_half_length = [
+            0.05, 0.04, 0.07, 0.06, 0.03,
+            0.03, 0.05, 0.04, 0.07, 0.06,
+            0.06, 0.03, 0.05, 0.04, 0.07,
+            0.07, 0.06, 0.03, 0.05, 0.04,
+        ]
+        self.box_gap = 0.7
+        self.boxes = [Stairs() for _ in range(20)]
+
     def _generate(self, env):
         # Generate stairs
         start_x = self.stair_gap
@@ -66,6 +89,18 @@ class MultipleTerrain(EnvModifier):
                 env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
             )
             start_x += self.stair_length + self.stair_gap
+
+        # Generate boxes
+        for i in range(len(self.boxes)):
+            self.boxes[i]._generate(
+                env, start_x=start_x, num_steps=1,
+                step_rise=self.boxes_rise_levels[i % len(self.boxes_rise_levels)],
+                boxHalfLength=self.boxes_half_length[i % len(self.boxes_half_length)],
+                boxHalfWidth=self.boxes_half_width[i % len(self.boxes_half_width)],
+                pos_y=self.boxes_pos_y[i % len(self.boxes_pos_y)],
+            )
+            start_x += self.box_gap
+
         # Generate heightfield
         start_x += self.hf_length / 2
         self.hf._generate(env, start_x=start_x, heightPerturbationRange=0.08)
@@ -99,8 +134,8 @@ def main():  # noqa: C901
     dx = 0.05
     dy = 0
     grid_sizes = [(12, 16)]
-    grid_units = [(0.04, 0.04)]
-    grid_transforms = [(0.08, 0)]
+    grid_units = [(0.03, 0.03)]
+    grid_transforms = [(0.10, 0)]
     ray_origins = ["head"]
     grid_names = ["depth"]
     num_timesteps = args.n_timesteps

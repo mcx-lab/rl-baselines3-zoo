@@ -14,7 +14,7 @@ class Stairs(EnvModifier):
         super().__init__()
 
     def _generate(self, env, start_x=3, num_steps=5, step_rise=0.1, step_run=0.3, friction=0.5,
-                  boxHalfLength=0.5):
+                  boxHalfLength=0.5, boxHalfWidth=10, pos_y=0):
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 0)
 
         stepShape = env.pybullet_client.createCollisionShape(
@@ -23,7 +23,7 @@ class Stairs(EnvModifier):
         colors = [[0.5, 0.5, 0.5, 1], [0.7, 0.7, 0.7, 1], [0.9, 0.9, 0.9, 1]]
 
         # Create upwards stairs
-        base_pos = [start_x, 0, step_rise - boxHalfHeight]
+        base_pos = [start_x, pos_y, step_rise - boxHalfHeight]
         self.base_pos = base_pos
         for i in range(num_steps):
             step = env.pybullet_client.createMultiBody(

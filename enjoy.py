@@ -302,6 +302,9 @@ def main():  # noqa: C901
             if args.save_encoder_output:
                 predicted_extrinsics_logger = Logger(name="predicted_extrinsics")
 
+    # # Code for replay
+    # action_data = np.load(os.path.join(log_path, "./stats_flat/actions.npy"))
+
     # ######################### Enjoy Loop ######################### #
 
     # Deterministic by default except for atari games
@@ -316,7 +319,7 @@ def main():  # noqa: C901
     successes = []
 
     try:
-        for _ in range(args.n_timesteps):
+        for i in range(args.n_timesteps):
             if is_a1_gym_env:
                 obs_np = obs
                 obs = obs_as_tensor(obs_np, model.device)
@@ -352,6 +355,8 @@ def main():  # noqa: C901
                 if args.save_action:
                     action_logger.update(action)
                 obs, reward, done, infos = env.step(action)
+                # # Code for replay
+                # obs, reward, done, infos = env.step([action_data[i]])
 
             if not args.no_render:
                 env.render("human")

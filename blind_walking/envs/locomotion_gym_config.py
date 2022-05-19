@@ -34,7 +34,7 @@ class SimulationParameters(object):
     robot_on_rack = attr.ib(type=bool, default=False)
     camera_distance = attr.ib(type=float, default=1.0)
     camera_yaw = attr.ib(type=float, default=0)
-    camera_pitch = attr.ib(type=float, default=-30)
+    camera_pitch = attr.ib(type=float, default=-10)
     render_width = attr.ib(type=int, default=960)
     render_height = attr.ib(type=int, default=720)
     egl_rendering = attr.ib(type=bool, default=False)
