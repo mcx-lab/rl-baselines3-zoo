@@ -29,7 +29,7 @@ class MultipleTerrain(EnvModifier):
         # Stairs parameters
         self.step_rise_levels = [0.02, 0.05, 0.07, 0.09, 0.11]
         self.num_steps = 10
-        self.stair_gap = 1.5
+        self.stair_gap = 1.0
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
         self.sec_num_steps = 1
@@ -64,13 +64,13 @@ class MultipleTerrain(EnvModifier):
             0.06, 0.07, 0.03, 0.04, 0.05,
         ]
         self.boxes_half_length = [
-            0.05, 0.04, 0.07, 0.06, 0.03,
-            0.03, 0.05, 0.04, 0.07, 0.06,
-            0.06, 0.03, 0.05, 0.04, 0.07,
-            0.07, 0.06, 0.03, 0.05, 0.04,
+            0.025, 0.02, 0.035, 0.03, 0.015,
+            0.015, 0.015, 0.02, 0.035, 0.03,
+            0.03, 0.015, 0.025, 0.02, 0.035,
+            0.035, 0.03, 0.015, 0.025, 0.02,
         ]
-        self.box_gap = 0.7
-        self.boxes = [Stairs() for _ in range(20)]
+        self.box_gap = 0.5
+        self.boxes = [Stairs() for _ in range(30)]
 
     def _generate(self, env):
         # Generate stairs

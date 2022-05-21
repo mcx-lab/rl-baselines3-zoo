@@ -526,8 +526,9 @@ class A1(minitaur.Minitaur):
             else:
                 hit_position = info[3]
             hit_coordinates.append(hit_position)
-        depth_distances = np.subtract(origin_coords, hit_coordinates)
-        depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        # depth_distances = np.subtract(origin_coords, hit_coordinates)
+        # depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        depth_view = np.array(origin_coords)[:, 2] - np.array(hit_coordinates)[:, 2]
         depth_view = np.array(depth_view).reshape(grid_size)
 
         # # For visualising rays
