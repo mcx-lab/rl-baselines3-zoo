@@ -18,14 +18,17 @@ When training with multiple gaits, it is important for the policy to anticipate 
 Example of gait randomization with predictive control: 
 
 ```
-python train.py --algo ppo --env A1GymEnv-v0 -f logs \
+python train.py \
+--algo ppo \
+--env A1GymEnv-v0 \
+-f logs \
 --env-kwargs \
-  gait_names:["'walk'","'trot'"]
-  gait_frequency_upper:1.9
-  gait_frequency_lower:1.1
-  duty_factor_upper:0.85
-  duty_factor_lower:0.55
-  obs_steps_ahead:(0,1,2,10,50)
+  gait_names:["'walk'","'trot'"] \
+  gait_frequency_upper:1.9 \
+  gait_frequency_lower:1.1 \
+  duty_factor_upper:0.85 \
+  duty_factor_lower:0.55 \
+  obs_steps_ahead:[0,1,2,10,50]
 ```
 
 This will configure randomization of gait on each episode as follows:
@@ -40,12 +43,16 @@ This will configure randomization of gait on each episode as follows:
 Evaluation on a fixed gait can be done as follows:
 
 ```
-python scripts/enjoy_with_logging.py --algo ppo --env A1GymEnv-v0 -f logs --no-render \
+python scripts/enjoy_with_logging.py \
+--algo ppo \
+--env A1GymEnv-v0 \
+-f logs \
+--no-render \
 --env-kwargs \
-  gait_names:["'walk'","'trot'"]
-  gait_frequency_upper:1.5
-  gait_frequency_lower:1.5
-  duty_factor_upper:0.75
+  gait_names:["'walk'","'trot'"] \
+  gait_frequency_upper:1.5 \
+  gait_frequency_lower:1.5 \
+  duty_factor_upper:0.75 \
   duty_factor_lower:0.75
 ```
 
