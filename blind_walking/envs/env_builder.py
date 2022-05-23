@@ -73,7 +73,7 @@ def build_regular_env(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.01),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
 
