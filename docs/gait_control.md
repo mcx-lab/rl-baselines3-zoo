@@ -7,7 +7,11 @@ Run with default settings:
 python train.py --algo ppo --env A1GymEnv-v0 -f logs
 ```
 
-By default, the configured gait is a walking gait with frequency 1.5Hz and duty factor of 0.5. The policy will observe reference foot contacts for only the current timestep. 
+By default, the configuration is:
+- a walking gait
+- frequency 1.5Hz 
+- duty factor of 0.5
+- Policy observes reference foot contacts for (0,1,2,10,50) steps ahead. 
 
 ## Training with Gait Randomization
 
