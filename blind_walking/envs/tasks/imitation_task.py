@@ -70,8 +70,13 @@ class ImitationTask(object):
         self.current_foot_contacts = env.robot.GetFootContacts()
         self.feet_air_time = env.robot._feet_air_time
 
-        # Update relative target position
-        self._target_pos = env._observations["TargetPosition_flatten"]
+        # Update reference displacement
+        self._reference_displacement = env._observations["TargetPosition_flatten"]
+        # Update actual displacement
+        dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
+        dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
+        self._actual_displacement = np.array([dx_local, dy_local])
+
         # Assume gait sensor is last sensor
         ref_gait_sensor = env.all_sensors()[-1]
         self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
@@ -89,12 +94,9 @@ class ImitationTask(object):
 
     def _calc_reward_distance(self):
         """Reward term for travelling in the indicated direction"""
-        dx, dy, dz = np.array(self.current_base_pos) - np.array(self.last_base_pos)
-        dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
-        dxy_local = np.array([dx_local, dy_local])
         # Reward distance travelled in target direction.
-        distance_target = np.linalg.norm(self._target_pos)
-        distance_towards = np.dot(dxy_local, self._target_pos) / distance_target
+        distance_target = np.linalg.norm(self._reference_displacement)
+        distance_towards = np.dot(self._actual_displacement, self._reference_displacement) / distance_target
         distance_reward = min(distance_towards / distance_target, 1)
         return distance_reward
 
@@ -134,7 +136,7 @@ class ImitationTask(object):
         weighted_objectives = {
             "distance": distance_reward * 1.0,
             "shake": shake_reward * 1.5,
-            "imitation": imitation_reward * 1.5,
+            "imitation": imitation_reward * 1.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])
