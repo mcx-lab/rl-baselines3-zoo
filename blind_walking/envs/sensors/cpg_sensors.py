@@ -46,7 +46,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         gait_frequency_upper: float = DEFAULT_GAIT_FREQUENCY,
         duty_factor_lower: float = DEFAULT_DUTY_FACTOR,
         duty_factor_upper: float = DEFAULT_DUTY_FACTOR,
-        obs_steps_ahead: typing.List[int] = (0,),
+        obs_steps_ahead: typing.List[int] = (0, 1, 2, 10, 50),
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
         name: typing.Text = "ReferenceGait",
@@ -126,7 +126,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._current_phase = self.cpg_system.get_phase()
 
         # Initialize the history buffer
-        for _ in range(10):
+        for _ in range(max(self._obs_steps_ahead) + 1):
             self.cpg_system.step()
             self._current_phase = self.cpg_system.get_phase()
             obs = self._get_foot_contact(self._current_phase)
