@@ -19,7 +19,7 @@ class CPG:
 
     state_dim = 2
 
-    def __init__(self, params: CPGParameters, initial_state: np.ndarray = np.array([1.0, 0.0])):
+    def __init__(self, params: CPGParameters, initial_state: np.ndarray):
         self.params = params
         self.set_state(initial_state)
 
@@ -29,7 +29,7 @@ class CPG:
     def set_state(self, state: np.ndarray):
         self.state = state.copy()
 
-    def step(self, extrinsic_delta_state: np.ndarray = np.zeros(2)):
+    def step(self, extrinsic_delta_state: np.ndarray):
         state = self.get_state()
         state += self._calc_intrinsic_delta_state() * self.params.dt
         state += extrinsic_delta_state * self.params.dt
@@ -62,8 +62,8 @@ class CPGSystem:
         self,
         params: CPGParameters,
         coupling_strength: float,
-        desired_phase_offsets: np.ndarray = np.zeros(4),
-        initial_state: np.ndarray = np.zeros((4, CPG.state_dim)),
+        desired_phase_offsets: np.ndarray,
+        initial_state: np.ndarray,
     ):
         self.num_cpgs = desired_phase_offsets.shape[0]
         self.params = params
@@ -118,7 +118,7 @@ class CPGSystem:
             self.cpgs[i].step(extrinsic_delta_state=delta_state[i])
 
     def _init_cpgs(self):
-        self.cpgs = [CPG(self.params) for i in range(self.num_cpgs)]
+        self.cpgs = [CPG(self.params, np.zeros(4)) for i in range(self.num_cpgs)]
 
     def _init_coupling_coeff(self):
         coupling_coeff = np.zeros((self.num_cpgs, self.num_cpgs, CPG.state_dim, CPG.state_dim))
