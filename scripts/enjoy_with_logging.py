@@ -41,8 +41,8 @@ class RobotLoggingCallback:
         "motor_torque",
         "base_rpy",
         "base_rpy_rate",
-        "base_vel",
-        "feet_air_time",
+        "base_position",
+        "base_velocity",
         "time",
     )
 
@@ -54,10 +54,10 @@ class RobotLoggingCallback:
         self.loggers["motor_position"].update(robot.GetTrueMotorAngles())
         self.loggers["motor_velocity"].update(robot.GetTrueMotorVelocities())
         self.loggers["motor_torque"].update(robot.GetTrueMotorTorques())
-        self.loggers["feet_air_time"].update(robot._feet_air_time)
         self.loggers["base_rpy"].update(robot.GetTrueBaseRollPitchYaw())
         self.loggers["base_rpy_rate"].update(robot.GetTrueBaseRollPitchYawRate())
-        self.loggers["base_vel"].update(robot.GetBaseVelocity())
+        self.loggers["base_position"].update(robot.GetBasePosition())
+        self.loggers["base_velocity"].update(robot.GetBaseVelocity())
         self.loggers["time"].update(robot.GetTimeSinceReset())
 
     def on_episode_end(self, **kwargs):
@@ -80,16 +80,23 @@ class ObservationLoggingCallback:
 
 
 class TaskLoggingCallback:
+
+    log_names = ("reference_foot_contact", "actual_foot_contact", "reference_displacement", "actual_displacement")
+
     def __init__(self, savedir: str):
-        self.logger = Logger("reference_foot_contact")
+        self.loggers = {ln: Logger(ln) for ln in self.log_names}
         self.savedir = savedir
 
     def on_step(self, task=None, **kwargs):
-        self.logger.update(task._reference_foot_contacts)
+        self.loggers["reference_foot_contact"].update(task._reference_foot_contacts)
+        self.loggers["actual_foot_contact"].update(task._actual_foot_contacts)
+        self.loggers["reference_displacement"].update(task._reference_displacement)
+        self.loggers["actual_displacement"].update(task._actual_displacement)
 
     def on_episode_end(self, **kwargs):
-        self.logger.save(str(self.savedir))
-        self.logger.clear()
+        for logger in self.loggers.values():
+            logger.save(str(self.savedir))
+            logger.clear()
 
 
 class ActionLoggingCallback:
@@ -332,7 +339,7 @@ def main():  # noqa: C901
         ObservationLoggingCallback(savedir=stats_dir),
         ActionLoggingCallback(savedir=stats_dir),
         RewardLoggingCallback(savedir=stats_dir),
-        # TaskLoggingCallback(savedir=stats_dir),
+        TaskLoggingCallback(savedir=stats_dir),
     ]
     try:
         for _ in range(args.n_timesteps):
