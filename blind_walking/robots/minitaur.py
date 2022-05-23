@@ -48,8 +48,8 @@ _BRACKET_NAME_PATTERN = re.compile(r"motor\D*_bracket_joint")
 _LEG_NAME_PATTERN1 = re.compile(r"hip\D*joint")
 _LEG_NAME_PATTERN2 = re.compile(r"hip\D*link")
 _LEG_NAME_PATTERN3 = re.compile(r"motor\D*link")
-SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0, 0.0, 0.0)
-# SENSOR_NOISE_STDDEV = (0.01, 0.1, 0.1, 0.01, 0.1)
+# SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0, 0.0, 0.0)
+SENSOR_NOISE_STDDEV = (0.01, 0.1, 0.1, 0.01, 0.1)
 MINITAUR_DEFAULT_MOTOR_DIRECTIONS = (-1, -1, -1, -1, 1, 1, 1, 1)
 MINITAUR_DEFAULT_MOTOR_OFFSETS = (0, 0, 0, 0, 0, 0, 0, 0)
 MINITAUR_NUM_MOTORS = 8
@@ -302,6 +302,14 @@ class Minitaur(object):
         for i in range(num_joints):
             joint_info = self._pybullet_client.getJointInfo(self.quadruped, i)
             self._joint_name_to_id[joint_info[1].decode("UTF-8")] = joint_info[0]
+
+    def GetFootNames(self):
+        foot_names = []
+        for foot_link_id in self._foot_link_ids:
+            for joint_name, joint_id in self._joint_name_to_id.items():
+                if joint_id == foot_link_id:
+                    foot_names.append(joint_name)
+        return foot_names
 
     def _BuildUrdfIds(self):
         """Build the link Ids from its name in the URDF file.
