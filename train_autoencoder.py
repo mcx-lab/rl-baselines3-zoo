@@ -55,6 +55,42 @@ class VGGPerceptualLoss(torch.nn.Module):
         return loss
 
 
+class MSEnEdgeLoss(torch.nn.Module):
+    def __init__(self):
+        super(MSEnEdgeLoss, self).__init__()
+        self.sobel_filter = Sobel()
+
+    def forward(self, output, target):
+        mse_loss = torch.mean((output - target)**2)
+
+        output = output.reshape((-1, 1, *single_data_shape))
+        grad_output = self.sobel_filter(output)
+        target = target.reshape((-1, 1, *single_data_shape))
+        grad_target = self.sobel_filter(target)
+        edge_loss = torch.mean((grad_output - grad_target)**2)
+
+        return 0.5 * mse_loss + 0.5 * edge_loss
+
+
+class Sobel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.filter = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3, stride=1, padding=0, bias=False)
+
+        Gx = torch.tensor([[1.0, 0.0, -1.0], [2.0, 0.0, -2.0], [1.0, 0.0, -1.0]])
+        Gy = torch.tensor([[1.0, 2.0, 1.0], [0.0, 0.0, 0.0], [-1.0, -2.0, -1.0]])
+        G = torch.cat([Gx.unsqueeze(0), Gy.unsqueeze(0)], 0)
+        G = G.unsqueeze(1)
+        self.filter.weight = torch.nn.Parameter(G, requires_grad=False)
+
+    def forward(self, img):
+        x = self.filter(img)
+        x = torch.mul(x, x)
+        x = torch.sum(x, dim=1, keepdim=True)
+        x = torch.sqrt(x)
+        return x
+
+
 class LinearAE(torch.nn.Module):
     def __init__(self, input_size=140, code_size=32):
         super().__init__()
