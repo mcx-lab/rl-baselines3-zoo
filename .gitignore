@@ -1,3 +1,7 @@
+stats
+# wandb log files
+wandb
+
 __pycache__/
 logs
 .pytest_cache/

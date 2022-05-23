@@ -201,6 +201,21 @@ if __name__ == "__main__":  # noqa: C901
         default=False,
         help="Ensure that the run has a unique ID",
     )
+    parser.add_argument(
+        "-use-wandb",
+        "--use-wandb",
+        action="store_true",
+        default=False,
+        help="Additionally log results to WandB",
+    )
+    parser.add_argument(
+        "-run-name",
+        "--run-name",
+        type=str,
+        default=None,
+        help="Override run name in WandB logging",
+    )
+    parser.add_argument("--project-name", type=str, default=None, help="Set the project name in WandB logging")
     args = parser.parse_args()
 
     # Going through custom gym packages to let them register in the global registory

@@ -5,13 +5,7 @@ repos:
       - id: black
         language_version: python3.8
         args: ["blind_walking", --line-length=127]
-
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
-    hooks:
-      - id: flake8
-        args: ["--ignore=W503,W504,E203,E231,F841,F401,E402", "blind_walking"]
-
+        
   - repo: https://github.com/pycqa/isort
     rev: 5.5.2
     hooks:

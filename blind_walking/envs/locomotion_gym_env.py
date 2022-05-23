@@ -427,6 +427,10 @@ class LocomotionGymEnv(gym.Env):
             return self._task(self)
         return 0, {}
 
+    def get_observation(self):
+        """Public wrapper around _get_observation"""
+        return self._get_observation()
+
     def _get_observation(self):
         """Get observation of this environment from a list of sensors.
 

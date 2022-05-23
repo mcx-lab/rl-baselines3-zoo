@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+
 import torch as th
 
 """Utilities for building environments."""
@@ -21,43 +22,44 @@ from blind_walking.envs.env_modifiers import heightfield, stairs, train_course, 
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
+from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors, sensor_wrappers
+from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
-from blind_walking.envs.sensors import environment_sensors, robot_sensors, cpg_sensors
-from blind_walking.envs.tasks import forward_task, forward_task_pos, forward_task_imitation
 from blind_walking.robots import a1, laikago, robot_config
 from train_autoencoder import LinearAE
 
 
 # Load heightmap encoder
-model = LinearAE(input_size=12*16, code_size=32)
-model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
-model.load_state_dict(model_state)
-model.eval()
-_hm_encoder = model.encoder
-for param in _hm_encoder.parameters():
-    param.requires_grad = False
+def load_encoder():
+    model = LinearAE(input_size=12 * 16, code_size=32)
+    model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
+    model.load_state_dict(model_state)
+    model.eval()
+    _hm_encoder = model.encoder
+    for param in _hm_encoder.parameters():
+        param.requires_grad = False
+    return _hm_encoder
 
 
 def build_regular_env(
     robot_class,
-    motor_control_mode,
     enable_rendering=False,
     on_rack=False,
-    action_limit=(0.75, 0.75, 0.75),
-    wrap_trajectory_generator=True,
+    action_limit=(0.5, 0.5, 0.5),
     robot_sensor_list=None,
     env_sensor_list=None,
     env_randomizer_list=None,
     env_modifier_list=None,
     task=None,
-    obs_wrapper=None,
+    # CPG sensor kwargs
+    **kwargs,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
     sim_params.enable_rendering = enable_rendering
-    sim_params.motor_control_mode = motor_control_mode
+    sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
     sim_params.reset_time = 2
-    sim_params.num_action_repeat = 30
+    sim_params.num_action_repeat = 10
     sim_params.enable_action_interpolation = False
     sim_params.enable_action_filter = True
     sim_params.enable_clip_motor_commands = True
@@ -67,46 +69,36 @@ def build_regular_env(
 
     if robot_sensor_list is None:
         robot_sensor_list = [
-            robot_sensors.BaseVelocitySensor(convert_to_local_frame=True, exclude_z=True),
-            robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
-            robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-            robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+            sensor_wrappers.HistoricSensorWrapper(
+                robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
+            ),
+            sensor_wrappers.HistoricSensorWrapper(
+                robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
+            ),
+            cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.LastActionSensor(num_actions=a1.NUM_MOTORS),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.01),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.003),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),
                 transform=(0.10, 0),
                 ray_origin="head",
-                noisy_reading=True,
+                noisy_reading=False,
                 name="depthmiddle",
-                encoder=_hm_encoder,
-            ),
-            cpg_sensors.ReferenceGaitSensor(
-                gait_name="trot",
-                gait_frequency=3.0,
-                duty_factor=None,
-                randomize_duty_factor=False,
-                randomize_gait_frequency=False,
+                encoder=load_encoder(),
             ),
         ]
 
     if env_randomizer_list is None:
-        # env_randomizer_list = [ControllableEnvRandomizerFromConfig("train_params", step_sample_prob=0.004)]
         env_randomizer_list = []
 
     if env_modifier_list is None:
         env_modifier_list = [train_course.TrainStep()]
 
     if task is None:
-        task = forward_task_imitation.ForwardTask()
-
-    if obs_wrapper is None:
-        obs_wrapper = obs_array_wrapper.ObservationDictionaryToArrayWrapper
-        # obs_wrapper = obs_split_wrapper.ObservationDictionarySplitByEncoderWrapper
+        task = imitation_task.ImitationTask()
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
@@ -115,19 +107,12 @@ def build_regular_env(
         env_sensors=env_sensor_list,
         task=task,
         env_randomizers=env_randomizer_list,
-        env_modifiers=env_modifier_list,
     )
 
-    env = obs_wrapper(env)
-    if (motor_control_mode == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
-        if robot_class == laikago.Laikago:
-            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-                env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
-            )
-        elif robot_class == a1.A1:
-            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-                env,
-                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
-            )
+    env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
+    env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
+        env,
+        trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=action_limit),
+    )
+
     return env

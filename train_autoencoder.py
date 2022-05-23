@@ -3,13 +3,14 @@ import argparse
 import numpy as np
 import os
 import torch
+import torch.nn as nn
 import matplotlib.pyplot as plt
 from ray import tune
 import torchvision
 
 
 DATA_DIR = os.path.join(os.getcwd(), "./blind_walking/examples/data/heightmap.npy")
-single_data_shape = (16, 12) # x-axis 12, y-axis 16
+single_data_shape = (16, 12)  # x-axis 12, y-axis 16
 
 
 class VGGPerceptualLoss(torch.nn.Module):
