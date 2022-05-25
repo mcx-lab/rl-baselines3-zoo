@@ -134,9 +134,9 @@ class ImitationTask(object):
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": distance_reward * 1.0,
+            "distance": distance_reward * 2.0,
             "shake": shake_reward * 1.5,
-            "imitation": imitation_reward * 1.0,
+            "imitation": imitation_reward * 0.5,
         }
 
         reward = sum([o for o in weighted_objectives.values()])

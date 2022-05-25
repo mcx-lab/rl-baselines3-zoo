@@ -40,7 +40,7 @@ from scipy.signal import butter
 
 ACTION_FILTER_ORDER = 1
 ACTION_FILTER_LOW_CUT = 0.0
-ACTION_FILTER_HIGH_CUT = 4.0
+ACTION_FILTER_HIGH_CUT = 2.0
 
 
 class ActionFilter(object):
