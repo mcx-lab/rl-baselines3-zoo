@@ -99,3 +99,140 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         dx_local = np.cos(yaw) * dx + np.sin(yaw) * dy
         dy_local = -np.sin(yaw) * dx + np.cos(yaw) * dy
         return dx_local, dy_local
+
+
+class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
+    """A sensor that gets the depth from the robot to the ground"""
+
+    def __init__(
+        self,
+        noisy_reading: bool = True,
+        grid_unit: typing.Tuple[float] = (0.1, 0.1),
+        grid_size: typing.Tuple[int] = (10, 10),
+        transform: typing.Tuple[float] = (0, 0),
+        ray_origin: typing.Text = "body",
+        lower_bound: _FLOAT_OR_ARRAY = 0.0,
+        upper_bound: _FLOAT_OR_ARRAY = 8.0,
+        name: typing.Text = "LocalTerrainDepth",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+        encoder: typing.Type[typing.Any] = None,
+    ) -> None:
+        """Constructs LocalTerrainDepthSensor.
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          lower_bound: the lower bound of the terrain view.
+          upper_bound: the upper bound of the terrain view.
+          name: the name of the sensor.
+          dtype: data type of sensor value.
+          encoder: pretrained encoder which the raw observations pass through.
+        """
+        self._env = None
+        self._noisy_reading = noisy_reading
+        self.grid_unit = grid_unit
+        self.grid_size = grid_size
+        self.transform = transform
+        self.ray_origin = ray_origin
+        self.encoder = encoder
+
+        shape = (1, grid_size[0], grid_size[1]) if not encoder else (1, 32)
+        super(LocalTerrainDepthSensor, self).__init__(
+            name=name,
+            shape=shape,
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns the local distances to ground"""
+        heightmap = self._env.robot.GetLocalTerrainDepth(
+            grid_unit=self.grid_unit,
+            grid_size=self.grid_size,
+            transform=self.transform,
+            ray_origin=self.ray_origin,
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
+        # Add noise
+        if self._noisy_reading:
+            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+        # Clip readings
+        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
+        # Encode raw observations
+        if self.encoder:
+            heightmap = heightmap.reshape(-1, np.prod(self.grid_size))
+            return self.encoder(torch.Tensor(heightmap)).detach().numpy()
+        return heightmap
+
+
+class LocalTerrainDepthByAngleSensor(sensor.BoxSpaceSensor):
+    """A sensor that gets the depth from the robot to the ground"""
+
+    def __init__(
+        self,
+        noisy_reading: bool = True,
+        grid_angle: typing.Tuple[float] = (0.1, 0.1),
+        grid_size: typing.Tuple[int] = (10, 10),
+        transform_angle: typing.Tuple[float] = (0, 0),
+        ray_origin: typing.Text = "body",
+        lower_bound: _FLOAT_OR_ARRAY = 0.0,
+        upper_bound: _FLOAT_OR_ARRAY = 8.0,
+        name: typing.Text = "LocalTerrainDepthByAngle",
+        enc_name: typing.Text = "flatten",
+        dtype: typing.Type[typing.Any] = np.float64,
+    ) -> None:
+        """Constructs LocalTerrainDepthByAngleSensor.
+        Args:
+          grid_unit: Side length of one square in the grid
+          grid_size: Number of squares along one side of grid
+          lower_bound: the lower bound of the terrain view.
+          upper_bound: the upper bound of the terrain view.
+          name: the name of the sensor.
+          dtype: data type of sensor value.
+        """
+        self._env = None
+        self._noisy_reading = noisy_reading
+        self.grid_angle = grid_angle
+        self.grid_size = grid_size
+        self.transform_angle = transform_angle
+        self.ray_origin = ray_origin
+
+        shape = (1, grid_size[0], grid_size[1])
+        super(LocalTerrainDepthByAngleSensor, self).__init__(
+            name=name,
+            shape=shape,
+            enc_name=enc_name,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def on_reset(self, env):
+        """From the callback, the sensor remembers the environment.
+        Args:
+          env: the environment who invokes this callback function.
+        """
+        self._env = env
+
+    def _get_observation(self) -> _ARRAY:
+        """Returns the local distances to ground"""
+        heightmap = self._env.robot.GetLocalTerrainDepthByAngle(
+            grid_angle=self.grid_angle,
+            grid_size=self.grid_size,
+            transform_angle=self.transform_angle,
+            ray_origin=self.ray_origin,
+        ).reshape(1, self.grid_size[0], self.grid_size[1])
+        # Add noise
+        if self._noisy_reading:
+            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+        # Clip readings
+        heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
+        return heightmap

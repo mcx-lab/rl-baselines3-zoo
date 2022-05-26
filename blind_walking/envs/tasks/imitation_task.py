@@ -78,7 +78,7 @@ class ImitationTask(object):
         self._actual_displacement = np.array([dx_local, dy_local])
 
         # Assume gait sensor is last sensor
-        ref_gait_sensor = env.all_sensors()[-1]
+        ref_gait_sensor = env.all_sensors()[-3]
         self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
         t = env.env_time_step
         self._actual_foot_contacts = (t - 2 * self.feet_air_time) / t
@@ -115,9 +115,8 @@ class ImitationTask(object):
     def _calc_reward_imitation(self):
         feet_ground_time = (self._env.env_time_step - self.feet_air_time) / self._env.env_time_step
         ref_foot_contact_imitation_reward = np.dot(feet_ground_time, self._reference_foot_contacts)
-        # Rescale from [-4,4] to [0,4]
-        ref_foot_contact_imitation_reward += 4
-        ref_foot_contact_imitation_reward /= 2
+        # Rescale from [-4,4] to [-1,1]
+        ref_foot_contact_imitation_reward /= 4
         return ref_foot_contact_imitation_reward
 
     def reward(self, env):
@@ -135,10 +134,10 @@ class ImitationTask(object):
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
-            "distance": distance_reward * 3.0,
+            "distance": distance_reward * 1.0,
             "shake": shake_reward * 1.5,
             "energy": energy_reward * 0.0001,
-            "imitation": imitation_reward * 0.5,
+            "imitation": imitation_reward * 2.0,
         }
 
         reward = sum([o for o in weighted_objectives.values()])

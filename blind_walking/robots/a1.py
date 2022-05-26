@@ -466,7 +466,7 @@ class A1(minitaur.Minitaur):
         # # For visualising rays
         # if not hasattr(self, "ball_ids"):
         #     self.ball_ids = []
-        # if len(self.ball_ids) > 200:
+        # if len(self.ball_ids) > 190:
         #     for i in self.ball_ids:
         #         self._pybullet_client.removeBody(i)
         #     self.ball_ids = []
@@ -526,15 +526,16 @@ class A1(minitaur.Minitaur):
             else:
                 hit_position = info[3]
             hit_coordinates.append(hit_position)
-        depth_distances = np.subtract(origin_coords, hit_coordinates)
-        depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        # depth_distances = np.subtract(origin_coords, hit_coordinates)
+        # depth_view = [np.linalg.norm(d, 2) for d in depth_distances]
+        depth_view = np.array(origin_coords)[:, 2] - np.array(hit_coordinates)[:, 2]
         depth_view = np.array(depth_view).reshape(grid_size)
 
         # # For visualising rays
         # ballid = draw_debug_sphere(self._pybullet_client, origin_world, [0, 0, 1, 1])
         # self.ball_ids.append(ballid)
         # for coord in hit_coordinates:
-        #     ballid = draw_debug_sphere(self._pybullet_client, coord, [1, 0, 0, 1])
+        #     ballid = draw_debug_sphere(self._pybullet_client, coord, [0, 1, 0, 1])
         #     self.ball_ids.append(ballid)
 
         return depth_view

@@ -6,10 +6,54 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 from ray import tune
+import torchvision
 
 
 DATA_DIR = os.path.join(os.getcwd(), "./blind_walking/examples/data/heightmap.npy")
 single_data_shape = (16, 12)  # x-axis 12, y-axis 16
+
+
+class VGGPerceptualLoss(torch.nn.Module):
+    def __init__(self, resize=True):
+        super(VGGPerceptualLoss, self).__init__()
+        blocks = []
+        blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
+        blocks.append(torchvision.models.vgg16(pretrained=True).features[4:9].eval())
+        blocks.append(torchvision.models.vgg16(pretrained=True).features[9:16].eval())
+        blocks.append(torchvision.models.vgg16(pretrained=True).features[16:23].eval())
+        for bl in blocks:
+            for p in bl.parameters():
+                p.requires_grad = False
+        self.blocks = torch.nn.ModuleList(blocks)
+        self.transform = torch.nn.functional.interpolate
+        self.resize = resize
+        self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
+        self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
+
+    def forward(self, input, target, feature_layers=[0, 1, 2, 3], style_layers=[]):
+        if input.shape[1] != 3:
+            input = input.repeat(1, 3, 1, 1)
+            target = target.repeat(1, 3, 1, 1)
+        input = (input-self.mean) / self.std
+        target = (target-self.mean) / self.std
+        if self.resize:
+            input = self.transform(input, mode='bilinear', size=(224, 224), align_corners=False)
+            target = self.transform(target, mode='bilinear', size=(224, 224), align_corners=False)
+        loss = 0.0
+        x = input
+        y = target
+        for i, block in enumerate(self.blocks):
+            x = block(x)
+            y = block(y)
+            if i in feature_layers:
+                loss += torch.nn.functional.l1_loss(x, y)
+            if i in style_layers:
+                act_x = x.reshape(x.shape[0], x.shape[1], -1)
+                act_y = y.reshape(y.shape[0], y.shape[1], -1)
+                gram_x = act_x @ act_x.permute(0, 2, 1)
+                gram_y = act_y @ act_y.permute(0, 2, 1)
+                loss += torch.nn.functional.l1_loss(gram_x, gram_y)
+        return loss
 
 
 class LinearAE(torch.nn.Module):
@@ -35,6 +79,49 @@ class LinearAE(torch.nn.Module):
         return decoded
 
 
+class ConvAE(torch.nn.Module):
+    def __init__(self, code_size=32):
+        super().__init__()
+        # encoder
+        self.encoder = torch.nn.Sequential(
+            torch.nn.Conv2d(1, 8, 3, stride=2 ,padding=1),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(8, 16, 3, stride=1, padding=0),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(16, 32, 3, stride=1, padding=0),
+            torch.nn.ReLU(),
+
+            torch.nn.Flatten(start_dim=1),
+
+            torch.nn.Linear(2 * 4 * 32, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, code_size),
+        )
+        # decoder
+        self.decoder = torch.nn.Sequential(
+            torch.nn.Linear(code_size, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, 2 * 4 * 32),
+            torch.nn.ReLU(),
+
+            torch.nn.Unflatten(dim=1, unflattened_size=(32, 4, 2)),
+
+            torch.nn.ConvTranspose2d(32, 16, 3, stride=1, output_padding=0),
+            torch.nn.BatchNorm2d(16),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(16, 8, 3, stride=1, output_padding=0),
+            torch.nn.BatchNorm2d(8),
+            torch.nn.ReLU(),
+            torch.nn.ConvTranspose2d(8, 1, 3, stride=2, padding=1, output_padding=1),
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+
+
 def load_data():
     # load dataset
     dataset_np = np.load(DATA_DIR)
@@ -45,6 +132,9 @@ def load_data():
     np.random.seed(12)
     np.random.shuffle(dataset_np)
 
+    # # offset dataset for more enriching features
+    # dataset_np = -(dataset_np - dataset_np.max(axis=1)[:, None])
+
     # split into train, test, validation sets
     train_size = int(0.8 * len(dataset_np))
     val_size = int(0.1 * len(dataset_np))
@@ -52,15 +142,23 @@ def load_data():
     val_dataset_np = dataset_np[train_size : train_size + val_size, :]
     test_dataset_np = dataset_np[train_size + val_size :, :]
 
+    # add noise to dataset
+    # train_dataset_noisy_np = train_dataset_np + np.random.normal(0, 0.01, train_dataset_np.shape)
+    # val_dataset_noisy_np = val_dataset_np + np.random.normal(0, 0.01, val_dataset_np.shape)
+    # test_dataset_noisy_np = test_dataset_np + np.random.normal(0, 0.01, test_dataset_np.shape)
+    train_dataset_noisy_np = train_dataset_np
+    val_dataset_noisy_np = val_dataset_np
+    test_dataset_noisy_np = test_dataset_np
+
     # make tensor dataset
-    train_dataset = torch.utils.data.TensorDataset(torch.Tensor(train_dataset_np))
-    val_dataset = torch.utils.data.TensorDataset(torch.Tensor(val_dataset_np))
-    test_dataset = torch.utils.data.TensorDataset(torch.Tensor(test_dataset_np))
+    train_dataset = torch.utils.data.TensorDataset(torch.Tensor(train_dataset_np), torch.Tensor(train_dataset_noisy_np))
+    val_dataset = torch.utils.data.TensorDataset(torch.Tensor(val_dataset_np), torch.Tensor(val_dataset_noisy_np))
+    test_dataset = torch.utils.data.TensorDataset(torch.Tensor(test_dataset_np), torch.Tensor(test_dataset_noisy_np))
 
     return (train_dataset, val_dataset, test_dataset), (single_data_size, single_data_shape)
 
 
-def train_model(config, checkpoint_dir=None, tune=True):
+def train_model(config, checkpoint_dir=None, tobetune=True, model_type="linear"):
     # load datasets
     dataset_and_info = load_data()
     train_dataset, val_dataset, _ = dataset_and_info[0]
@@ -78,7 +176,10 @@ def train_model(config, checkpoint_dir=None, tune=True):
     )
 
     # model initialisation
-    model = LinearAE(input_size=single_data_size, code_size=config["code_size"])
+    if model_type == "linear":
+        model = LinearAE(input_size=single_data_size, code_size=config["code_size"])
+    elif model_type == "conv":
+        model = ConvAE(code_size=config["code_size"])
     # use gpu if available
     device = "cpu"
     if torch.cuda.is_available():
@@ -97,18 +198,23 @@ def train_model(config, checkpoint_dir=None, tune=True):
 
     min_val_loss = 100  # artbitrary high number
     val_grace = 4  # number of grace times for training to continue
-    epochs = 10000
+    epochs = 100000
     for epoch in range(epochs):
         train_loss = 0
-        for batch_data in train_loader:
+        for (batch_data_truth, batch_data) in train_loader:
             # load mini-batch data to the active device
-            batch_data = batch_data[0].view(-1, single_data_size).to(device)
+            if model_type == "linear":
+                batch_data = batch_data.view(-1, single_data_size).to(device)
+                batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+            elif model_type == "conv":
+                batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
             # reset the gradients back to zero
             optimizer.zero_grad()
             # compute reconstructions
             outputs = model(batch_data)
             # compute loss
-            loss = loss_function(outputs, batch_data)
+            loss = loss_function(outputs, batch_data_truth)
             # compute accumulated gradients
             loss.backward()
             # perform parameter update based on current gradients
@@ -118,16 +224,21 @@ def train_model(config, checkpoint_dir=None, tune=True):
 
         # compute and display the epoch training loss
         train_loss = train_loss / len(train_loader)
-        if not tune and epoch % 100 == 0:
-            print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, train_loss))
+        if not tobetune and epoch % 100 == 0:
+            print("epoch : {}/{}, loss = {:.6f}, min val loss = {:.6f}".format(epoch + 1, epochs, train_loss, min_val_loss))
 
         # validation
         val_loss = 0
-        for batch_data in val_loader:
+        for (batch_data_truth, batch_data) in val_loader:
             with torch.no_grad():
-                batch_data = batch_data[0].view(-1, single_data_size).to(device)
+                if model_type == "linear":
+                    batch_data = batch_data.view(-1, single_data_size).to(device)
+                    batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+                elif model_type == "conv":
+                    batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                    batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
                 outputs = model(batch_data)
-                loss = loss_function(outputs, batch_data)
+                loss = loss_function(outputs, batch_data_truth)
                 val_loss += loss.item()
         val_loss = val_loss / len(val_loader)
         # early stopping
@@ -138,13 +249,13 @@ def train_model(config, checkpoint_dir=None, tune=True):
         min_val_loss = min(val_loss, min_val_loss)
 
         # report to ray tune
-        if tune:
+        if tobetune:
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
                 path = os.path.join(checkpoint_dir, "checkpoint")
                 torch.save((model.state_dict(), optimizer.state_dict()), path)
             tune.report(loss=val_loss)
 
-    if not tune:
+    if not tobetune:
         # save pytorch model
         torch.save(
             (model.state_dict(), optimizer.state_dict()),
@@ -153,7 +264,7 @@ def train_model(config, checkpoint_dir=None, tune=True):
     print("Finished Training")
 
 
-def test_model(model, device="cpu"):
+def test_model(model, device="cpu", model_type="linear"):
     # load datasets
     dataset_and_info = load_data()
     _, _, test_dataset = dataset_and_info[0]
@@ -168,21 +279,32 @@ def test_model(model, device="cpu"):
     loss_function = torch.nn.MSELoss()
     # test
     test_loss = 0
-    for batch_data in test_loader:
+    for (batch_data_truth, batch_data) in test_loader:
         with torch.no_grad():
-            batch_data = batch_data[0].view(-1, single_data_size).to(device)
+            if model_type == "linear":
+                batch_data = batch_data.view(-1, single_data_size).to(device)
+                batch_data_truth = batch_data_truth.view(-1, single_data_size).to(device)
+            elif model_type == "conv":
+                batch_data = batch_data.view(-1, 1, *single_data_shape).to(device)
+                batch_data_truth = batch_data_truth.view(-1, 1, *single_data_shape).to(device)
             outputs = model(batch_data)
-            loss = loss_function(outputs, batch_data)
+            loss = loss_function(outputs, batch_data_truth)
             test_loss += loss.item()
     # render some test images
     n_test_render = 5
-    test_images = test_dataset[:n_test_render][0]
-    recon_images = model(test_images.reshape(-1, single_data_size).to(device))
+    test_images_truth, test_images = test_dataset.tensors[:]
+    test_images_truth = test_images_truth[:n_test_render]
+    test_images = test_images[:n_test_render]
+    if model_type == "linear":
+        recon_images = model(test_images.reshape(-1, single_data_size).to(device))
+    elif model_type == "conv":
+        recon_images = model(test_images.reshape(-1, 1, *single_data_shape).to(device))
     recon_images = recon_images.detach().cpu().numpy()
-    fig, axes = plt.subplots(n_test_render, 2, figsize=(6, 6))
+    fig, axes = plt.subplots(n_test_render, 3, figsize=(6, 6))
     for i, test_image in enumerate(test_images):
-        axes[i, 0].imshow(test_image.reshape(*single_data_shape))
-        axes[i, 1].imshow(recon_images[i].reshape(*single_data_shape))
+        axes[i, 0].imshow(test_images_truth[i].reshape(*single_data_shape), vmin=0.1, vmax=0.6)
+        axes[i, 1].imshow(test_image.reshape(*single_data_shape), vmin=0.1, vmax=0.6)
+        axes[i, 2].imshow(recon_images[i].reshape(*single_data_shape), vmin=0.1, vmax=0.6)
     plt.savefig("./autoenc_results/test_images.png")
     plt.close()
     # return loss
@@ -242,11 +364,11 @@ def single_train_run():
     }
 
     """ Train """
-    train_model(config, tune=False)
+    train_model(config, tobetune=False, model_type="linear")
 
     """ Test """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = LinearAE(input_size=np.prod(single_data_shape), code_size=config["code_size"]).to(device)
+    model = LinearAE(code_size=config["code_size"], input_size=np.prod(single_data_shape)).to(device)
     # load trained model
     model_state, optimizer_state = torch.load(
         f"./autoenc_results/model_bs{config['batch_size']}_cs{config['code_size']}_lr{config['lr']}"
@@ -254,7 +376,7 @@ def single_train_run():
     model.load_state_dict(model_state)
     model.eval()
     # test model
-    test_loss = test_model(model, device)
+    test_loss = test_model(model, device, model_type="linear")
     print("test loss = {:.6f}".format(test_loss))
 
 

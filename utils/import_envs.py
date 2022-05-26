@@ -52,10 +52,3 @@ register(
     max_episode_steps=1000,
     reward_threshold=1000.0,
 )
-
-register(
-    env_id="A1BlindWalkingBulletEnv-v0",
-    entry_point="blind_walking.envs.gym_envs:A1BlindWalkingBulletEnv",
-    max_episode_steps=2000,
-    reward_threshold=2000.0,
-)

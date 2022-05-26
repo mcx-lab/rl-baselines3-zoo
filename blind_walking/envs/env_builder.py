@@ -18,7 +18,7 @@ import torch as th
 
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs, train_course
+from blind_walking.envs.env_modifiers import heightfield, stairs, train_course, collapsibletile
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
@@ -59,7 +59,7 @@ def build_regular_env(
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
     sim_params.reset_time = 2
-    sim_params.num_action_repeat = 10
+    sim_params.num_action_repeat = 25
     sim_params.enable_action_interpolation = False
     sim_params.enable_action_filter = True
     sim_params.enable_clip_motor_commands = True
@@ -72,17 +72,30 @@ def build_regular_env(
             sensor_wrappers.HistoricSensorWrapper(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),
-            sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.02),
+            sensor_wrappers.HistoricSensorWrapper(
+                robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
+            ),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
+        ]
+    if env_sensor_list is None:
+        env_sensor_list = [
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.0075),
+            environment_sensors.LocalTerrainDepthSensor(
+                grid_size=(12, 16),
+                grid_unit=(0.03, 0.03),
+                transform=(0.10, 0),
+                ray_origin="head",
+                noisy_reading=False,
+                name="depthmiddle",
+                encoder=load_encoder(),
+            ),
         ]
 
     if env_randomizer_list is None:
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        # env_modifier_list = [train_course.TrainStep()]
-        env_modifier_list = []
+        env_modifier_list = [train_course.TrainStep()]
 
     if task is None:
         task = imitation_task.ImitationTask()
@@ -94,6 +107,7 @@ def build_regular_env(
         env_sensors=env_sensor_list,
         task=task,
         env_randomizers=env_randomizer_list,
+        env_modifiers=env_modifier_list,
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
