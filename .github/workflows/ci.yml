@@ -32,7 +32,7 @@ jobs:
         sudo apt install --no-install-recommends -y ffmpeg
         python -m pip install --upgrade pip
         # cpu version of pytorch - faster to download
-        pip install torch==1.9.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch==1.9.0+cpu torchvision==0.10.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
         # temp fix: use pybullet 3.0.8 (issue with numpy for 3.0.9)
         pip install pybullet==3.0.8
         pip install -e .[dev]
@@ -48,6 +48,6 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 --ignore=W503,W504,E203,E231,F841,F401,E402 blind_walking 
-    - name: Test with pytest
-      run: |
-        python -m pytest tests
+#     - name: Test with pytest
+#       run: |
+#         python -m pytest tests

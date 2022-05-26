@@ -38,7 +38,9 @@ class MultipleTerrain(EnvModifier):
         self.sec_stair_length = (self.sec_num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
         self.sec_trip_half_run = 0.03
         self.sec_trip_num_steps = 1
-        self.sec_trip_stair_length = (self.sec_trip_num_steps - 1) * self.sec_trip_half_run * 2 * 2 * 2 + self.sec_trip_half_run * 2 * 2
+        self.sec_trip_stair_length = (
+            self.sec_trip_num_steps - 1
+        ) * self.sec_trip_half_run * 2 * 2 * 2 + self.sec_trip_half_run * 2 * 2
         # Heightfield parameters
         self.hf_length = 18
 
@@ -54,22 +56,70 @@ class MultipleTerrain(EnvModifier):
         # Random boxes
         self.boxes_rise_levels = [0.03, 0.05, 0.07, 0.09, 0.10]
         self.boxes_pos_y = [
-            -0.08, -0.14, 0.04, 0.14, 0.08,
-            0.10, 0.06, 0.0, -0.06, -0.10,
-            -0.04, -0.08, 0.08, 0.0, 0.04,
-            0.12, 0.06, -0.18, -0.06, -0.12,
+            -0.08,
+            -0.14,
+            0.04,
+            0.14,
+            0.08,
+            0.10,
+            0.06,
+            0.0,
+            -0.06,
+            -0.10,
+            -0.04,
+            -0.08,
+            0.08,
+            0.0,
+            0.04,
+            0.12,
+            0.06,
+            -0.18,
+            -0.06,
+            -0.12,
         ]
         self.boxes_half_width = [
-            0.03, 0.04, 0.05, 0.06, 0.07,
-            0.04, 0.05, 0.06, 0.07, 0.03,
-            0.05, 0.06, 0.07, 0.03, 0.04,
-            0.06, 0.07, 0.03, 0.04, 0.05,
+            0.03,
+            0.04,
+            0.05,
+            0.06,
+            0.07,
+            0.04,
+            0.05,
+            0.06,
+            0.07,
+            0.03,
+            0.05,
+            0.06,
+            0.07,
+            0.03,
+            0.04,
+            0.06,
+            0.07,
+            0.03,
+            0.04,
+            0.05,
         ]
         self.boxes_half_length = [
-            0.025, 0.02, 0.035, 0.03, 0.015,
-            0.015, 0.015, 0.02, 0.035, 0.03,
-            0.03, 0.015, 0.025, 0.02, 0.035,
-            0.035, 0.03, 0.015, 0.025, 0.02,
+            0.025,
+            0.02,
+            0.035,
+            0.03,
+            0.015,
+            0.015,
+            0.015,
+            0.02,
+            0.035,
+            0.03,
+            0.03,
+            0.015,
+            0.025,
+            0.02,
+            0.035,
+            0.035,
+            0.03,
+            0.015,
+            0.025,
+            0.02,
         ]
         self.box_gap = 0.5
         self.boxes = [Stairs() for _ in range(30)]
@@ -79,7 +129,10 @@ class MultipleTerrain(EnvModifier):
         start_x = self.stair_gap
         for i in range(len(self.step_rise_levels)):
             self.sec_trip_stairs[i]._generate(
-                env, start_x=start_x, num_steps=self.sec_trip_num_steps, step_rise=self.step_rise_levels[i],
+                env,
+                start_x=start_x,
+                num_steps=self.sec_trip_num_steps,
+                step_rise=self.step_rise_levels[i],
                 boxHalfLength=self.sec_trip_half_run,
             )
             start_x += self.sec_trip_stair_length + self.stair_gap
@@ -95,7 +148,9 @@ class MultipleTerrain(EnvModifier):
         # Generate boxes
         for i in range(len(self.boxes)):
             self.boxes[i]._generate(
-                env, start_x=start_x, num_steps=1,
+                env,
+                start_x=start_x,
+                num_steps=1,
                 step_rise=self.boxes_rise_levels[i % len(self.boxes_rise_levels)],
                 boxHalfLength=self.boxes_half_length[i % len(self.boxes_half_length)],
                 boxHalfWidth=self.boxes_half_width[i % len(self.boxes_half_width)],

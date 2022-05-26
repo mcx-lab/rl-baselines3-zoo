@@ -72,9 +72,7 @@ def build_regular_env(
             sensor_wrappers.HistoricSensorWrapper(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),
-            sensor_wrappers.HistoricSensorWrapper(
-                robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
-            ),
+            sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
     if env_sensor_list is None:
