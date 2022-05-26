@@ -69,15 +69,12 @@ def build_regular_env(
 
     if robot_sensor_list is None:
         robot_sensor_list = [
-            # sensor_wrappers.HistoricSensorWrapper(
-            #     robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
-            # ),
-            # sensor_wrappers.HistoricSensorWrapper(
-            #     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
-            # ),
-            robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
-            robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-            robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+            sensor_wrappers.HistoricSensorWrapper(
+                robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
+            ),
+            sensor_wrappers.HistoricSensorWrapper(
+                robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
+            ),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
     if env_sensor_list is None:
