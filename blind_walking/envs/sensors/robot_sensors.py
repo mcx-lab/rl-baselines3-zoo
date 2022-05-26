@@ -191,3 +191,42 @@ class IMUSensor(sensor.BoxSpaceSensor):
             if channel == "dY":
                 observations[i] = drpy[2]
         return observations
+
+
+class MotorVelocitySensor(sensor.BoxSpaceSensor):
+    """A sensor that reads motor velocities from the robot."""
+
+    def __init__(
+        self,
+        num_motors: int,
+        noisy_reading: bool = True,
+        lower_bound: _FLOAT_OR_ARRAY = -10,
+        upper_bound: _FLOAT_OR_ARRAY = 10,
+        name: typing.Text = "MotorVelocity",
+        dtype: typing.Type[typing.Any] = np.float64,
+    ) -> None:
+        """Constructs MotorVelocitySensor.
+        Args:
+          num_motors: the number of motors in the robot
+          noisy_reading: whether values are true observations
+          lower_bound: the lower bound of the motor velocity
+          upper_bound: the upper bound of the motor velocity
+          name: the name of the sensor
+          dtype: data type of sensor value
+        """
+        self._num_motors = num_motors
+        self._noisy_reading = noisy_reading
+        super(MotorVelocitySensor, self).__init__(
+            name=name,
+            shape=(self._num_motors,),
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+    def _get_observation(self) -> _ARRAY:
+        if self._noisy_reading:
+            motor_velocities = self._robot.GetMotorVelocities()
+        else:
+            motor_velocities = self._robot.GetTrueMotorVelocities()
+        return motor_velocities

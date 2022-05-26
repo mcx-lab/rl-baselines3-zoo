@@ -70,7 +70,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             beta=DEFAULT_DUTY_FACTOR,
             gamma=50.0,
             period=1 / DEFAULT_GAIT_FREQUENCY,
-            dt=0.010,  # 0.03 seconds = 0.001 sim_time_step * 30 action_repeat
+            dt=0.025,  # 0.025 seconds = 0.001 sim_time_step * 25 action_repeat
         )
 
         self._gait_names = gait_names

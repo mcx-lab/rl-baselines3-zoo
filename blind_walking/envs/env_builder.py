@@ -59,7 +59,7 @@ def build_regular_env(
     sim_params.enable_rendering = enable_rendering
     sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
     sim_params.reset_time = 2
-    sim_params.num_action_repeat = 10
+    sim_params.num_action_repeat = 25
     sim_params.enable_action_interpolation = False
     sim_params.enable_action_filter = True
     sim_params.enable_clip_motor_commands = True
@@ -69,17 +69,20 @@ def build_regular_env(
 
     if robot_sensor_list is None:
         robot_sensor_list = [
-            sensor_wrappers.HistoricSensorWrapper(
-                robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
-            ),
-            sensor_wrappers.HistoricSensorWrapper(
-                robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
-            ),
+            # sensor_wrappers.HistoricSensorWrapper(
+            #     robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
+            # ),
+            # sensor_wrappers.HistoricSensorWrapper(
+            #     robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3
+            # ),
+            robot_sensors.IMUSensor(channels=["R", "P", "Y", "dR", "dP", "dY"]),
+            robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+            robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
             cpg_sensors.ReferenceGaitSensor(**kwargs),
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.003),
+            environment_sensors.ForwardTargetPositionSensor(max_distance=0.0075),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),
@@ -107,6 +110,7 @@ def build_regular_env(
         env_sensors=env_sensor_list,
         task=task,
         env_randomizers=env_randomizer_list,
+        env_modifiers=env_modifier_list,
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
