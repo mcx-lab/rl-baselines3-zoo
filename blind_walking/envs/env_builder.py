@@ -69,6 +69,7 @@ def build_regular_env(
 
     if robot_sensor_list is None:
         robot_sensor_list = [
+            robot_sensors.BaseVelocitySensor(convert_to_local_frame=True),
             sensor_wrappers.HistoricSensorWrapper(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),

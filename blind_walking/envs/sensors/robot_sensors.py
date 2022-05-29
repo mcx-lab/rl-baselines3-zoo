@@ -230,3 +230,70 @@ class MotorVelocitySensor(sensor.BoxSpaceSensor):
         else:
             motor_velocities = self._robot.GetTrueMotorVelocities()
         return motor_velocities
+
+
+class BaseVelocitySensor(sensor.BoxSpaceSensor):
+    """A sensor that reads the robot's base velocity."""
+
+    def __init__(
+        self,
+        lower_bound: _FLOAT_OR_ARRAY = -100,
+        upper_bound: _FLOAT_OR_ARRAY = 100,
+        convert_to_local_frame: bool = False,
+        exclude_z: bool = False,
+        name: typing.Text = "BaseVelocity",
+        dtype: typing.Type[typing.Any] = float,
+    ) -> None:
+        """Constructs BaseVelocitySensor.
+        Args:
+          lower_bound: the lower bound of the motor velocity
+          upper_bound: the upper bound of the motor velocity
+          convert_to_local_frame: whether to project dx, dy to local frame based on
+            robot's current yaw angle. (Note that it's a projection onto 2D plane,
+            and the roll, pitch of the robot is not considered.)
+          name: the name of the sensor
+          dtype: data type of sensor value
+        """
+        size = 2 if exclude_z else 3
+        super(BaseVelocitySensor, self).__init__(
+            name=name,
+            shape=(size,),
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            dtype=dtype,
+        )
+
+        self._convert_to_local_frame = convert_to_local_frame
+        self._exclude_z = exclude_z
+
+        self._last_yaw = 0
+        self._last_base_velocity = np.zeros(3)
+        self._current_yaw = 0
+        self._current_base_velocity = np.zeros(3)
+
+    def _get_observation(self) -> _ARRAY:
+        vx, vy, vz = self._current_base_velocity
+        if self._convert_to_local_frame:
+            vx_local = np.cos(self._last_yaw) * vx + np.sin(self._last_yaw) * vy
+            vy_local = -np.sin(self._last_yaw) * vx + np.cos(self._last_yaw) * vy
+            if self._exclude_z:
+                return np.array([vx_local, vy_local])
+            return np.array([vx_local, vy_local, vz])
+
+        if self._exclude_z:
+            return np.array([vx, vy])
+        return np.array([vx, vy, vz])
+
+    def on_reset(self, env):
+        """See base class."""
+        self._current_base_velocity = np.array(self._robot.GetBaseVelocity())
+        self._last_base_velocity = np.array(self._robot.GetBaseVelocity())
+        self._current_yaw = self._robot.GetBaseRollPitchYaw()[2]
+        self._last_yaw = self._robot.GetBaseRollPitchYaw()[2]
+
+    def on_step(self, env):
+        """See base class."""
+        self._last_base_velocity = self._current_base_velocity
+        self._current_base_velocity = np.array(self._robot.GetBaseVelocity())
+        self._last_yaw = self._current_yaw
+        self._current_yaw = self._robot.GetBaseRollPitchYaw()[2]
