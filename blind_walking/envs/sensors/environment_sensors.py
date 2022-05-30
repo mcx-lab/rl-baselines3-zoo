@@ -32,7 +32,8 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
 
     def __init__(
         self,
-        max_distance: float = 0.022,
+        max_range: float = 0.01,
+        min_range: float = 0.01,
         lower_bound: _FLOAT_OR_ARRAY = -1.0,
         upper_bound: _FLOAT_OR_ARRAY = 1.0,
         name: typing.Text = "TargetPosition",
@@ -57,7 +58,9 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
             dtype=dtype,
         )
 
-        self._max_distance = max_distance
+        self._max_range = max_range
+        self._min_range = min_range
+        self._max_distance = self._max_range
 
         self._last_base_pos = np.zeros(3)
         self._current_base_pos = np.zeros(3)
@@ -81,6 +84,8 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._last_base_pos = self._current_base_pos
         self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
         self._last_yaw = self._current_yaw
+
+        self._max_distance = np.random.uniform(self._max_range, self._min_range)
 
     def _get_observation(self) -> _ARRAY:
         # target y position is always zero

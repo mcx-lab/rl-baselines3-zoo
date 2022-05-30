@@ -78,7 +78,7 @@ def build_regular_env(
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(max_distance=0.0075),
+            environment_sensors.ForwardTargetPositionSensor(max_range=0.0075, min_range=0.0075),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),
