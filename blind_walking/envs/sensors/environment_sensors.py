@@ -26,6 +26,8 @@ _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
 _DATATYPE_LIST = typing.Iterable[typing.Any]  # pylint:disable=invalid-name
 
+maxdist_schedule = lambda t : 0.02 if t < 300 else 0.01
+
 
 class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
     """A sensor that reports the relative target position."""
@@ -68,6 +70,8 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._current_yaw = 0
 
     def on_step(self, env):
+        # self._max_distance = maxdist_schedule(env.env_step_counter)
+
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_yaw = self._current_yaw
@@ -85,7 +89,15 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
         self._last_yaw = self._current_yaw
 
-        self._max_distance = np.random.uniform(self._max_range, self._min_range)
+        # random sampling of target distance from range
+        self._max_distance = np.random.uniform(self._min_range, self._max_range)
+
+        # # target distance is proportional to gait frequency
+        # ref_gait_sensor = env.all_sensors()[-3]
+        # min_freq, max_freq = ref_gait_sensor._gait_frequency_range
+        # tgt_freq = 1 / ref_gait_sensor.get_period()
+        # self._max_distance = self._min_range + \
+        #     ((tgt_freq - min_freq) / (max_freq - min_freq)) * (self._max_range - self._min_range)
 
     def _get_observation(self) -> _ARRAY:
         # target y position is always zero
