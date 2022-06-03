@@ -92,7 +92,16 @@ def build_regular_env(
                 transform=(0.10, 0),
                 ray_origin="head",
                 noisy_reading=False,
-                name="depthmiddle",
+                name="depth",
+                encoder=load_encoder(),
+            ),
+            environment_sensors.LocalTerrainDepthSensor(
+                grid_size=(12, 16),
+                grid_unit=(0.03, 0.03),
+                transform=(-0.10, 0),
+                ray_origin="body",
+                noisy_reading=False,
+                name="depthrear",
                 encoder=load_encoder(),
             ),
         ]

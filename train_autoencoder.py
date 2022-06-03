@@ -133,7 +133,7 @@ def load_data():
     np.random.shuffle(dataset_np)
 
     # # offset dataset for more enriching features
-    # dataset_np = -(dataset_np - dataset_np.max(axis=1)[:, None])
+    dataset_np = -(dataset_np - dataset_np.max(axis=1)[:, None])
 
     # split into train, test, validation sets
     train_size = int(0.8 * len(dataset_np))
@@ -302,9 +302,9 @@ def test_model(model, device="cpu", model_type="linear"):
     recon_images = recon_images.detach().cpu().numpy()
     fig, axes = plt.subplots(n_test_render, 3, figsize=(6, 6))
     for i, test_image in enumerate(test_images):
-        axes[i, 0].imshow(test_images_truth[i].reshape(*single_data_shape), vmin=0.1, vmax=0.6)
-        axes[i, 1].imshow(test_image.reshape(*single_data_shape), vmin=0.1, vmax=0.6)
-        axes[i, 2].imshow(recon_images[i].reshape(*single_data_shape), vmin=0.1, vmax=0.6)
+        axes[i, 0].imshow(test_images_truth[i].reshape(*single_data_shape), vmin=0.0, vmax=0.3)
+        axes[i, 1].imshow(test_image.reshape(*single_data_shape), vmin=0.0, vmax=0.3)
+        axes[i, 2].imshow(recon_images[i].reshape(*single_data_shape), vmin=0.0, vmax=0.3)
     plt.savefig("./autoenc_results/test_images.png")
     plt.close()
     # return loss

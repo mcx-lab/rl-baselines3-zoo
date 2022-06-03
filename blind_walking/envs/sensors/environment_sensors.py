@@ -186,6 +186,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         # Encode raw observations
         if self.encoder:
             heightmap = heightmap.reshape(-1, np.prod(self.grid_size))
+            heightmap = -(heightmap - heightmap.max(axis=1)[:, None])
             return self.encoder(torch.Tensor(heightmap)).detach().numpy()
         return heightmap
 
