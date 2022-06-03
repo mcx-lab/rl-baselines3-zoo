@@ -47,7 +47,7 @@ jobs:
         black --check blind_walking --line-length=127
     - name: Lint with flake8
       run: |
-        flake8 --ignore=W503,W504,E203,E231,F841,F401,E402 blind_walking 
+        flake8 --ignore=W503,W504,E203,E231,F841,F401,E402,E731 blind_walking 
 #     - name: Test with pytest
 #       run: |
 #         python -m pytest tests

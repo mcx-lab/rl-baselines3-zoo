@@ -101,10 +101,10 @@ class ImitationTask(object):
         alpha = 1.0
         if diff < 0:
             # if distance travelled is less than target
-            distance_reward = math.exp(- (4 * diff)**2)
-        elif round(diff, 5) < 1/(5*alpha):
+            distance_reward = math.exp(-((4 * diff) ** 2))
+        elif round(diff, 5) < 1 / (5 * alpha):
             # if distance travelled is more than target
-            distance_reward = math.exp(1 - 1/(1 - (5*alpha * diff)**2))
+            distance_reward = math.exp(1 - 1 / (1 - (5 * alpha * diff) ** 2))
         else:
             distance_reward = 0
         return distance_reward

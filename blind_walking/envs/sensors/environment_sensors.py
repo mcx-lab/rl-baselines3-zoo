@@ -26,7 +26,7 @@ _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
 _DATATYPE_LIST = typing.Iterable[typing.Any]  # pylint:disable=invalid-name
 
-maxdist_schedule = lambda t : 0.02 if t < 300 else 0.01
+maxdist_schedule = lambda t: 0.02 if t < 300 else 0.01
 
 
 class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
