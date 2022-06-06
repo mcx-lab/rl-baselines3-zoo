@@ -76,8 +76,8 @@ def build_regular_env(
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(
                 gait_names=["trot"],
-                gait_frequency_upper=2.5,
-                gait_frequency_lower=1.5,
+                gait_frequency_upper=kwargs["freq"],
+                gait_frequency_lower=kwargs["freq"],
                 duty_factor_upper=0.5,
                 duty_factor_lower=0.5,
                 obs_steps_ahead=[0, 1, 2, 10, 50],
@@ -85,7 +85,7 @@ def build_regular_env(
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(min_range=0.01, max_range=0.02),
+            environment_sensors.ForwardTargetPositionSensor(min_range=kwargs["dist"], max_range=kwargs["dist"]),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),
@@ -101,7 +101,14 @@ def build_regular_env(
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainStep()]
+        if kwargs["terrain"] == "flat":
+            env_modifier_list = []
+        elif kwargs["terrain"] == "step":
+            env_modifier_list = [train_course.TrainStep()]
+        elif kwargs["terrain"] == "uneven":
+            env_modifier_list = [train_course.TrainUneven()]
+        elif kwargs["terrain"] == "trippy":
+            env_modifier_list = [train_course.TrippySteps()]
 
     if task is None:
         task = imitation_task.ImitationTask()

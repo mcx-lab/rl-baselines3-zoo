@@ -7,6 +7,7 @@ import numpy as np
 import torch as th
 import yaml
 import gym
+import csv
 
 from stable_baselines3.common.utils import set_random_seed, obs_as_tensor
 from stable_baselines3.common.vec_env import VecVideoRecorder
@@ -315,6 +316,12 @@ def main():  # noqa: C901
     episode_reward = 0.0
     episode_rewards, episode_lengths = [], []
     ep_len = 0
+    episode_weighted_rewards = {
+        "distance": 0,
+        "shake": 0,
+        "energy": 0,
+        "imitation": 0,
+    }
     # For HER, monitor success rate
     successes = []
 
@@ -362,6 +369,8 @@ def main():  # noqa: C901
                 env.render("human")
 
             episode_reward += reward[0]
+            for key in infos[0]["reward_components"]:
+                episode_weighted_rewards[key] += infos[0]["reward_components"][key]
             ep_len += 1
 
             if args.n_envs == 1:
@@ -383,6 +392,9 @@ def main():  # noqa: C901
                     episode_reward = 0.0
                     ep_len = 0
                     state = None
+                    with open("./logs.csv", "a") as f:
+                        writer = csv.writer(f)
+                        writer.writerow([*episode_weighted_rewards.values()])
 
                 # Reset also when the goal is achieved when using HER
                 if done and infos[0].get("is_success") is not None:
