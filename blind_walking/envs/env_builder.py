@@ -18,7 +18,7 @@ import torch as th
 
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs, train_course, collapsibletile
+from blind_walking.envs.env_modifiers import collapsibletile, heightfield, stairs, train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
@@ -75,9 +75,9 @@ def build_regular_env(
             ),
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(
-                gait_names=["trot"],
-                gait_frequency_upper=2.5,
-                gait_frequency_lower=1.5,
+                gait_names=["trot", "walk"],
+                gait_frequency_upper={"trot": 3.0, "walk": 1.0},
+                gait_frequency_lower={"trot": 1.0, "walk": 0.5},
                 duty_factor_upper=0.5,
                 duty_factor_lower=0.5,
                 obs_steps_ahead=[0, 1, 2, 10, 50],
