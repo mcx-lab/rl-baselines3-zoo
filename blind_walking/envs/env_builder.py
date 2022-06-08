@@ -78,8 +78,8 @@ def build_regular_env(
                 gait_names=["trot", "walk"],
                 gait_frequency_upper={"trot": 3.0, "walk": 1.0},
                 gait_frequency_lower={"trot": 1.0, "walk": 0.5},
-                duty_factor_upper=0.5,
-                duty_factor_lower=0.5,
+                duty_factor_upper={"trot": 0.5, "walk": 0.75},
+                duty_factor_lower={"trot": 0.5, "walk": 0.75},
                 obs_steps_ahead=[0, 1, 2, 10, 50],
             ),
         ]

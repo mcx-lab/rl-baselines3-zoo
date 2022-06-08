@@ -45,8 +45,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         gait_names: typing.List[str] = DEFAULT_GAIT_NAMES,
         gait_frequency_lower: typing.Dict[str, float] = DEFAULT_GAIT_FREQUENCY,
         gait_frequency_upper: typing.Dict[str, float] = DEFAULT_GAIT_FREQUENCY,
-        duty_factor_lower: float = DEFAULT_DUTY_FACTOR,
-        duty_factor_upper: float = DEFAULT_DUTY_FACTOR,
+        duty_factor_lower: typing.Dict[str, float] = DEFAULT_DUTY_FACTOR,
+        duty_factor_upper: typing.Dict[str, float] = DEFAULT_DUTY_FACTOR,
         obs_steps_ahead: typing.List[int] = (0, 1, 2, 10, 50),
         lower_bound: _FLOAT_OR_ARRAY = -np.pi,
         upper_bound: _FLOAT_OR_ARRAY = np.pi,
@@ -78,7 +78,8 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         self._phase_offset = DEFAULT_PHASE_OFFSETS
         self._gait_frequency_upper = gait_frequency_upper
         self._gait_frequency_lower = gait_frequency_lower
-        self._duty_factor_range = (duty_factor_lower, duty_factor_upper)
+        self._duty_factor_upper = duty_factor_upper
+        self._duty_factor_lower = duty_factor_lower
         self._obs_steps_ahead = obs_steps_ahead
 
         self.cpg_system = CPGSystem(
@@ -124,7 +125,9 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
             self._gait_frequency_upper[self._gait_name], self._gait_frequency_lower[self._gait_name]
         )
         self.set_period(1 / gait_frequency)
-        duty_factor = np.random.uniform(self._duty_factor_range[0], self._duty_factor_range[1])
+        duty_factor = np.random.uniform(
+            self._duty_factor_upper[self._gait_name], self._duty_factor_lower[self._gait_name]
+        )
         self.set_duty_factor(duty_factor)
 
         # Reset CPG to a random state
