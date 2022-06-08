@@ -130,6 +130,7 @@ threadpoolctl==2.2.0
 toml==0.10.2
 tomli==1.2.1
 torch==1.9.0
+torchvision
 tornado==6.1
 tqdm==4.62.1
 typed-ast==1.4.3
