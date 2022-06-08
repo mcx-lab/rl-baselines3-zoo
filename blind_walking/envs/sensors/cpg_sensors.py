@@ -135,7 +135,9 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         for _ in range(max(self._obs_steps_ahead) + 1):
             self.cpg_system.step()
             self._current_phase = self.cpg_system.get_phase()
-            obs = self._get_foot_contact(self._current_phase)
+
+            # obs = self._get_foot_contact(self._current_phase)
+            obs = self._current_phase
             self._obs_history_buffer.append(obs)
 
     def on_reset(self, env):
@@ -158,7 +160,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
         """
         Gets the correct reference foot contact state at the current time.
         """
-        return self._obs_history_buffer[0]
+        return self._get_foot_contact(self._obs_history_buffer[0])
 
     def get_period(self):
         return self.cpg_system.params.period
