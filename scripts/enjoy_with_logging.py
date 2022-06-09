@@ -334,22 +334,29 @@ def main():  # noqa: C901
 
     stats_dir = os.path.join(log_path, args.stats_dir)
     os.makedirs(stats_dir, exist_ok=True)
-    callbacks = [
-        RobotLoggingCallback(savedir=stats_dir),
-        ObservationLoggingCallback(savedir=stats_dir),
+    post_callbacks = [
+        
         ActionLoggingCallback(savedir=stats_dir),
         RewardLoggingCallback(savedir=stats_dir),
         TaskLoggingCallback(savedir=stats_dir),
     ]
+    pre_callbacks = [
+        ObservationLoggingCallback(savedir=stats_dir),
+        RobotLoggingCallback(savedir=stats_dir),
+    ]
+    all_callbacks = pre_callbacks + post_callbacks
     try:
         for _ in range(args.n_timesteps):
             action, state = model.predict(obs, state=state, deterministic=deterministic)
-            prev_obs = obs
+            for callback in pre_callbacks:
+                callback.on_step(
+                    observations=obs,
+                    robot=env.get_attr("robot")[0],
+                )
             obs, reward, done, infos = env.step(action)
-            for callback in callbacks:
+            for callback in post_callbacks:
                 callback.on_step(
                     infos=infos,
-                    observations=prev_obs,
                     actions=action,
                     robot=env.get_attr("robot")[0],
                     task=env.get_attr("task")[0],
@@ -380,7 +387,7 @@ def main():  # noqa: C901
                     ep_len = 0
                     state = None
 
-                    for callback in callbacks:
+                    for callback in all_callbacks:
                         callback.on_episode_end()
 
                 # Reset also when the goal is achieved when using HER
