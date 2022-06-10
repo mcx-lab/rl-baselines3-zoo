@@ -27,12 +27,12 @@ _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
 _DATATYPE_LIST = typing.Iterable[typing.Any]  # pylint:disable=invalid-name
 
 leeway_time = 100
-maxdist_schedule = lambda t: 0.01 if t < 250 + leeway_time else \
-    0.015 if t < 500 + leeway_time else \
-    0.02 if t < 750 + leeway_time else \
-    0.025 if t < 1000 + leeway_time else \
-    0.02 if t < 1250 + leeway_time else \
-    0.015 if t < 1500 + leeway_time else \
+maxdist_schedule = lambda t: 0.01 if t < 250 else \
+    0.015 if t < 500 else \
+    0.02 if t < 750 else \
+    0.025 if t < 1000 else \
+    0.02 if t < 1250 else \
+    0.015 if t < 1500 else \
     0.010
 
 
@@ -79,7 +79,7 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._current_yaw = 0
 
     def on_step(self, env):
-        self._max_distance = maxdist_schedule(env.env_step_counter)
+        self._max_distance = maxdist_schedule(env.env_step_counter - leeway_time)
 
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
@@ -90,6 +90,12 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._tgtpos_x += self._max_distance
         if env.env_step_counter < leeway_time and self._current_base_pos[0] < self._tgtpos_x:
             # leeway to reach the steady speed
+            self._tgtpos_x = self._current_base_pos[0] + self._max_distance
+        elif env.env_step_counter - leeway_time in [1000, 1250, 1500] and self._current_base_pos[0] < self._tgtpos_x - self._max_distance * (leeway_time * 0.1 + 1):
+            # the target position is too far to catch up, reset
+            self._tgtpos_x = self._current_base_pos[0] + self._max_distance
+        elif env.env_step_counter - leeway_time in [250, 500, 750] and self._current_base_pos[0] > self._tgtpos_x + self._max_distance * leeway_time * 0.1:
+            # the target position is too behind, reset
             self._tgtpos_x = self._current_base_pos[0] + self._max_distance
         # calculate the distance to follow
         self._tf_max_distance = self._tgtpos_x - self._current_base_pos[0]
