@@ -3,6 +3,7 @@ import glob
 import importlib
 import os
 import sys
+import uuid
 
 import numpy as np
 import torch as th
@@ -190,6 +191,8 @@ def main():  # noqa: C901
     for env_module in args.gym_packages:
         importlib.import_module(env_module)
 
+    args.stats_dir = os.path.join(args.stats_dir, uuid.uuid4().hex)
+
     env_id = args.env
     algo = args.algo
     folder = args.folder
@@ -346,7 +349,7 @@ def main():  # noqa: C901
     ]
     all_callbacks = pre_callbacks + post_callbacks
     try:
-        for _ in range(args.n_timesteps):
+        for i in range(args.n_timesteps):
             action, state = model.predict(obs, state=state, deterministic=deterministic)
             for callback in pre_callbacks:
                 callback.on_step(
@@ -376,7 +379,7 @@ def main():  # noqa: C901
                         print(f"Atari Episode Score: {episode_infos['r']:.2f}")
                         print("Atari Episode Length", episode_infos["l"])
 
-                if done and not is_atari and args.verbose > 0:
+                if (done or i == args.n_timesteps-1) and not is_atari and args.verbose > 0:
                     # NOTE: for env using VecNormalize, the mean reward
                     # is a normalized reward when `--norm_reward` flag is passed
                     print(f"Episode Reward: {episode_reward:.2f}")

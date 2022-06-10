@@ -392,9 +392,9 @@ def main():  # noqa: C901
                     episode_reward = 0.0
                     ep_len = 0
                     state = None
-                    with open("./logs.csv", "a") as f:
-                        writer = csv.writer(f)
-                        writer.writerow([*episode_weighted_rewards.values()])
+                    # with open("./logs.csv", "a") as f:
+                    #     writer = csv.writer(f)
+                    #     writer.writerow([*episode_weighted_rewards.values()])
 
                 # Reset also when the goal is achieved when using HER
                 if done and infos[0].get("is_success") is not None:

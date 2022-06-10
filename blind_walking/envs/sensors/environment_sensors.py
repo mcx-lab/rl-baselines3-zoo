@@ -26,7 +26,14 @@ _ARRAY = typing.Iterable[float]  # pylint:disable=invalid-name
 _FLOAT_OR_ARRAY = typing.Union[float, _ARRAY]  # pylint:disable=invalid-name
 _DATATYPE_LIST = typing.Iterable[typing.Any]  # pylint:disable=invalid-name
 
-maxdist_schedule = lambda t: 0.02 if t < 300 else 0.01
+leeway_time = 100
+maxdist_schedule = lambda t: 0.01 if t < 250 + leeway_time else \
+    0.015 if t < 500 + leeway_time else \
+    0.02 if t < 750 + leeway_time else \
+    0.025 if t < 1000 + leeway_time else \
+    0.02 if t < 1250 + leeway_time else \
+    0.015 if t < 1500 + leeway_time else \
+    0.010
 
 
 class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
@@ -63,6 +70,8 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._max_range = max_range
         self._min_range = min_range
         self._max_distance = self._max_range
+        self._tgtpos_x = self._max_distance
+        self._tf_max_distance = self._max_distance
 
         self._last_base_pos = np.zeros(3)
         self._current_base_pos = np.zeros(3)
@@ -70,12 +79,22 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._current_yaw = 0
 
     def on_step(self, env):
-        # self._max_distance = maxdist_schedule(env.env_step_counter)
+        self._max_distance = maxdist_schedule(env.env_step_counter)
 
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_yaw = self._current_yaw
         self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
+
+        # calculate the target position to follow
+        self._tgtpos_x += self._max_distance
+        if env.env_step_counter < leeway_time and self._current_base_pos[0] < self._tgtpos_x:
+            # leeway to reach the steady speed
+            self._tgtpos_x = self._current_base_pos[0] + self._max_distance
+        # calculate the distance to follow
+        self._tf_max_distance = self._tgtpos_x - self._current_base_pos[0]
+        self._tf_max_distance = max(self._max_distance * 0.7, self._tf_max_distance)  # lower limit of follow target
+        self._tf_max_distance = min(self._max_distance * 1.3, self._tf_max_distance)  # upper limit of follow target
 
     def on_reset(self, env):
         """From the callback, the sensor remembers the environment.
@@ -90,7 +109,7 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._last_yaw = self._current_yaw
 
         # random sampling of target distance from range
-        self._max_distance = np.random.uniform(self._min_range, self._max_range)
+        # self._max_distance = np.random.uniform(self._min_range, self._max_range)
 
         # # target distance is proportional to gait frequency
         # ref_gait_sensor = env.all_sensors()[-3]
@@ -103,9 +122,9 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         # target y position is always zero
         dy_target = 0 - self._current_base_pos[1]
         # give some leeway for the robot to walk forward
-        dy_target = max(min(dy_target, self._max_distance / 2), -self._max_distance / 2)
+        dy_target = max(min(dy_target, self._tf_max_distance / 2), -self._tf_max_distance / 2)
         # target x position is always forward
-        dx_target = np.sqrt(pow(self._max_distance, 2) - pow(dy_target, 2))
+        dx_target = np.sqrt(pow(self._tf_max_distance, 2) - pow(dy_target, 2))
         # Transform to local frame
         dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
         return [dx_target_local, dy_target_local]
