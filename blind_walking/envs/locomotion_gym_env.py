@@ -46,6 +46,7 @@ class LocomotionGymEnv(gym.Env):
         task=None,
         env_randomizers=None,
         env_modifiers=None,
+        env_perturbations=None,
     ):
         """Initializes the locomotion gym environment.
 
@@ -83,6 +84,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_randomizers = env_randomizers if env_randomizers else []
         # Set env modifiers after initial hard reset
         self._env_modifiers = []
+        self._env_perturbations = env_perturbations
 
         # This is a workaround due to the issue in b/130128505#comment5
         if isinstance(self._task, sensor.Sensor):
@@ -248,6 +250,7 @@ class LocomotionGymEnv(gym.Env):
                 enable_action_filter=self._gym_config.simulation_parameters.enable_action_filter,
                 enable_action_interpolation=self._gym_config.simulation_parameters.enable_action_interpolation,
                 allow_knee_contact=self._gym_config.simulation_parameters.allow_knee_contact,
+                perturbations = self._env_perturbations
             )
         else:
             # Reset modifications

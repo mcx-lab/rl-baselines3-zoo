@@ -103,6 +103,7 @@ class Minitaur(object):
         sensors=None,
         enable_action_interpolation=False,
         enable_action_filter=False,
+        perturbations = [],
         reset_time=-1,
     ):
         """Constructs a minitaur and reset it to the initial states.
@@ -186,6 +187,7 @@ class Minitaur(object):
         self._last_action = None
 
         self._adjust_position = (0, 0, 0)
+        self._perturbations = perturbations
 
         if not motor_model_class:
             raise ValueError("Must provide a motor model class!")
@@ -238,7 +240,12 @@ class Minitaur(object):
     def GetTimeSinceReset(self):
         return self._step_counter * self.time_step
 
+    def ApplyPerturbations(self):
+        for perturbation in self._perturbations:
+            perturbation.apply(self)
+
     def _StepInternal(self, action, motor_control_mode=None):
+        self.ApplyPerturbations()
         self.ApplyAction(action, motor_control_mode)
         self._pybullet_client.stepSimulation()
         self.ReceiveObservation()
