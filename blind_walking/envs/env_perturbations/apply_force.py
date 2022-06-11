@@ -35,26 +35,28 @@ class ThrowObject:
 
     def apply(self, robot):
         time =  robot.GetTimeSinceReset()
-        if robot._step_counter == 100:
+        if robot._step_counter == 1000:
             print(f"Throwing object at time {time}")
             pybullet_client = robot.pybullet_client 
             quadruped = robot.quadruped
 
             base_position = np.array(robot.GetBasePosition())
+            base_position[0] += 0.1
             desired_direction = np.array([0, 1.0, 0])
 
             self.applyDisturbance(pybullet_client, target_position=base_position, desired_direction=desired_direction)
-
-        elif robot._step_counter == 2100:
+        """
+        elif robot._step_counter == 5100:
             print(f"Throwing object at time {time}")
             pybullet_client = robot.pybullet_client 
             quadruped = robot.quadruped
 
             base_position = np.array(robot.GetBasePosition())
+            base_position[0] += 0.1
             desired_direction = np.array([0, -1.0, 0])
 
             self.applyDisturbance(pybullet_client, target_position=base_position, desired_direction=desired_direction)
-
+        """
 
 class ApplyForce:
 
