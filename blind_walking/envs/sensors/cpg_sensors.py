@@ -31,6 +31,11 @@ DEFAULT_DUTY_FACTOR = 0.75
 
 # gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
 gait_freq_schedule = lambda t: 3.0 if t < 300 else 1.0
+obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]
+unit_change = 0.5
+gait_freq_schedule_x = lambda x: 2.0 if any([x > p-unit_change*2 and x < p+unit_change*1 for p in obstacle_pos]) else \
+    2.5 if any([x > p-unit_change*4 and x < p+unit_change*2 for p in obstacle_pos]) else \
+    3.0
 
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
@@ -104,7 +109,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
         # Update gait according to schedule
         # self.set_gait_name(gait_name_schedule(t))
-        # self.set_period(1/gait_freq_schedule(t))
+        self.set_period(1/gait_freq_schedule_x(self._env._robot.GetBasePosition()[0]))
 
         self.cpg_system.step()
         self._current_phase = self.cpg_system.get_phase()

@@ -76,8 +76,8 @@ def build_regular_env(
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(
                 gait_names=["trot"],
-                gait_frequency_upper=kwargs["freq"],
-                gait_frequency_lower=kwargs["freq"],
+                gait_frequency_upper=3.0,
+                gait_frequency_lower=3.0,
                 duty_factor_upper=0.5,
                 duty_factor_lower=0.5,
                 obs_steps_ahead=[0, 1, 2, 10, 50],
@@ -85,7 +85,7 @@ def build_regular_env(
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(min_range=kwargs["dist"], max_range=kwargs["dist"]),
+            environment_sensors.ForwardTargetPositionSensor(min_range=0.02, max_range=0.02),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),

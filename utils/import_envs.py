@@ -49,6 +49,6 @@ def register(env_id, *args, **kvargs):
 register(
     env_id="A1GymEnv-v0",
     entry_point="blind_walking.envs.gym_envs:A1GymEnv",
-    max_episode_steps=2000,
+    max_episode_steps=3000,
     reward_threshold=1000.0,
 )

@@ -34,6 +34,11 @@ maxdist_schedule = lambda t: 0.01 if t < 250 else \
     0.02 if t < 1250 else \
     0.015 if t < 1500 else \
     0.010
+obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]
+unit_change = 0.5
+maxdist_schedule_x = lambda x: 0.01 if any([x > p-unit_change*2 and x < p+unit_change*1 for p in obstacle_pos]) else \
+    0.015 if any([x > p-unit_change*4 and x < p+unit_change*2 for p in obstacle_pos]) else \
+    0.02
 
 
 class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
@@ -79,24 +84,24 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         self._current_yaw = 0
 
     def on_step(self, env):
-        self._max_distance = maxdist_schedule(env.env_step_counter - leeway_time)
-
         self._last_base_pos = self._current_base_pos
         self._current_base_pos = self._env._robot.GetBasePosition()
         self._last_yaw = self._current_yaw
         self._current_yaw = self._env._robot.GetTrueBaseRollPitchYaw()[2]
+
+        self._max_distance = maxdist_schedule_x(self._current_base_pos[0])
 
         # calculate the target position to follow
         self._tgtpos_x += self._max_distance
         if env.env_step_counter < leeway_time and self._current_base_pos[0] < self._tgtpos_x:
             # leeway to reach the steady speed
             self._tgtpos_x = self._current_base_pos[0] + self._max_distance
-        elif env.env_step_counter - leeway_time in [1000, 1250, 1500] and self._current_base_pos[0] < self._tgtpos_x - self._max_distance * (leeway_time * 0.1 + 1):
-            # the target position is too far to catch up, reset
-            self._tgtpos_x = self._current_base_pos[0] + self._max_distance
-        elif env.env_step_counter - leeway_time in [250, 500, 750] and self._current_base_pos[0] > self._tgtpos_x + self._max_distance * leeway_time * 0.1:
-            # the target position is too behind, reset
-            self._tgtpos_x = self._current_base_pos[0] + self._max_distance
+        # elif self._current_base_pos[0] < self._tgtpos_x - self._max_distance * (leeway_time * 0.1 + 1):
+        #     # the target position is too far to catch up, reset
+        #     self._tgtpos_x = self._current_base_pos[0] + self._max_distance
+        # elif self._current_base_pos[0] > self._tgtpos_x + self._max_distance * leeway_time * 0.1:
+        #     # the target position is too behind, reset
+        #     self._tgtpos_x = self._current_base_pos[0] + self._max_distance
         # calculate the distance to follow
         self._tf_max_distance = self._tgtpos_x - self._current_base_pos[0]
         self._tf_max_distance = max(self._max_distance * 0.7, self._tf_max_distance)  # lower limit of follow target
@@ -116,13 +121,6 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
 
         # random sampling of target distance from range
         # self._max_distance = np.random.uniform(self._min_range, self._max_range)
-
-        # # target distance is proportional to gait frequency
-        # ref_gait_sensor = env.all_sensors()[-3]
-        # min_freq, max_freq = ref_gait_sensor._gait_frequency_range
-        # tgt_freq = 1 / ref_gait_sensor.get_period()
-        # self._max_distance = self._min_range + \
-        #     ((tgt_freq - min_freq) / (max_freq - min_freq)) * (self._max_range - self._min_range)
 
     def _get_observation(self) -> _ARRAY:
         # target y position is always zero
