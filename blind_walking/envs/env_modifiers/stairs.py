@@ -1,7 +1,7 @@
 import pybullet as p
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
-boxHalfLength = 0.5
+boxHalfLength = 0.5 * 3
 boxHalfWidth = 10
 boxHalfHeight = 0.1
 
@@ -21,8 +21,8 @@ class Stairs(EnvModifier):
         step_rise=0.1,
         step_run=0.3,
         friction=0.5,
-        boxHalfLength=0.5,
-        boxHalfWidth=10,
+        boxHalfLength=boxHalfLength,
+        boxHalfWidth=boxHalfWidth,
         pos_y=0,
     ):
         env.pybullet_client.configureDebugVisualizer(env.pybullet_client.COV_ENABLE_RENDERING, 0)
