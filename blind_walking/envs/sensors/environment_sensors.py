@@ -34,18 +34,16 @@ maxdist_schedule = lambda t: 0.01 if t < 250 else \
     0.02 if t < 1250 else \
     0.015 if t < 1500 else \
     0.010
+
 # obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]  # platform obstacle pos
 obstacle_pos = [6.0, 14.0, 21.0, 29.0]
-unit_change = 0.5
+unit_change = 1.0
 def interpolate(x, high, low):
     closest_obstacle_pos = min(obstacle_pos, key=lambda v: abs(v - x))
     diff = closest_obstacle_pos - x
-    if diff > 0:
-        return low + (high-low) * (abs(diff) - unit_change*2) / (unit_change * 2)
-    else:
-        return low + (high-low) * (abs(diff) - unit_change) / (unit_change)
-maxdist_schedule_x = lambda x: 0.01 if any([x > p-unit_change*2 and x < p+unit_change*1 for p in obstacle_pos]) else \
-    interpolate(x, 0.02, 0.01) if any([x > p-unit_change*4 and x < p+unit_change*2 for p in obstacle_pos]) else \
+    return low + (high-low) * (abs(diff) - unit_change) / (unit_change)
+maxdist_schedule_x = lambda x: 0.01 if any([x > p-unit_change and x < p+unit_change for p in obstacle_pos]) else \
+    interpolate(x, 0.02, 0.01) if any([x > p-unit_change*2 and x < p+unit_change*2 for p in obstacle_pos]) else \
     0.02
 
 
