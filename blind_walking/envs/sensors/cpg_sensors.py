@@ -31,19 +31,17 @@ DEFAULT_DUTY_FACTOR = 0.75
 
 # gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
 gait_freq_schedule = lambda t: 3.0 if t < 300 else 1.0
+
 # obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]  # platform obstacle pos
 # obstacle_pos = [6.0, 14.0, 21.0, 29.0]  # hurdle obstacle pos
 obstacle_pos = [15]
-unit_change = 2.0
+unit_change = 4.0
 def interpolate(x, high, low):
     closest_obstacle_pos = min(obstacle_pos, key=lambda v: abs(v - x))
     diff = closest_obstacle_pos - x
-    if diff > 0:
-        return low + (high-low) * (abs(diff) - unit_change*2) / (unit_change * 2)
-    else:
-        return low + (high-low) * (abs(diff) - unit_change) / (unit_change)
-gait_freq_schedule_x = lambda x: 2.0 if any([x > p-unit_change*2 and x < p+unit_change*1 for p in obstacle_pos]) else \
-    interpolate(x, 3.0, 2.0) if any([x > p-unit_change*4 and x < p+unit_change*2 for p in obstacle_pos]) else \
+    return low + (high-low) * (abs(diff) - unit_change) / (unit_change)
+gait_freq_schedule_x = lambda x: 2.0 if any([x > p-unit_change and x < p+unit_change for p in obstacle_pos]) else \
+    interpolate(x, 3.0, 2.0) if any([x > p-unit_change*2 and x < p+unit_change*2 for p in obstacle_pos]) else \
     3.0
 
 
