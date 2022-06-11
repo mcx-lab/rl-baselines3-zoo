@@ -38,7 +38,7 @@ maxdist_schedule = lambda t: 0.01 if t < 250 else \
 # obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]  # platform obstacle pos
 # obstacle_pos = [6.0, 14.0, 21.0, 29.0]  # hurdle obstacle pos
 obstacle_pos = [15]
-unit_change = 4.0
+unit_change = 3.0
 def interpolate(x, high, low):
     closest_obstacle_pos = min(obstacle_pos, key=lambda v: abs(v - x))
     diff = closest_obstacle_pos - x
