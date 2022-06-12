@@ -1,6 +1,8 @@
 from turtle import pos
 from typing import Tuple
 import numpy as np
+import csv
+import os
 
 def draw_debug_sphere(pybullet_client, position: Tuple[float, float, float], rgba_color=[0, 1, 1, 1], radius=0.02) -> int:
     ballShape = pybullet_client.createCollisionShape(shapeType=pybullet_client.GEOM_SPHERE, radius=radius)
@@ -11,9 +13,26 @@ def draw_debug_sphere(pybullet_client, position: Tuple[float, float, float], rgb
     pybullet_client.setCollisionFilterGroupMask(ball_id, -1, 0, 0)
     return ball_id
 
+obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]
+obstacle_pos.sort()
+
+log_path = "object_thrown_time.csv"
+
+def clear_thrown_logs():
+    if os.path.exists(log_path):
+        os.remove(log_path)
+
+def log_object_thrown(time, target_position):
+    with open(log_path, "a") as f:
+        writer = csv.writer(f)
+        writer.writerow([time, *target_position])
+
 class ThrowObject:
     def __init__(self):
-        pass 
+        self.throw_windows = [(p - 1.0, p + 1.0) for p in obstacle_pos]
+        self.throw_directions = [-1, 1, 1, -1, -1, 1]
+        self.window_idx = 0
+        clear_thrown_logs()
 
     def applyDisturbance(self, pybullet_client, target_position, desired_direction):
         p = pybullet_client
@@ -35,16 +54,26 @@ class ThrowObject:
 
     def apply(self, robot):
         time =  robot.GetTimeSinceReset()
-        if robot._step_counter == 1000:
-            print(f"Throwing object at time {time}")
+        base_position = np.array(robot.GetBasePosition())
+
+        if self.window_idx >= len(self.throw_windows):
+            return
+
+        window_start, window_end = self.throw_windows[self.window_idx]
+        if window_start < base_position[0] < window_end:
+            print(f"Throwing object at time {time}, position {base_position}")
             pybullet_client = robot.pybullet_client 
-            quadruped = robot.quadruped
 
             base_position = np.array(robot.GetBasePosition())
             base_position[0] += 0.1
-            desired_direction = np.array([0, 1.0, 0])
+            
+            dir = self.throw_directions[self.window_idx]
+            desired_direction = np.array([0, 1.0, 0]) if dir == 1 else np.array([0, -1.0, 0])
 
             self.applyDisturbance(pybullet_client, target_position=base_position, desired_direction=desired_direction)
+            log_object_thrown(time, base_position)
+            # Move to next window
+            self.window_idx += 1
         """
         elif robot._step_counter == 5100:
             print(f"Throwing object at time {time}")
