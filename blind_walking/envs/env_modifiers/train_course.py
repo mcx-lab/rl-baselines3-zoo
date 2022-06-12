@@ -212,7 +212,7 @@ class TrainUneven(EnvModifier):
         self.hf = HeightField()
 
     def _generate(self, env):
-        self.hf._generate(env, start_x=10, heightPerturbationRange=0.08)
+        self.hf._generate(env, start_x=14, heightPerturbationRange=0.05)
 
 
 class TrainMultiple(EnvModifier):
@@ -323,9 +323,9 @@ class TrainMultiple(EnvModifier):
 class TrippySteps(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rises = [0.03, 0.04, 0.05, 0.06]
+        self.step_rise = 0.05
         # self.stair_gaps = [0.8, 0.5, 0.8, 0.2, 0.8, 0.4, 0.8, 0.3, 0.8, 0.2, 0.7, 0.5, 0.7, 0.3]  # trippy steps
-        self.stair_gaps = [5.0, 6.0, 8.0, 7.0]  # hurdle steps
+        self.stair_gaps = [6.0, 8.0, 7.0, 8.0]  # hurdle steps
         # Note: change colours of steps for better visualisation
 
         self.stairs = []
@@ -340,6 +340,6 @@ class TrippySteps(EnvModifier):
                 env,
                 start_x=start_x,
                 num_steps=1,
-                step_rise=self.step_rises[i],
+                step_rise=self.step_rise,
                 boxHalfLength=0.03,
             )
