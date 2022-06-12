@@ -323,9 +323,9 @@ class TrainMultiple(EnvModifier):
 class TrippySteps(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rises = [0.04, 0.05, 0.06]
+        self.step_rises = [0.03, 0.04, 0.05, 0.06]
         # self.stair_gaps = [0.8, 0.5, 0.8, 0.2, 0.8, 0.4, 0.8, 0.3, 0.8, 0.2, 0.7, 0.5, 0.7, 0.3]  # trippy steps
-        self.stair_gaps = [6.0, 8.0, 7.0]  # hurdle steps
+        self.stair_gaps = [5.0, 6.0, 8.0, 7.0]  # hurdle steps
         # Note: change colours of steps for better visualisation
 
         self.stairs = []
