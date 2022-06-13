@@ -46,6 +46,7 @@ class LocomotionGymEnv(gym.Env):
         task=None,
         env_randomizers=None,
         env_modifiers=None,
+        data_path=None,
     ):
         """Initializes the locomotion gym environment.
 
@@ -83,6 +84,7 @@ class LocomotionGymEnv(gym.Env):
         self._env_randomizers = env_randomizers if env_randomizers else []
         # Set env modifiers after initial hard reset
         self._env_modifiers = []
+        self._data_path = data_path
 
         # This is a workaround due to the issue in b/130128505#comment5
         if isinstance(self._task, sensor.Sensor):
@@ -112,7 +114,8 @@ class LocomotionGymEnv(gym.Env):
             )
         else:
             self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
-        self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
+        print(self._data_path)
+        self._pybullet_client.setAdditionalSearchPath(pd.getDataPath() if self._data_path is None else self._data_path)
         if gym_config.simulation_parameters.egl_rendering:
             self._pybullet_client.loadPlugin("eglRendererPlugin")
 
