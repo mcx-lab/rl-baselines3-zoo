@@ -30,7 +30,7 @@ class Stairs(EnvModifier):
         stepShape = env.pybullet_client.createCollisionShape(
             p.GEOM_BOX, halfExtents=[boxHalfLength, boxHalfWidth, boxHalfHeight]
         )
-        colors = [[0.5, 0.5, 0.5, 1], [0.7, 0.7, 0.7, 1], [0.9, 0.9, 0.9, 1]]
+        colors = [[0.75, 0.6, 0.2, 1], [0.80, 0.6, 0.2, 1], [0.85, 0.6, 0.2, 1]]
 
         # Create upwards stairs
         base_pos = [start_x, pos_y, step_rise - boxHalfHeight]
