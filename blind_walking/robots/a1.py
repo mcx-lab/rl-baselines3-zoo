@@ -267,6 +267,7 @@ class A1(minitaur.Minitaur):
         motor_control_mode=None,
         reset_time=1,
         allow_knee_contact=False,
+        perturbations = [],
     ):
         self._urdf_filename = urdf_filename
         self._allow_knee_contact = allow_knee_contact
@@ -320,6 +321,7 @@ class A1(minitaur.Minitaur):
             enable_action_interpolation=enable_action_interpolation,
             enable_action_filter=enable_action_filter,
             reset_time=reset_time,
+            perturbations=perturbations
         )
 
     def _LoadRobotURDF(self):

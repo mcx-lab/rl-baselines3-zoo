@@ -26,6 +26,7 @@ from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_s
 from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.robots import a1, laikago, robot_config
+from blind_walking.envs.env_perturbations import apply_force
 from train_autoencoder import LinearAE
 
 
@@ -53,7 +54,7 @@ def build_regular_env(
     env_modifier_list=None,
     task=None,
     # CPG sensor kwargs
-    **kwargs,
+    **kwargs
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -111,6 +112,8 @@ def build_regular_env(
         elif kwargs["terrain"] == "trippy":
             env_modifier_list = [train_course.TrippySteps()]
 
+    env_perturbations_list = [apply_force.ThrowObject()]
+
     if task is None:
         task = imitation_task.ImitationTask()
 
@@ -122,6 +125,7 @@ def build_regular_env(
         task=task,
         env_randomizers=env_randomizer_list,
         env_modifiers=env_modifier_list,
+        env_perturbations=env_perturbations_list,
         data_path = data_path
     )
 
