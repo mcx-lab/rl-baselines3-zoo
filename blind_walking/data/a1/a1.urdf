@@ -13,14 +13,11 @@
   <material name="green">
     <color rgba="0.0 0.8 0.0 1.0"/>
   </material>
-  <material name="grey">
-    <color rgba="0.2 0.2 0.2 1.0"/>
-  </material>
   <material name="silver">
     <color rgba="0.913725490196 0.913725490196 0.847058823529 1.0"/>
   </material>
   <material name="grey">
-    <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
+    <color rgba="0.5 0.5 0.5 1.0"/>
   </material>
   <material name="brown">
     <color rgba="0.870588235294 0.811764705882 0.764705882353 1.0"/>
