@@ -81,10 +81,10 @@ class TrainStairs(EnvModifier):
 class TrainStep(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rise_levels = [0.02, 0.05, 0.07]
+        self.step_rise_levels = [0.03, 0.05, 0.07]
         self.num_levels = len(self.step_rise_levels)
-        self.num_steps = 1
-        self.stair_gap = 2.0
+        self.num_steps = 5
+        self.stair_gap = 6.0
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
 
@@ -95,11 +95,11 @@ class TrainStep(EnvModifier):
             self.stairs.append(Stairs())
 
     def _generate(self, env):
-        start_x = self.stair_gap
-        for i in range(self.num_levels + 1):
-            # Generate last level twice
-            if i == self.num_levels:
-                i -= 1
+        start_x = self.stair_gap * 1.5
+        for i in range(self.num_levels):
+            # # Generate last level twice
+            # if i == self.num_levels:
+            #     i -= 1
             self.stairs[i]._generate(
                 env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
             )
@@ -119,7 +119,7 @@ class TrainStep(EnvModifier):
         x_pos = level * (self.stair_length + self.stair_gap)
         z_pos = 0
         # Equal chances to encouter going up and down the stair level
-        if np.random.uniform() < 0.4:
+        if np.random.uniform() < 0:
             x_pos += self.stair_gap + self.stair_length / 2 - 1
             z_pos = self.step_rise_levels[level] * self.num_steps
         self.adjust_position = (x_pos, 0, z_pos)
@@ -323,9 +323,9 @@ class TrainMultiple(EnvModifier):
 class TrippySteps(EnvModifier):
     def __init__(self):
         super().__init__()
-        self.step_rise = 0.08
+        self.step_rises = [0.03, 0.04, 0.05, 0.06]
         # self.stair_gaps = [0.8, 0.5, 0.8, 0.2, 0.8, 0.4, 0.8, 0.3, 0.8, 0.2, 0.7, 0.5, 0.7, 0.3]  # trippy steps
-        self.stair_gaps = [3.0, 2.0, 2.5, 2.0, 1.5, 1.0]  # hurdle steps
+        self.stair_gaps = [5.0, 6.0, 8.0, 7.0]  # hurdle steps
         # Note: change colours of steps for better visualisation
 
         self.stairs = []
@@ -340,6 +340,6 @@ class TrippySteps(EnvModifier):
                 env,
                 start_x=start_x,
                 num_steps=1,
-                step_rise=self.step_rise,
+                step_rise=self.step_rises[i],
                 boxHalfLength=0.03,
             )

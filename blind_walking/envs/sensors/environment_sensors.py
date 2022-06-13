@@ -124,6 +124,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
     def __init__(
         self,
         noisy_reading: bool = True,
+        noise_scale: float = 0.01,
         grid_unit: typing.Tuple[float] = (0.1, 0.1),
         grid_size: typing.Tuple[int] = (10, 10),
         transform: typing.Tuple[float] = (0, 0),
@@ -147,6 +148,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         """
         self._env = None
         self._noisy_reading = noisy_reading
+        self.noise_scale = noise_scale
         self.grid_unit = grid_unit
         self.grid_size = grid_size
         self.transform = transform
@@ -180,7 +182,7 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
         ).reshape(1, self.grid_size[0], self.grid_size[1])
         # Add noise
         if self._noisy_reading:
-            heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)
+            heightmap = heightmap + np.random.normal(scale=self.noise_scale, size=heightmap.shape)
         # Clip readings
         heightmap = np.minimum(np.maximum(heightmap, 0.1), 8.0)
         # Encode raw observations

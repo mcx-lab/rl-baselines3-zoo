@@ -26,6 +26,7 @@ from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_s
 from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.robots import a1, laikago, robot_config
+from blind_walking.envs.env_perturbations import apply_force
 from train_autoencoder import LinearAE
 
 
@@ -53,7 +54,9 @@ def build_regular_env(
     env_modifier_list=None,
     task=None,
     # CPG sensor kwargs
-    **kwargs,
+    test_gait_frequency = None, # Hz
+    test_velocity =  None, # m / s
+    depth_sensor_noise = 0.0,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -77,8 +80,8 @@ def build_regular_env(
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(
                 gait_names=["trot"],
-                gait_frequency_upper=2.5,
-                gait_frequency_lower=1.5,
+                gait_frequency_upper=2.5 if test_gait_frequency is None else test_gait_frequency,
+                gait_frequency_lower=1.5 if test_gait_frequency is None else test_gait_frequency,
                 duty_factor_upper=0.5,
                 duty_factor_lower=0.5,
                 obs_steps_ahead=[0, 1, 2, 10, 50],
@@ -86,13 +89,17 @@ def build_regular_env(
         ]
     if env_sensor_list is None:
         env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(min_range=0.01, max_range=0.02),
+            environment_sensors.ForwardTargetPositionSensor(
+                min_range=0.01 if test_velocity is None else test_velocity * 0.025, 
+                max_range=0.02 if test_velocity is None else test_velocity * 0.025, 
+            ),
             environment_sensors.LocalTerrainDepthSensor(
                 grid_size=(12, 16),
                 grid_unit=(0.03, 0.03),
                 transform=(0.10, 0),
                 ray_origin="head",
-                noisy_reading=False,
+                noisy_reading=False if depth_sensor_noise == 0 else True,
+                noise_scale = depth_sensor_noise,
                 name="depthmiddle",
                 encoder=load_encoder(),
             ),
@@ -103,6 +110,8 @@ def build_regular_env(
 
     if env_modifier_list is None:
         env_modifier_list = [train_course.TrainStep()]
+
+    env_perturbations_list = [apply_force.ThrowObject()]
 
     if task is None:
         task = imitation_task.ImitationTask()
@@ -115,6 +124,7 @@ def build_regular_env(
         task=task,
         env_randomizers=env_randomizer_list,
         env_modifiers=env_modifier_list,
+        env_perturbations=env_perturbations_list,
         data_path = data_path
     )
 
