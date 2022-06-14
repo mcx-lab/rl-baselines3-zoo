@@ -84,7 +84,7 @@ class TrainStep(EnvModifier):
         self.step_rise_levels = [0.05, 0.07, 0.09]
         self.num_levels = len(self.step_rise_levels)
         self.num_steps = 1
-        self.stair_gap = 6.0
+        self.stair_gap = 2.0
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
 
@@ -103,7 +103,9 @@ class TrainStep(EnvModifier):
             self.stairs[i]._generate(
                 env, start_x=start_x, num_steps=self.num_steps, step_rise=self.step_rise_levels[i], step_run=self.step_run
             )
-            start_x += self.stair_length + self.stair_gap
+            print(f"Platform start: {start_x}")
+            print(f"Platform end: {start_x + self.stair_length}")
+            start_x += self.stair_length + self.stair_gap            
 
     def _reset(self, env):
         if self.up_level(env):

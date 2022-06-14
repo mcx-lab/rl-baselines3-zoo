@@ -14,9 +14,10 @@ def draw_debug_sphere(pybullet_client, position: Tuple[float, float, float], rgb
     return ball_id
 
 # obstacle_pos = [7.5, 19.5, 31.5, 13.5, 25.5, 37.5]    # Platform obstacle pos
+obstacle_pos = [2.5, 6.5, 10.5]         # Short platform obstacle pos
 # obstacle_pos = [5.0, 11.0, 19.0, 26.0]                # Hurdle obstacle pos
 # obstacle_pos = [5, 10, 15, 20]                        # Heightfield obstacle pos
-obstacle_pos = [7.5, 21.9, 36.3, 14.4, 28.8, 44.7]    # Staircase obstacle pos
+# obstacle_pos = [7.5, 21.9, 36.3, 14.4, 28.8, 44.7]    # Staircase obstacle pos
 obstacle_pos.sort()
 
 log_path = "object_thrown_time.csv"
@@ -33,7 +34,7 @@ def log_object_thrown(time, target_position):
 class ThrowObject:
     def __init__(self):
         self.throw_windows = [(p - 0.4, p + 0.4) for p in obstacle_pos]
-        self.throw_directions = [1, -1, -1, 1, 1, -1]
+        self.throw_directions = [1, 1, 1, 1, 1, 1]
         self.window_idx = 0
         clear_thrown_logs()
 
@@ -42,6 +43,7 @@ class ThrowObject:
         
         initial_displacement = -desired_direction
         bodyPos = initial_displacement + target_position
+        bodyPos[2] += 0.04
         
         collisionId = p.createCollisionShape(shapeType=p.GEOM_BOX, halfExtents=[0.05, 0.05, 0.05])
         visualId = p.createVisualShape(shapeType=p.GEOM_BOX, halfExtents=[0.05, 0.05, 0.05],

@@ -1,8 +1,8 @@
 import pybullet as p
 from blind_walking.envs.env_modifiers.env_modifier import EnvModifier
 
-boxHalfLength = 0.5 * 3
-boxHalfWidth = 10
+boxHalfLength = 0.5
+boxHalfWidth = 3.0
 boxHalfHeight = 0.1
 
 
