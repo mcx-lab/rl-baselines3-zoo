@@ -191,8 +191,6 @@ def main():  # noqa: C901
     for env_module in args.gym_packages:
         importlib.import_module(env_module)
 
-    args.stats_dir = os.path.join(args.stats_dir, uuid.uuid4().hex)
-
     env_id = args.env
     algo = args.algo
     folder = args.folder

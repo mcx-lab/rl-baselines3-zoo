@@ -84,7 +84,7 @@ class TrainStep(EnvModifier):
         self.step_rise_levels = [0.05, 0.07, 0.09]
         self.num_levels = len(self.step_rise_levels)
         self.num_steps = 1
-        self.stair_gap = 2.0
+        self.stair_gap = 6.0
         self.step_run = 0.3
         self.stair_length = (self.num_steps - 1) * self.step_run * 2 + boxHalfLength * 2 * 2
 
