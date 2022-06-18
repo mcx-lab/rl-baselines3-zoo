@@ -100,12 +100,25 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
         #     ((tgt_freq - min_freq) / (max_freq - min_freq)) * (self._max_range - self._min_range)
 
     def _get_observation(self) -> _ARRAY:
-        # target y position is always zero
-        dy_target = 0 - self._current_base_pos[1]
-        # give some leeway for the robot to walk forward
-        dy_target = max(min(dy_target, self._max_distance / 2), -self._max_distance / 2)
-        # target x position is always forward
-        dx_target = np.sqrt(pow(self._max_distance, 2) - pow(dy_target, 2))
+        step = self._env.env_step_counter
+        step_interval = 300
+        if (step // step_interval) % 4 == 0:
+            tangent_ratio = divmod(step, step_interval)[1] / step_interval
+            dy_target = -self._max_distance * tangent_ratio
+            dx_target = self._max_distance * (1 - tangent_ratio)
+        elif (step // step_interval) % 4 == 1:
+            tangent_ratio = divmod(step, step_interval)[1] / step_interval
+            dy_target = -self._max_distance * tangent_ratio
+            dx_target = self._max_distance * (tangent_ratio - 1)
+        elif (step // step_interval) % 4 == 2:
+            tangent_ratio = divmod(step, step_interval)[1] / step_interval
+            dy_target = self._max_distance * tangent_ratio
+            dx_target = self._max_distance * (tangent_ratio - 1)
+        elif (step // step_interval) % 4 == 3:
+            tangent_ratio = divmod(step, step_interval)[1] / step_interval
+            dy_target = self._max_distance * tangent_ratio
+            dx_target = self._max_distance * (1 - tangent_ratio)
+
         # Transform to local frame
         dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
         return [dx_target_local, dy_target_local]
