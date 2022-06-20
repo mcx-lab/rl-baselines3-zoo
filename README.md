@@ -11,6 +11,20 @@ Install dependencies and source in developer mode:
 python -m pip install -e .
 ```
 
+## Training heightmap eutoencoder
+First, generate the data used in training the heightmap autoencoder:
+```
+python blind_walking/examples/hover_robot.py -n 1800
+```
+A few notes on the script:
+* `-n 1800` sets the number of timesteps collected to be 1800.
+* `--record` to record the hovering robot's trajectory over different terrains.
+
+Shift the generated `heightmap.npy` data file to a folder `./blind_walking/examples/data/heightmap.npy`. Then, train the heightmap autoencoder:
+```
+python train_autoencoder.py
+```
+
 ## Loading an Existing Model
 
 A pre-trained locomotion policy is provided in `saved_models/policy`.  
