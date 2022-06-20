@@ -6,8 +6,7 @@ def parse_requirements_file(path):
     return [line.rstrip() for line in open(path, "r")]
 
 
-reqs_main = parse_requirements_file("requirements/main.txt")
-reqs_dev = parse_requirements_file("requirements/dev.txt")
+reqs_main = parse_requirements_file("requirements.txt")
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -33,9 +32,6 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     install_requires=reqs_main,
-    extras_require={
-        "dev": reqs_main + reqs_dev,
-    },
     include_package_data=True,
     python_requires=">=3.8",
     zip_safe=False,

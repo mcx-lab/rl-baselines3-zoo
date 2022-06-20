@@ -24,7 +24,6 @@ target_positions.csv
 *.mp4
 *.json
 *.npy
-autoenc_results/
 
 # Distribution / packaging
 .Python

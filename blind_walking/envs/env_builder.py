@@ -18,12 +18,11 @@ import torch as th
 
 """Utilities for building environments."""
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_modifiers import heightfield, stairs, train_course, collapsibletile
-from blind_walking.envs.env_wrappers import observation_dictionary_split_by_encoder_wrapper as obs_split_wrapper
+from blind_walking.envs.env_modifiers import train_course
 from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
 from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
 from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors, sensor_wrappers
-from blind_walking.envs.tasks import forward_task, forward_task_pos, imitation_task
+from blind_walking.envs.tasks import imitation_task
 from blind_walking.envs.utilities.controllable_env_randomizer_from_config import ControllableEnvRandomizerFromConfig
 from blind_walking.robots import a1, laikago, robot_config
 from train_autoencoder import LinearAE
@@ -32,7 +31,7 @@ from train_autoencoder import LinearAE
 # Load heightmap encoder
 def load_encoder():
     model = LinearAE(input_size=12 * 16, code_size=32)
-    model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "autoenc_results/model_bs32_cs32_lr0.001"))
+    model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "saved_models/autoencoder/model_bs32_cs32_lr0.001"))
     model.load_state_dict(model_state)
     model.eval()
     _hm_encoder = model.encoder
