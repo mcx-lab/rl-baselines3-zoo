@@ -30,3 +30,9 @@ To reproduce the training settings from the paper:
 ```
 python train.py --algo ppo --env A1GymEnv-v0 -f logs --n-timesteps 4000000
 ```
+
+# Acknowledgements
+
+This codebase draws inspiration from the following codebases: 
+- [Stable Baselines3 Zoo](https://github.com/DLR-RM/rl-baselines3-zoo)
+- [Motion Imitation](https://github.com/erwincoumans/motion_imitation)
