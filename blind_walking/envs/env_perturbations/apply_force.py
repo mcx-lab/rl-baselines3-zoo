@@ -16,8 +16,8 @@ def draw_debug_sphere(pybullet_client, position: Tuple[float, float, float], rgb
 # obstacle_pos = [7.5, 19.5, 31.5]    # Platform obstacle pos
 # obstacle_pos = [2.5, 6.5, 10.5]                       # Short platform obstacle pos
 # obstacle_pos = [5.0, 11.0, 19.0, 26.0]                # Hurdle obstacle pos
-obstacle_pos = [8, 12, 16, 20]                          # Heightfield obstacle pos
-# obstacle_pos = [7.5, 21.9, 36.3, 14.4, 28.8, 44.7]    # Staircase obstacle pos
+# obstacle_pos = [8, 12, 16, 20]                          # Heightfield obstacle pos
+obstacle_pos = [7.5, 21.9, 36.3]    # Staircase obstacle pos
 obstacle_pos.sort()
 
 log_path = "object_thrown_time.csv"
