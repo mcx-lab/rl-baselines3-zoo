@@ -118,6 +118,7 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
             tangent_ratio = (divmod(step, step_interval)[1] / step_interval) ** 1
             dy_target = self._max_distance * (1 - tangent_ratio)
             dx_target = self._max_distance * tangent_ratio
+        # dy_target = -dy_target  # anti-clockwise
 
         # Transform to local frame
         dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
