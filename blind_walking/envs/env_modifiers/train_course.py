@@ -214,7 +214,7 @@ class TrainUneven(EnvModifier):
         self.hf = HeightField()
 
     def _generate(self, env):
-        self.hf._generate(env, start_x=10, heightPerturbationRange=0.08)
+        self.hf._generate(env, start_x=14, heightPerturbationRange=0.05)
 
 
 class TrainMultiple(EnvModifier):
