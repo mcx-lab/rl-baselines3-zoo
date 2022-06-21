@@ -19,8 +19,8 @@ if __name__ == "__main__":
             -f logs 
             --no-render 
             --env-kwargs
-                terrain:"'trippy'"
-            --stats-dir throw-obj-hurdles-seed{seed}
+                terrain:"'uneven'"
+            --stats-dir throw-obj-heightfield-seed{seed}
             --exp-id 44
             --seed {seed}
             --n-timesteps 3000
