@@ -101,25 +101,11 @@ class ForwardTargetPositionSensor(sensor.BoxSpaceSensor):
 
     def _get_observation(self) -> _ARRAY:
         step = self._env.env_step_counter
-        step_interval = 400
-        if (step // step_interval) % 4 == 0:
-            tangent_ratio = (divmod(step, step_interval)[1] / step_interval) ** 1
-            dy_target = -self._max_distance * tangent_ratio
-            dx_target = self._max_distance * (1 - tangent_ratio)
-        elif (step // step_interval) % 4 == 1:
-            tangent_ratio = (divmod(step, step_interval)[1] / step_interval) ** 1
-            dy_target = -self._max_distance * (1 - tangent_ratio)
-            dx_target = -self._max_distance * tangent_ratio
-        elif (step // step_interval) % 4 == 2:
-            tangent_ratio = (divmod(step, step_interval)[1] / step_interval) ** 1
-            dy_target = self._max_distance * tangent_ratio
-            dx_target = -self._max_distance * (1 - tangent_ratio)
-        elif (step // step_interval) % 4 == 3:
-            tangent_ratio = (divmod(step, step_interval)[1] / step_interval) ** 1
-            dy_target = self._max_distance * (1 - tangent_ratio)
-            dx_target = self._max_distance * tangent_ratio
-        # dy_target = -dy_target  # anti-clockwise
-
+        tangent_ratio = 0.75
+        dy_target = self._max_distance * tangent_ratio
+        dx_target = self._max_distance * (1 - tangent_ratio)
+        if step > 100:
+            dy_target *= -1
         # Transform to local frame
         dx_target_local, dy_target_local = self.to_local_frame(dx_target, dy_target, self._current_yaw)
         return [dx_target_local, dy_target_local]
