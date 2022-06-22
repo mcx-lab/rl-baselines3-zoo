@@ -19,11 +19,11 @@ if __name__ == "__main__":
             -f logs 
             --no-render 
             --env-kwargs
-                terrain:"'uneven'"
-            --stats-dir throw-obj-heightfield-seed{seed}
-            --exp-id 44
+                terrain:"'step'"
+            --stats-dir throw-obj-stairs-seed{seed}
+            --exp-id 50
             --seed {seed}
-            --n-timesteps 3000
+            --n-timesteps 5000
         """.replace("\n", " ").replace("\t", " ")
         print(command)
         os.system(command)
