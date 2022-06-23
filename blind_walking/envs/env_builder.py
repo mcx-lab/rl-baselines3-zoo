@@ -27,32 +27,14 @@ from blind_walking.envs.utilities.controllable_env_randomizer_from_config import
 from blind_walking.robots import a1, laikago, robot_config
 from train_autoencoder import LinearAE
 
-
-# Load heightmap encoder
-def load_encoder():
-    model = LinearAE(input_size=12 * 16, code_size=32)
-    model_state, optimizer_state = th.load(os.path.join(os.getcwd(), "saved_models/autoencoder/model_bs32_cs32_lr0.001"))
-    model.load_state_dict(model_state)
-    model.eval()
-    _hm_encoder = model.encoder
-    for param in _hm_encoder.parameters():
-        param.requires_grad = False
-    return _hm_encoder
-
 data_path = os.path.join(os.getcwd(), "blind_walking/data")
+
 
 def build_regular_env(
     robot_class,
     enable_rendering=False,
     on_rack=False,
     action_limit=(0.5, 0.5, 0.5),
-    robot_sensor_list=None,
-    env_sensor_list=None,
-    env_randomizer_list=None,
-    env_modifier_list=None,
-    task=None,
-    # CPG sensor kwargs
-    **kwargs,
 ):
 
     sim_params = locomotion_gym_config.SimulationParameters()
@@ -67,44 +49,26 @@ def build_regular_env(
 
     gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
 
-    if robot_sensor_list is None:
-        robot_sensor_list = [
-            robot_sensors.BaseVelocitySensor(convert_to_local_frame=True),
-            sensor_wrappers.HistoricSensorWrapper(
-                robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
-            ),
-            sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
-            cpg_sensors.ReferenceGaitSensor(
-                gait_names=["trot"],
-                gait_frequency_upper=2.5,
-                gait_frequency_lower=1.5,
-                duty_factor_upper=0.5,
-                duty_factor_lower=0.5,
-                obs_steps_ahead=[0, 1, 2, 10, 50],
-            ),
-        ]
-    if env_sensor_list is None:
-        env_sensor_list = [
-            environment_sensors.ForwardTargetPositionSensor(min_range=0.01, max_range=0.02),
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(12, 16),
-                grid_unit=(0.03, 0.03),
-                transform=(0.10, 0),
-                ray_origin="head",
-                noisy_reading=False,
-                name="depthmiddle",
-                encoder=load_encoder(),
-            ),
-        ]
+    robot_sensor_list = [
+        robot_sensors.BaseVelocitySensor(convert_to_local_frame=True),
+        robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]),
+        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+        robot_sensors.MotorVelocitySensor(num_motors=a1.NUM_MOTORS),
+        cpg_sensors.ReferenceGaitSensor(
+            gait_names=["trot"],
+            gait_frequency_upper=2.0,
+            gait_frequency_lower=2.0,
+            duty_factor_upper=0.5,
+            duty_factor_lower=0.5,
+            obs_steps_ahead=[0, 1, 2, 10, 50],
+        ),
+    ]
 
-    if env_randomizer_list is None:
-        env_randomizer_list = []
+    env_sensor_list = [environment_sensors.ForwardTargetPositionSensor(min_range=0.015, max_range=0.015)]
+    env_randomizer_list = []
+    env_modifier_list = []
 
-    if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainStep()]
-
-    if task is None:
-        task = imitation_task.ImitationTask()
+    task = imitation_task.ImitationTask()
 
     env = locomotion_gym_env.LocomotionGymEnv(
         gym_config=gym_config,
@@ -114,7 +78,7 @@ def build_regular_env(
         task=task,
         env_randomizers=env_randomizer_list,
         env_modifiers=env_modifier_list,
-        data_path = data_path
+        data_path=data_path,
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)
