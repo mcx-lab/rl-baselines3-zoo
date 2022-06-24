@@ -17,9 +17,7 @@ import os
 
 import gym
 from blind_walking.envs import locomotion_gym_config, locomotion_gym_env
-from blind_walking.envs.env_wrappers import imitation_task
-from blind_walking.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_array_wrapper
-from blind_walking.envs.env_wrappers import simple_openloop, trajectory_generator_wrapper_env
+from blind_walking.envs.env_wrappers import imitation_task, simple_openloop, trajectory_generator_wrapper_env
 from blind_walking.envs.sensors import cpg_sensors, environment_sensors, robot_sensors
 from blind_walking.robots import a1, robot_config
 
