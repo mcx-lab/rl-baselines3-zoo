@@ -11,3 +11,5 @@ optuna
 absl-py
 numba
 ray[rllib]
+wandb
+tensorboard
