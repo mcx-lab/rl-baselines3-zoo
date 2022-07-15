@@ -39,7 +39,7 @@ def load_encoder():
         param.requires_grad = False
     return _hm_encoder
 
-data_path = os.path.join(os.getcwd(), "blind_walking/data")
+# data_path = os.path.join(os.getcwd(), "blind_walking/data")
 
 def build_regular_env(
     robot_class,
@@ -75,33 +75,26 @@ def build_regular_env(
             ),
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
             cpg_sensors.ReferenceGaitSensor(
-                gait_names=["trot"],
-                gait_frequency_upper=2.5,
+                gait_names=["trot", "walk", "canter"],
+                # gait_names=["trot"],
+                # gait_names=["walk"],
+                gait_frequency_upper=3.0,
                 gait_frequency_lower=1.5,
                 duty_factor_upper=0.5,
-                duty_factor_lower=0.5,
+                duty_factor_lower=0.75,
                 obs_steps_ahead=[0, 1, 2, 10, 50],
             ),
         ]
     if env_sensor_list is None:
         env_sensor_list = [
             environment_sensors.ForwardTargetPositionSensor(min_range=0.01, max_range=0.02),
-            environment_sensors.LocalTerrainDepthSensor(
-                grid_size=(12, 16),
-                grid_unit=(0.03, 0.03),
-                transform=(0.10, 0),
-                ray_origin="head",
-                noisy_reading=False,
-                name="depthmiddle",
-                encoder=load_encoder(),
-            ),
         ]
 
     if env_randomizer_list is None:
         env_randomizer_list = []
 
     if env_modifier_list is None:
-        env_modifier_list = [train_course.TrainStep()]
+        env_modifier_list = []
 
     if task is None:
         task = imitation_task.ImitationTask()
@@ -113,8 +106,7 @@ def build_regular_env(
         env_sensors=env_sensor_list,
         task=task,
         env_randomizers=env_randomizer_list,
-        env_modifiers=env_modifier_list,
-        data_path = data_path
+        env_modifiers=env_modifier_list
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)

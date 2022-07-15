@@ -30,7 +30,8 @@ DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
 DEFAULT_DUTY_FACTOR = 0.75
 
 # gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
-gait_freq_schedule = lambda t: 3.0 if t < 300 else 1.0
+# gait_freq_schedule = lambda t: 3.0 if t % 200 < 100 else 0.5
+# duty_factor_schedule = lambda t : 0.75 if t % 200 < 100 else 0.5
 
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
@@ -104,6 +105,7 @@ class ReferenceGaitSensor(sensor.BoxSpaceSensor):
 
         # Update gait according to schedule
         # self.set_gait_name(gait_name_schedule(t))
+        # self.set_duty_factor(duty_factor_schedule(t))
         # self.set_period(1/gait_freq_schedule(t))
 
         self.cpg_system.step()

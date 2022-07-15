@@ -78,7 +78,7 @@ class ImitationTask(object):
         self._actual_displacement = np.array([dx_local, dy_local])
 
         # Assume gait sensor is last sensor
-        ref_gait_sensor = env.all_sensors()[-3]
+        ref_gait_sensor = env.all_sensors()[-2]
         self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
         t = env.env_time_step
         self._actual_foot_contacts = (t - 2 * self.feet_air_time) / t
