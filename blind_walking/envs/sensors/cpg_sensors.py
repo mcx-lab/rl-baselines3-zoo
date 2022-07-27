@@ -29,9 +29,9 @@ DEFAULT_PHASE_OFFSETS = phase_offsets["walk"]
 DEFAULT_GAIT_FREQUENCY = 1.5  # Hz
 DEFAULT_DUTY_FACTOR = 0.75
 
-# gait_name_schedule = lambda t : "walk" if t % 200 < 100 else "trot"
-# gait_freq_schedule = lambda t: 3.0 if t % 200 < 100 else 0.5
-# duty_factor_schedule = lambda t : 0.75 if t % 200 < 100 else 0.5
+gait_name_schedule = lambda t : "walk" if t < 200 or t > 400  else "trot"
+gait_freq_schedule = lambda t: 1.0 if t < 200 or t > 400 else 3.0
+duty_factor_schedule = lambda t : 0.75 if t < 200 or t > 400 else 0.5
 
 
 class ReferenceGaitSensor(sensor.BoxSpaceSensor):
