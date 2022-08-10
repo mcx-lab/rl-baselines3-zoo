@@ -39,7 +39,7 @@ def load_encoder():
         param.requires_grad = False
     return _hm_encoder
 
-# data_path = os.path.join(os.getcwd(), "blind_walking/data")
+data_path = os.path.join(os.getcwd(), "blind_walking/data")
 
 def build_regular_env(
     robot_class,
@@ -107,7 +107,8 @@ def build_regular_env(
         env_sensors=env_sensor_list,
         task=task,
         env_randomizers=env_randomizer_list,
-        env_modifiers=env_modifier_list
+        env_modifiers=env_modifier_list,
+        data_path = data_path
     )
 
     env = obs_array_wrapper.ObservationDictionaryToArrayWrapper(env)

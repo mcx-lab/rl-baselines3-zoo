@@ -356,7 +356,7 @@ class LocomotionGymEnv(gym.Env):
         base_pos = self._robot.GetBasePosition()
         view_matrix = self._pybullet_client.computeViewMatrixFromYawPitchRoll(
             cameraTargetPosition=(base_pos[0], base_pos[1], 0),
-            distance=3 * self._camera_dist,
+            distance=self._camera_dist,
             yaw=self._camera_yaw,
             pitch=self._camera_pitch,
             roll=0,
