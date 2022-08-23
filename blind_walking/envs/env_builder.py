@@ -74,14 +74,6 @@ def build_regular_env(
                 robot_sensors.IMUSensor(channels=["R", "P", "dR", "dP", "dY"]), num_history=3
             ),
             sensor_wrappers.HistoricSensorWrapper(robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS), num_history=3),
-            cpg_sensors.ReferenceGaitSensor(
-                gait_names=["trot"],
-                gait_frequency_upper=2.5,
-                gait_frequency_lower=1.5,
-                duty_factor_upper=0.5,
-                duty_factor_lower=0.5,
-                obs_steps_ahead=[0, 1, 2, 10, 50],
-            ),
         ]
     if env_sensor_list is None:
         env_sensor_list = [

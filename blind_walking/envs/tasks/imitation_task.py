@@ -77,12 +77,6 @@ class ImitationTask(object):
         dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
         self._actual_displacement = np.array([dx_local, dy_local])
 
-        # Assume gait sensor is last sensor
-        ref_gait_sensor = env.all_sensors()[-3]
-        self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
-        t = env.env_time_step
-        self._actual_foot_contacts = (t - 2 * self.feet_air_time) / t
-
     def done(self, env):
         """Checks if the episode is over.
         If the robot base becomes unstable (based on orientation), the episode
@@ -137,16 +131,15 @@ class ImitationTask(object):
         distance_reward = self._calc_reward_distance()
         shake_reward = self._calc_reward_shake()
         energy_reward = self._calc_reward_energy()
-        imitation_reward = self._calc_reward_imitation()
 
         # Dictionary of:
         # - {name: reward * weight}
         # for all reward components
         weighted_objectives = {
             "distance": distance_reward * 1.0,
-            "shake": shake_reward * 1.5,
+            "shake": shake_reward * 1.0,
             "energy": energy_reward * 0.0001,
-            "imitation": imitation_reward * 2.0,
+            "alive": 0.05
         }
 
         reward = sum([o for o in weighted_objectives.values()])
