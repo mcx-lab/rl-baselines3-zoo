@@ -77,6 +77,10 @@ class ImitationTask(object):
         dx_local, dy_local = self.to_local_frame(dx, dy, self.last_base_rpy[2])
         self._actual_displacement = np.array([dx_local, dy_local])
 
+        self._reference_foot_contacts = -2
+        t = env.env_time_step
+        self._actual_foot_contacts = (t - 2 * self.feet_air_time) / t
+
     def done(self, env):
         """Checks if the episode is over.
         If the robot base becomes unstable (based on orientation), the episode
