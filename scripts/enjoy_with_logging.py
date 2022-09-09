@@ -81,7 +81,7 @@ class ObservationLoggingCallback:
 
 class TaskLoggingCallback:
 
-    log_names = ("reference_foot_contact", "actual_foot_contact", "reference_displacement", "actual_displacement")
+    log_names = ("reference_foot_contact", "actual_foot_contact", "reference_displacement", "actual_displacement", "heightmap")
 
     def __init__(self, savedir: str):
         self.loggers = {ln: Logger(ln) for ln in self.log_names}
@@ -92,6 +92,7 @@ class TaskLoggingCallback:
         self.loggers["actual_foot_contact"].update(task._actual_foot_contacts)
         self.loggers["reference_displacement"].update(task._reference_displacement)
         self.loggers["actual_displacement"].update(task._actual_displacement)
+        self.loggers["heightmap"].update(task._heightmap)
 
     def on_episode_end(self, **kwargs):
         for logger in self.loggers.values():

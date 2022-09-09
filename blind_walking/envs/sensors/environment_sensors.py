@@ -178,6 +178,8 @@ class LocalTerrainDepthSensor(sensor.BoxSpaceSensor):
             transform=self.transform,
             ray_origin=self.ray_origin,
         ).reshape(1, self.grid_size[0], self.grid_size[1])
+        self._raw_heightmap = heightmap
+        
         # Add noise
         if self._noisy_reading:
             heightmap = heightmap + np.random.normal(scale=0.01, size=heightmap.shape)

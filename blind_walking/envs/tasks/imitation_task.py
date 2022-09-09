@@ -80,6 +80,11 @@ class ImitationTask(object):
         # Assume gait sensor is last sensor
         ref_gait_sensor = env.all_sensors()[-3]
         self._reference_foot_contacts = ref_gait_sensor.get_current_reference_state()
+        
+        # Update heightmap
+        heightmap_sensor = env.all_sensors()[-1]
+        self._heightmap = heightmap_sensor._raw_heightmap
+
         t = env.env_time_step
         self._actual_foot_contacts = (t - 2 * self.feet_air_time) / t
 
